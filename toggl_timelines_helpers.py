@@ -21,7 +21,9 @@ def end_of_day(timestamp):
 	return end_of_day_timestamp
 
 def timestamp_to_datetime(timestamp, string_format='%Y-%m-%dT%H:%M:%S%z'):
-	return datetime.strptime(timestamp, string_format)
+	timestamp = remove_colon_from_timezone(timestamp)
+	
+	return datetime.strptime(timestamp, string_format) 
 
 def datetime_to_timestamp(dt, string_format='%Y-%m-%dT%H:%M:%S%z'):
 	return remove_colon_from_timezone(datetime.strftime(dt, string_format))

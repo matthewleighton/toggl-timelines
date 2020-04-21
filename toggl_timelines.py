@@ -80,7 +80,10 @@ def update_database(start_days_ago, end_days_ago=0):
 	toggl.setAPIKey(config.api_key)
 
 	entries = toggl.getDetailedReportPages(request_data)['data']
-
+	
+	currently_tracking = get_currently_tracking()
+	entries.append(currently_tracking)
+	
 	delete_days_from_database(start_days_ago, end_days_ago)
 
 	for entry in entries:
@@ -193,6 +196,51 @@ def get_entries_from_database(user_id='test', start = False):
 	completed_entries = fill_untracked_time(entries, start)
 
 	return completed_entries
+
+# Get the currently tracking entry, and add/format the required data so it matches the historic entries.
+def get_currently_tracking():
+	toggl = Toggl()
+	toggl.setAPIKey(config.api_key)
+
+	user_data = toggl.request("https://www.toggl.com/api/v8/me?with_related_data=true")
+	projects = user_data['data']['projects']
+	clients = user_data['data']['clients']
+
+	current = toggl.currentRunningTimeEntry()
+
+	start_string = helpers.remove_colon_from_timezone(current['start'])
+	start = helpers.timestamp_to_datetime(start_string).replace(tzinfo=None)
+	utc_now = datetime.utcnow()
+	difference = utc_now - start
+	seconds = difference.seconds
+	milliseconds = seconds*1000
+
+	start_datetime = helpers.timestamp_to_datetime(current['start'])
+	end_datetime = start_datetime + timedelta(seconds=seconds)
+	end_string = helpers.datetime_to_timestamp(end_datetime)
+
+	current['dur'] = milliseconds
+	current['tags'] = '' # We get no tags info from this request.
+	current['end'] = end_string
+
+	for project in projects:
+		if project['id'] == current['pid']:
+			current['project'] 			 = project['name']
+			current['project_hex_color'] = project['hex_color']
+			client_id = project['cid']
+			break;
+
+		client_id = False
+		current['project'] = 'None'
+
+	for client in clients:
+		if client['id'] == client_id:
+			current['client'] = client['name']
+			break
+
+		current['client'] = 'None'
+
+	return current
 
 def sort_entries_by_day(entries):
 	sorted_by_day = {}
