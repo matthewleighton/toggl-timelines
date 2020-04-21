@@ -4,6 +4,7 @@ toggl-timelines.db
 utc_offsets.csv
 toggl_timelines_config.py
 log.txt
+old.db
 # Created by https://www.gitignore.io/api/linux,macos,flask,python,windows
 # Edit at https://www.gitignore.io/?templates=linux,macos,flask,python,windows
 

@@ -15,7 +15,7 @@
 	<body>
 	    <div class='container main_container'>
 
-	    	<div class='vertical_line'></div>
+	    	<div class='vertical_line' id='current_time_marker'></div>
 
 	    	<div class='row time_marker_container fixed-top'>
 	    		{%for time in data.times%}
@@ -108,13 +108,19 @@
 				})
 			}
 
+			function move_time_marker() {
+				$('#current_time_marker').css('left', get_day_percentage() - 0.1 + '%');
+			}
+
 
 			$(document).ready(function(){
 				
 				var DELAY = 200, entry_clicks = 0, timer = null
 
 				$('[data-toggle="tooltip"]').tooltip({placement: 'bottom'});
-				$('.vertical_line').css('left', get_day_percentage() - 0.1 + '%');
+				
+				move_time_marker()
+				setInterval(move_time_marker, 30000)
 
 				// Selecting Projects
 				$('.tracked_time').on('click', function(e){
