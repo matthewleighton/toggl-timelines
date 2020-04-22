@@ -4,13 +4,14 @@ import pytz
 
 import toggl_timelines_config as config
 
-from flask import Flask, url_for, render_template, request, make_response, redirect
+from flask import Flask, url_for, render_template, request, make_response, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from TogglPy import Toggl
 
 import toggl_timelines_helpers as helpers
 
 app = Flask(__name__)
+initial_load_number = 8
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///toggl-timelines.db'
@@ -37,34 +38,49 @@ class Entry(db.Model):
 
 @app.route('/')
 def home_page():
-	return load_homepage()
-
-def load_homepage():
-	start = datetime.today() - timedelta(days=365*10) # Ten years ago
-	start = start.astimezone().replace(microsecond=0).isoformat()
-
-	# Get most recent 3 days from Toggl
 	update_database(3)
 
-	db_entries = get_entries_from_database()
+	displayed_days = get_days_list()
 
-	days = sort_entries_by_day(db_entries)
-
-	days_list = []
-
-	for day in days.values():
-		days_list.append(day)
-
-	days_list.reverse()
+	heart = helpers.display_heart()
 
 	page_data = {
-		'days': days_list,
-		'times': range(0, 24)
+		'days': displayed_days,
+		'times': range(0, 24),
+		'heart': heart
 	}
 
 	response = make_response(render_template('timelines.html', data=page_data))
 
 	return response
+
+@app.route('/json_test')
+def json_test():
+	displayed_days = get_days_list(True)
+	
+	page_data = {
+		'days': displayed_days
+	}
+
+	return jsonify(render_template('day.html', data=page_data))
+
+
+
+
+def get_days_list(loading_additional_days = False):
+	db_entries = get_entries_from_database()
+	days = sort_entries_by_day(db_entries)
+	
+	days_list = []
+	for day in days.values():
+		days_list.append(day)
+
+	days_list.reverse()
+
+	if loading_additional_days:
+		return days_list[initial_load_number:]
+	else:
+		return days_list[:initial_load_number]
 
 def update_database(start_days_ago, end_days_ago=0):	
 	start = datetime.today() - timedelta(days=start_days_ago)
@@ -82,7 +98,8 @@ def update_database(start_days_ago, end_days_ago=0):
 	entries = toggl.getDetailedReportPages(request_data)['data']
 	
 	currently_tracking = get_currently_tracking()
-	entries.append(currently_tracking)
+	if currently_tracking:
+		entries.append(currently_tracking)
 	
 	delete_days_from_database(start_days_ago, end_days_ago)
 
@@ -148,6 +165,8 @@ def fill_untracked_time(entries, target_time):
 	for entry in entries:
 		entry = entry.__dict__
 
+		entry.pop('_sa_instance_state', None)
+
 		
 		entry['start'] = entry['start'] + timedelta(hours=entry['utc_offset'])
 		entry['end'] = entry['end'] + timedelta(hours=entry['utc_offset'])
@@ -184,7 +203,7 @@ def fill_untracked_time(entries, target_time):
 
 	return completed_entries
 
-def get_entries_from_database(user_id='test', start = False):
+def get_entries_from_database(start = False):
 	if not start:
 		start = datetime.today() - timedelta(days=365*10) # Ten years ago
 		start = start.replace(microsecond=0).isoformat()
@@ -208,6 +227,9 @@ def get_currently_tracking():
 
 	current = toggl.currentRunningTimeEntry()
 
+	if not current:
+		return False
+
 	start_string = helpers.remove_colon_from_timezone(current['start'])
 	start = helpers.timestamp_to_datetime(start_string).replace(tzinfo=None)
 	utc_now = datetime.utcnow()
@@ -222,16 +244,18 @@ def get_currently_tracking():
 	current['dur'] = milliseconds
 	current['tags'] = '' # We get no tags info from this request.
 	current['end'] = end_string
+	current['project_hex_color'] = '#C8C8C8'
 
-	for project in projects:
-		if project['id'] == current['pid']:
-			current['project'] 			 = project['name']
-			current['project_hex_color'] = project['hex_color']
-			client_id = project['cid']
-			break;
+	current['project'] = 'No Project'
+	client_id = False
 
-		client_id = False
-		current['project'] = 'None'
+	if 'pid' in current:
+		for project in projects:
+			if project['id'] == current['pid']:
+				current['project'] 			 = project['name']
+				current['project_hex_color'] = project['hex_color']
+				client_id = project['cid']
+				break;
 
 	for client in clients:
 		if client['id'] == client_id:
@@ -239,6 +263,9 @@ def get_currently_tracking():
 			break
 
 		current['client'] = 'None'
+
+	if not 'description' in current:
+		current['description'] = ''
 
 	return current
 

@@ -2,6 +2,7 @@ from datetime import datetime, time, timedelta
 from calendar import monthrange
 import pytz
 import csv
+import getpass
 
 import toggl_timelines_config as config
 
@@ -187,3 +188,11 @@ def get_client_hex_color(client):
 		return hex_color_config[client]
 	else:
 		return '#a6a6a6'
+
+def display_heart():
+	system_username = getpass.getuser()
+
+	if 'johanna' in system_username.lower():
+		return True
+	else:
+		return False

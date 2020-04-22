@@ -13,6 +13,10 @@
     <title>Toggl Timelines</title>
 	</head>
 	<body>
+		<script type=text/javascript>
+  			$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+		</script>
+
 	    <div class='container main_container'>
 
 	    	<div class='vertical_line' id='current_time_marker'></div>
@@ -51,11 +55,17 @@
 
 				{%endfor%}
 	    	</div>
+
+	    	<button type="button" class="btn btn-primary" id='load_more'>Load More</button>
+	    	<div id='loading_div'>
+	    		{% include "loading.html" %}
+	    	</div>
 		</div>
 
 		<!-- Optional JavaScript -->
 		<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-		<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+		<!--<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>-->
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
 		<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
 
@@ -112,9 +122,8 @@
 				$('#current_time_marker').css('left', get_day_percentage() - 0.1 + '%');
 			}
 
-
-			$(document).ready(function(){
-				
+			// This has all been put into a function so we can call it again after loading elements via AJAX.
+			function assign_listeners() {
 				var DELAY = 200, entry_clicks = 0, timer = null
 
 				$('[data-toggle="tooltip"]').tooltip({placement: 'bottom'});
@@ -124,6 +133,7 @@
 
 				// Selecting Projects
 				$('.tracked_time').on('click', function(e){
+					console.log('CLICK!')
 					entry_clicks++
 					clicked_project = $(this).data('project')
 					clicked_client = $(this).data('client')
@@ -270,6 +280,28 @@
 
 						activate_client_mode(client_mode)
 					}
+				})
+			}
+
+
+			$(document).ready(function(){
+				assign_listeners()
+				
+
+				$('#load_more').click(function() {
+					$.ajax($SCRIPT_ROOT + '/json_test',{
+						'beforeSend': function() {
+							$('#load_more').hide()
+							$('#loading_div').show()
+						},
+						'complete': function() {
+							$('#loading_div').hide()
+						}
+					}).done(function(data) {
+						$('.main_container').append(data)
+						$('#load_more').hide()
+						assign_listeners()
+					})
 				})
 
 			});
