@@ -54,8 +54,10 @@ def home_page():
 
 	return response
 
-@app.route('/json_test')
-def json_test():
+
+
+@app.route('/load_more')
+def load_more():
 	displayed_days = get_days_list(True)
 	
 	page_data = {

@@ -110,6 +110,10 @@ body {
                                   supported by Chrome, Opera and Firefox */
 }
 
+#load_more {
+	margin-top: 25px;
+}
+
 /* -----------------Loading Spinners--------------- */
 #loading_div {
 	display: none;
