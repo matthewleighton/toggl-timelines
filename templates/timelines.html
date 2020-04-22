@@ -29,21 +29,7 @@
 	    		{%endfor%}
 	    	</div>
 
-	    	{%for day in data.days%}
-	    	
-	    		<div class='row day_row'>
-
-	    			<span class='day_date noselect' data-day="{{day.entries[0].start.weekday()}}" data-date="{{day.entries[0].start.strftime('%d-%m')}}">{{day.date}}</span>
-
-	    			{%for entry in day.entries%}
-
-						<span class='track_block {{entry.class}}' style="background-color:{{entry.project_hex_color}}; width:{{entry.day_percentage}}%;" data-toggle="tooltip" data-html="true" title="{{entry.tooltip}}" data-project="{{entry.project}}" data-description="{{entry.description}}" data-percentage="{{entry.day_percentage}}" data-date="{{day.date}}" data-client="{{entry.client}}" data-client-hex="{{entry.client_hex_color}}" data-project-hex="{{entry.project_hex_color}}">
-							<span>‏‏‎&#32</span>
-						</span>
-
-					{%endfor%}
-	    		</div>
-	    	{%endfor%}
+	    	{% include "day.html" %}
 
 	    	<div class='row'>
 	    		{%for entry in data.entries%}
@@ -111,11 +97,51 @@
 			
 			function activate_client_mode(value) {
 				mode = (value) ? 'client' : 'project'
-
+			
 				$('.tracked_time').each(function() {
 					hex_code = $(this).data(mode + '-hex')
 					$(this).css('background-color', hex_code)
 				})
+			}
+
+			function activate_stack_mode(value) {
+				display = (value) ? 'none' : 'block'
+				border_radius = (value) ? '0px' : '3px'
+
+				$('.untracked_time').css('display', display)
+				$('.tracked_time').css('border-radius', border_radius)
+
+				if (value) {
+					$('.main_container').css('left', '10%')
+					$('.day_date').css('left', '-8%')
+					$('.day_date').css('margin-top', '15px')
+					$('.time_marker').css('left', '10.3%')
+					$('.time_marker').css('position', 'relative')
+					$('#current_time_marker').css('display', 'none')
+
+				} else {
+					$('.main_container').css('left', '')
+					$('.day_date').css('left', '')
+					$('.day_date').css('margin-top', '')
+					$('.time_marker').css('left', '')
+					$('.time_marker').css('position', '')
+					$('#current_time_marker').css('display', '')
+				}
+			}
+
+			function activate_black_mode(value) {
+				client_mode = false
+				console.log('black mode')
+
+				if (value) {
+					$('.tracked_time').each(function() {
+						$(this).css('background-color', 'black')
+					})
+				} else {
+					activate_client_mode(false)
+				}
+
+				
 			}
 
 			function move_time_marker() {
@@ -273,14 +299,6 @@
 					row += 1
 				})
 
-				client_mode = false
-				$('body').keypress(function(e) {
-					if(e.which==99) {
-						client_mode = (client_mode) ? false : true
-
-						activate_client_mode(client_mode)
-					}
-				})
 			}
 
 
@@ -302,6 +320,33 @@
 						$('#load_more').hide()
 						assign_listeners()
 					})
+				})
+
+				client_mode = false
+				stack_mode = false
+				black_mode = false
+				$('body').keypress(function(e) {
+					console.log(e.which)
+
+					if(e.which==99) {
+						client_mode = (client_mode) ? false : true
+
+						activate_client_mode(client_mode)
+					}
+
+					if (e.which==115) {
+						stack_mode = (stack_mode) ? false : true
+						
+						activate_stack_mode(stack_mode)
+					}
+
+					if (e.which==119) {
+						black_mode = (black_mode) ? false : true
+						
+						activate_black_mode(black_mode)
+					}
+
+					
 				})
 
 			});
