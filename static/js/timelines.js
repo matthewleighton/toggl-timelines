@@ -245,7 +245,7 @@ function assign_listeners() {
 
 function remove_listeners() {
 	$('.day_date').off()
-	$('.tracked_time').off()
+	$('.tracked_time').off('click')
 }
 
 $(document).ready(function(){

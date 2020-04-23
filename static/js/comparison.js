@@ -2,6 +2,13 @@ $(document).ready(function() {
 	$.ajax($SCRIPT_ROOT + '/comparison_data').done(function(data) {
 		create_graph(data)		
 	})
+
+	$( "#comparison_form" ).on( "submit", function( event ) {
+		event.preventDefault();
+		console.log( $( this ).serialize() );
+	});
+
+	
 })
 
 
@@ -54,7 +61,7 @@ function create_graph(data) {
 	
 	console.log(data)
 
-	var width = $('body').width()/1.1
+	var width = $('#graph_container').width()
 
 	console.log(width)
 	
@@ -69,14 +76,19 @@ function create_graph(data) {
 
 
 
-
-	var width_scale = d3.scaleLinear()
-						.domain([0, 3])
-						.range([0, width]);
-
+	/*
 	var x_position = d3.scaleLinear()
 					.domain(d3.extent(data, d => d.value))
 					.rangeRound([margin.left, width - margin.right]);
+	*/
+
+	var x_position = d3.scalePow()
+					.exponent(0.6)
+					.domain([0, 3])
+					//.domain(d3.extent(data, d => d.value))
+					.rangeRound([margin.left, width - margin.right])
+					.clamp(true);
+
 
 	var y_position = d3.scaleBand()
     	.domain(d3.range(data.length))
@@ -85,7 +97,7 @@ function create_graph(data) {
 
 
 	  
-	var canvas = d3.select(".main_container")
+	var canvas = d3.select("#graph_container")
 				.append("svg")
 				.attr("width", width)
 				.attr("height", height);
@@ -148,7 +160,8 @@ function create_graph(data) {
 			.attr("x", d => x_position(d.value) + Math.sign(d.value - 1) * 4)
 			.attr("y", (d, i) => y_position(i) + y_position.bandwidth() / 2)
 			.attr("dy", "0.35em")
-			.text(d => d.value)
+			.text(d => Math.round(d.value*100) + '%')
+			//.text(d => d.value)
 
 	
 
