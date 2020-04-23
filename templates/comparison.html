@@ -1,0 +1,15 @@
+{% include "head.html" %}
+
+<body>
+	<script type=text/javascript>
+		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+	</script>
+
+	<div class='container main_container'></div>
+
+	
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+	<script src="{{ url_for('static', filename='js/comparison.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/timelines.js') }}"></script>
+</body>
+</html>

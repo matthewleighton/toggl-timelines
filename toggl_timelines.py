@@ -54,8 +54,6 @@ def home_page():
 
 	return response
 
-
-
 @app.route('/load_more')
 def load_more():
 	displayed_days = get_days_list(True)
@@ -69,7 +67,108 @@ def load_more():
 
 
 
-def get_days_list(loading_additional_days = False):
+
+
+
+@app.route('/comparison')
+def averages_page():
+	update_database(3)
+
+	response = make_response(render_template('comparison.html'))
+
+	return response
+
+
+
+@app.route('/comparison_data')
+def comparison_data():
+	historic_projects = {}
+
+	number_of_now_days = 1
+
+	now_days = get_days_list(False, number_of_now_days)
+
+	historic_days = get_days_list(True, number_of_now_days)
+
+	number_of_historic_days = len(historic_days)
+
+	project_colors = {'None': '#C8C8C8'}
+
+
+	for day in historic_days:
+		entries = day['entries']
+		for entry in entries:
+			if not 'project' in entry.keys():
+				continue
+
+			project = entry['project']
+			duration = entry['dur']/1000
+
+			project_colors[project] = entry['project_hex_color']
+
+			if not project in historic_projects.keys():
+				historic_projects[project] = 0
+
+			historic_projects[project] += duration
+
+	for project in historic_projects:
+		seconds = historic_projects[project]
+		average = seconds/number_of_historic_days
+
+		historic_projects[project] = average
+		#This now contains the average seconds per day of each project
+
+	
+	now_projects = dict.fromkeys(historic_projects.keys(),0)
+
+
+	for day in now_days:
+		entries = day['entries']
+		for entry in entries:
+			if not 'project' in entry.keys():
+				continue
+
+			project = entry['project']
+			duration = entry['dur']/1000
+
+			if not project in now_projects.keys():
+				now_projects[project] = 0
+
+			now_projects[project] += duration
+
+
+	current_comparison = {}
+
+	for project in historic_projects:
+		average_seconds = historic_projects[project]
+		current_seconds = now_projects[project]
+
+		current_comparison[project] = current_seconds/average_seconds
+
+	current_comparison['None'] = current_comparison.pop(None) #Fixing problems caused by 'None' entry.
+
+
+	current_comparison.pop('Self') # Temporarily removing this category.
+
+	prepared_data = []
+
+	for project, time in current_comparison.items():
+		prepared_data.append({
+			'name': project,
+			'value' : time,
+			'color': project_colors[project]
+			})
+
+	return jsonify(prepared_data)
+
+
+
+
+
+
+
+
+def get_days_list(loading_additional_days = False, amount = 8):
 	db_entries = get_entries_from_database()
 	days = sort_entries_by_day(db_entries)
 	
@@ -79,10 +178,12 @@ def get_days_list(loading_additional_days = False):
 
 	days_list.reverse()
 
+	#return days_list[:1]
+
 	if loading_additional_days:
-		return days_list[initial_load_number:]
+		return days_list[amount:]
 	else:
-		return days_list[:initial_load_number]
+		return days_list[:amount]
 
 def update_database(start_days_ago, end_days_ago=0):	
 	start = datetime.today() - timedelta(days=start_days_ago)

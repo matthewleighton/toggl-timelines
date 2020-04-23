@@ -254,6 +254,15 @@ body {
     opacity: 0;
   }
 }
-
-
 /* End of Loading Spinners*/
+
+
+
+
+/* ------------------------- COMPARISONS PAGE -------------------------- */
+
+.comparison_bar {
+	border: 2px solid black;
+	background-color: grey;
+	margin: 50px;
+}
