@@ -18,6 +18,7 @@
 
 			<label for="datarange">Data Range:</label>
 			<select id="datarange" name="datarange">
+				<option value="1">Day</option>
 				<option value="7">Past Week</option>
 				<option value="30" selected="selected">Past Month</option>
 				<option value="365">Past Year</option>
@@ -26,13 +27,13 @@
 
 			<label for="days">Days:</label>
 			<select id="days" name="weekdays" multiple>
-				<option value="Mon" selected="selected">Monday</option>
-				<option value="Tue" selected="selected">Tuesday</option>
-				<option value="Wed" selected="selected">Wednesday</option>
-				<option value="Thu" selected="selected">Thursday</option>
-				<option value="Fri" selected="selected">Friday</option>
-				<option value="Sat" selected="selected">Saturday</option>
-				<option value="Sun" selected="selected">Sunday</option>
+				<option value="0" selected="selected">Monday</option>
+				<option value="1" selected="selected">Tuesday</option>
+				<option value="2" selected="selected">Wednesday</option>
+				<option value="3" selected="selected">Thursday</option>
+				<option value="4" selected="selected">Friday</option>
+				<option value="5" selected="selected">Saturday</option>
+				<option value="6" selected="selected">Sunday</option>
 			</select>
 			<button type="submit" class="btn btn-primary" id="comparison_update">Update</button>
 		</form>

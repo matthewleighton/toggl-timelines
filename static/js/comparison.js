@@ -47,31 +47,6 @@ function format_serialized_data(data) {
 function create_graph(data) {
 
 	console.log(data)
-
-	/*
-	data = [
-		{
-			'name': 'Coding',
-			'value': 2.1
-		},
-		{
-			'name': 'Reading',
-			'value': 0.4
-		},
-		{
-			'name': 'Johanna',
-			'value': 1
-		},
-		{
-			'name': 'Physics',
-			'value': 1.5
-		},
-		{
-			'name': 'Video Games',
-			'value': 0.1
-		}
-	]
-	*/
 	
 	$('svg').remove()
 
@@ -122,13 +97,6 @@ function create_graph(data) {
 				.attr("height", height);
 
 
-	/*
-	canvas.append("rect")
-    	.attr("width", "100%")
-    	.attr("height", "100%")
-    	.attr("fill", "pink");
-	*/
-
 
 	metric = 'relative'
 	format = d3.format(metric === "absolute" ? "+,d" : "+,.0%")
@@ -161,7 +129,6 @@ function create_graph(data) {
 		.selectAll("rect")
 		.data(data)
 		.join("rect")
-			//.attr("fill", d => d3.schemeSet1[d.ratio > 1 ? 1 : 0])
 			.attr("fill", d => d.color)
 			.attr("x", d => x_position(Math.min(d.ratio, 1)))
 			.attr("y", (d, i) => y_position(i))
@@ -180,7 +147,6 @@ function create_graph(data) {
 			.attr("y", (d, i) => y_position(i) + y_position.bandwidth() / 2)
 			.attr("dy", "0.35em")
 			.text(d => Math.round(d.ratio*100) + '%')
-			//.text(d => d.ratio)
 
 	
 
