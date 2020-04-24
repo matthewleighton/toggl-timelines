@@ -7,21 +7,21 @@
 
 	<div class='container main_container'>
 		<form action="/comparison_data" id="comparison_form" method="post">
-			<label for="timeframe">Timeframe:</label>
+			<label for="timeframe">Compare...</label>
 			
 			<select id="timeframe" name="timeframe">
 				<option value="1">Today</option>
-				<option value="7" selected="selected">Past Week</option>
-				<option value="30">Past Month</option>
-				<option value="365">Past Year</option>
+				<option value="7" selected="selected">Past 7 days</option>
+				<option value="30">Past 30 days</option>
+				<option value="365">Past 365 days</option>
 			</select>
 
-			<label for="datarange">Data Range:</label>
+			<label for="datarange"> to...</label>
 			<select id="datarange" name="datarange">
-				<option value="1">Day</option>
-				<option value="7">Past Week</option>
-				<option value="30" selected="selected">Past Month</option>
-				<option value="365">Past Year</option>
+				<option value="1">Previous Day</option>
+				<option value="7" selected="selected">Previous 7 days</option>
+				<option value="30">Previous 30 days</option>
+				<option value="365">Previous 365</option>
 				<option value="1000">All Time</option>
 			</select>
 
@@ -35,7 +35,7 @@
 				<option value="5" selected="selected">Saturday</option>
 				<option value="6" selected="selected">Sunday</option>
 			</select>
-			<button type="submit" class="btn btn-primary" id="comparison_update">Update</button>
+			<!--<button type="submit" class="btn btn-primary" id="comparison_update">Update</button>-->
 		</form>
 
 
@@ -45,6 +45,7 @@
 
 	
 	<script src="https://d3js.org/d3.v5.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.min.js"></script>
 	<script src="{{ url_for('static', filename='js/comparison.js') }}"></script>
 	<!--<script src="{{ url_for('static', filename='js/timelines.js') }}"></script>-->
 </body>

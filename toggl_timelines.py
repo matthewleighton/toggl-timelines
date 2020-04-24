@@ -104,15 +104,12 @@ def comparison_data():
 
 	number_of_historic_days = len(historic_days)
 
-	print('--------------------------')
-	print(target_weekdays)
-	print('--------------------------')
 
 	project_colors = {'None': '#C8C8C8'}
 
-	print('Historic Days: ')
+	#print('Historic Days: ')
 	for day in historic_days:
-		print(day['date'])
+		#print(day['date'])
 		entries = day['entries']
 		for entry in entries:
 			if not 'project' in entry.keys():
@@ -151,9 +148,9 @@ def comparison_data():
 
 	
 	
-	print('Current Days: ')
+	#print('Current Days: ')
 	for day in now_days:
-		print(day['date'])
+		#print(day['date'])
 		entries = day['entries']
 		for entry in entries:
 			

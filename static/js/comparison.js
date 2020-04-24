@@ -1,10 +1,5 @@
 $(document).ready(function() {
-	/*
-	$.ajax($SCRIPT_ROOT + '/comparison_data').done(function(data) {
-		create_graph(data)		
-	})
-	*/
-
+	
 	$( "#comparison_form" ).on( "submit", function( event ) {
 		
 		event.preventDefault();
@@ -19,11 +14,16 @@ $(document).ready(function() {
 			"dataType": "json",
 			"data": JSON.stringify(serialized_data),
 			success: function(response) {
-				create_graph(response)
-				//console.log(response)
+				create_graph(response)				
 			}
 		})
-	});	
+	});
+
+	$('#comparison_form').change(function() {
+		$('#comparison_form').submit()
+	});
+
+	$('#comparison_form').submit()
 })
 
 function format_serialized_data(data) {
@@ -48,7 +48,7 @@ function format_percentage(ratio) {
 	value = Math.round(ratio*100) - 100
 
 	if (value == 9900) {
-		return "+∞"
+		return "∞"
 	}
 
 	sign = Math.sign(value) > 0 ? '+' : '-'
@@ -56,32 +56,104 @@ function format_percentage(ratio) {
 	return sign + Math.abs(Math.round(ratio*100) - 100) + '%'
 }
 
+function format_seconds(seconds) {
+	var timestamp = 9462;
+
+	var hours = Math.floor(seconds / 60 / 60);
+	var minutes = Math.floor(seconds / 60) - (hours * 60);
+	var seconds = Math.floor(seconds % 60);
+
+	var hours_label = (hours == 1) ? " hour, " : " hours, "
+	var minutes_label = (minutes == 1) ? " minute, " : " minutes, "
+	var seconds_label = (minutes == 1) ? " second " : " seconds "
+
+	return_string = ""
+
+	if (hours > 0) {
+		return_string += hours + hours_label
+	}
+
+	if (minutes > 0) {
+		return_string += minutes + minutes_label
+	}
+
+	if (seconds > 0) {
+		return_string += seconds + seconds_label
+	}
+
+	if (return_string == "") {
+		return_string = "0 seconds"
+	}
+
+	return return_string
+
+	return hours + hours_label + minutes + minutes_label + seconds + seconds_label
+}
+
+function get_current_period_string() {
+	var current_period_number = $('#timeframe').val();
+	switch (current_period_number) {
+		case '1':
+			return 'Today: '
+			break
+		case '7':
+			return 'Past 7 days: '
+			break
+		case '30':
+			return 'Past 30 days: '
+			break
+		case '365':
+			return 'Past 365 days: '
+			break
+	}
+
+	return 'This period: '
+}
+
+function get_average_label() {
+	var current_period_number = $('#timeframe').val();
+	var comparison_period_number = $('#datarange').val();
+
+	console.log(current_period_number)
+	console.log(comparison_period_number)
+
+	if (current_period_number !== comparison_period_number) {
+		return "Average: ";
+	}
+
+	switch (current_period_number) {
+		case '1':
+			return 'Yesterday: '
+			break
+		case '7':
+			return 'Previous 7 days: '
+			break
+		case '30':
+			return 'Previous 30 days: '
+			break
+		case '365':
+			return 'Previous 365 days: '
+			break
+	}
+
+	return 'Average: '
+}
 
 function create_graph(data) {
-
 	console.log(data)
 	
 	$('svg').remove()
+	$('.d3-tip').remove()
 
 	var width = $('#graph_container').width()
-
-	console.log(width)
-	
 	var half_width = width/2
-
 	var margin = ({top: 30, right: 60, bottom: 10, left: 60})
-	
-	var bar_height = 25
-
-
-
+	var bar_height = 35
 	var height = Math.ceil((data.length + 0.1) * bar_height) + margin.top + margin.bottom
+	var tooltip = d3.select("body").append("div").attr("class", "toolTip");
 
-	console.log('Height: ')
-	console.log(height)
-	console.log(data.length)
-
-
+	var current_period_string = get_current_period_string()
+	
 
 	/*
 	var x_position = d3.scaleLinear()
@@ -135,6 +207,24 @@ function create_graph(data) {
     canvas.append("g")
     	.call(xAxis);
 
+    var tip = d3.tip()
+	  .attr('class', 'd3-tip')
+	  .offset([-10, 0])
+	  .html(function(d) {
+	    current_tracked = format_seconds(d.current_tracked)
+	    average = format_seconds(d.average)
+
+	    average_label = get_average_label()
+
+	    difference_seconds = Math.abs(d.average - d.current_tracked)
+	    difference_string = format_seconds(difference_seconds)
+
+	    return "<strong>" + d.name + "</strong><div><span>" + current_period_string + "</span>" + current_tracked + "</div><div><span>" + average_label + "</span>" + average + "</div><div><span>Difference: </span>" + difference_string + "</div>";
+	    //return "<strong>Frequency:</strong> <span style='color:red'>" + d.frequency + "</span>";
+	  })
+
+	canvas.call(tip)
+
 
 
 
@@ -146,7 +236,9 @@ function create_graph(data) {
 			.attr("x", d => x_position(Math.min(d.ratio, 1)))
 			.attr("y", (d, i) => y_position(i))
 			.attr("width", d => Math.abs(x_position(d.ratio) - x_position(1)))
-			.attr("height", y_position.bandwidth());
+			.attr("height", y_position.bandwidth())
+			.on('mouseover', tip.show)
+      		.on('mouseout', tip.hide)
 			
 	
 	canvas.append("g")
