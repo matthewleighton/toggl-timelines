@@ -44,6 +44,19 @@ function format_serialized_data(data) {
 }
 
 
+function format_percentage(ratio) {
+	value = Math.round(ratio*100) - 100
+
+	if (value == 9900) {
+		return "+∞"
+	}
+
+	sign = Math.sign(value) > 0 ? '+' : '-'
+
+	return sign + Math.abs(Math.round(ratio*100) - 100) + '%'
+}
+
+
 function create_graph(data) {
 
 	console.log(data)
@@ -146,11 +159,14 @@ function create_graph(data) {
 			.attr("x", d => x_position(d.ratio) + Math.sign(d.ratio - 1) * 4)
 			.attr("y", (d, i) => y_position(i) + y_position.bandwidth() / 2)
 			.attr("dy", "0.35em")
-			.text(d => Math.round(d.ratio*100) + '%')
+			//.text(format_percentage(d.ratio))
+			.text(d => format_percentage(d.ratio))
+			//.text(d => Math.abs(Math.round(d.ratio*100) - 100) + '%')
 
 	
 
 	
 
 }
+
 
