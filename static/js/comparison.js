@@ -139,6 +139,15 @@ function get_average_label() {
 	return 'Average: '
 }
 
+function get_x_axis_tick(d) {
+	percentage =  ((d - 1) * 100).toFixed(0)
+	if (percentage > 0) {
+		percentage = "+" + percentage
+	}
+
+	return percentage + "%"
+}
+
 function create_graph(data) {
 	console.log(data)
 	
@@ -182,11 +191,6 @@ function create_graph(data) {
 				.attr("height", height);
 
 
-
-	metric = 'relative'
-	format = d3.format(metric === "absolute" ? "+,d" : "+,.0%")
-	tickFormat = metric === "absolute" ? d3.formatPrefix("+.1", 1e6) : format
-
 	yAxis = g => g
     .attr("transform", `translate(${x_position(0)},0)`)
     .call(d3.axisLeft(y_position).tickFormat(i => data[i].name).tickSize(0).tickPadding(6))
@@ -196,7 +200,7 @@ function create_graph(data) {
 
     xAxis = g => g
     	.attr("transform", `translate(0,${margin.top})`)
-    	.call(d3.axisTop(x_position).ticks(width / 80).tickFormat(tickFormat))
+    	.call(d3.axisTop(x_position).ticks(width / 80).tickFormat(d => get_x_axis_tick(d) ))
     	.call(g => g.select(".domain").remove())
 
     /*
