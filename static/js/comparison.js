@@ -1,36 +1,69 @@
 $(document).ready(function() {
+	/*
 	$.ajax($SCRIPT_ROOT + '/comparison_data').done(function(data) {
 		create_graph(data)		
 	})
+	*/
 
 	$( "#comparison_form" ).on( "submit", function( event ) {
+		console.log('dfighdf')
+
 		event.preventDefault();
-		console.log( $( this ).serialize() );
+
+		
+
+
+		serialized_data = $( this ).serializeArray();
+		serialized_data = format_serialized_data(serialized_data);
+		
+
+
+		$.ajax({
+			"type": "POST",
+			"url": "/comparison_data",
+			"contentType": "application/json",
+			"dataType": "json",
+			"data": JSON.stringify(serialized_data),
+			success: function(response) {
+				create_graph(response)
+				//console.log(response)
+			}
+		})
+
+		/*
+		$.ajax($SCRIPT_ROOT + '/comparison_data',{
+			'beforeSend': function() {
+				
+			},
+			'complete': function() {
+				
+			}
+		}).done(function(data) {
+			
+		})
+		*/
 	});
 
 	
 })
 
+function format_serialized_data(data) {
+	array = {}
 
-/*
-	var circle = canvas.append("circle")
-				.attr("cx", 250)
-				.attr("cy", 250)
-				.attr("r", 50)
-				.attr("fill", "red");
+	$.each(data, function() {
+		if (array[this.name]) {
+			if (!array[this.name].push) {
+				array[this.name] = [array[this.name]];
+			}
+			array[this.name].push(this.value || '');
+		} else {
+			array[this.name] = this.value || '';
+		}
+	})
 
-	var rect = canvas.append("rect")
-				.attr("width", 100)
-				.attr("height", 50)
+	return array
+}
 
-	var line = canvas.append("line")
-				.attr("x1", 0)
-				.attr("y1", 100)
-				.attr("x2", 400)
-				.attr("y2", 400)
-				.attr("stroke", "green")
-				.attr("stroke-width", 10);
-	*/
 
 function create_graph(data) {
 
@@ -59,7 +92,7 @@ function create_graph(data) {
 	]
 	*/
 	
-	console.log(data)
+	$('svg').remove()
 
 	var width = $('#graph_container').width()
 

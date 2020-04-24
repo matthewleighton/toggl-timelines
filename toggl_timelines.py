@@ -80,8 +80,16 @@ def averages_page():
 
 
 
-@app.route('/comparison_data')
+@app.route('/comparison_data', methods=['POST'])
 def comparison_data():
+
+
+	timeframe = request.json.get('timeframe')
+	datarange = request.json.get('datarange')
+	weekdays = request.json.get('weekdays')
+
+	
+
 	historic_projects = {}
 
 	number_of_now_days = 1
@@ -148,7 +156,7 @@ def comparison_data():
 	current_comparison['None'] = current_comparison.pop(None) #Fixing problems caused by 'None' entry.
 
 
-	current_comparison.pop('Self') # Temporarily removing this category.
+	#current_comparison.pop('Self') # Temporarily removing this category.
 
 	prepared_data = []
 
