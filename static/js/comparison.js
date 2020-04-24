@@ -148,11 +148,28 @@ function get_x_axis_tick(d) {
 	return percentage + "%"
 }
 
+function get_upper_x_domain_bound(data) {
+	max_ratio = 0
+
+	for (var i = data.length - 1; i >= 0; i--) {
+		ratio = data[i]['ratio']
+		console.log(ratio)
+
+		if (ratio > max_ratio && ratio < 7) {
+			max_ratio = ratio
+		}
+	}
+
+	return max_ratio + 0.1;
+}
+
 function create_graph(data) {
 	console.log(data)
 	
 	$('svg').remove()
 	$('.d3-tip').remove()
+
+	var upper_x_domain_bound = get_upper_x_domain_bound(data)
 
 	var width = $('#graph_container').width()
 	var half_width = width/2
@@ -164,19 +181,22 @@ function create_graph(data) {
 	var current_period_string = get_current_period_string()
 	
 
-	/*
+	console.log(d3.extent(data, d => d.ratio))
+	console.log([margin.left, width - margin.right])
+	
 	var x_position = d3.scaleLinear()
-					.domain(d3.extent(data, d => d.ratio))
-					.rangeRound([margin.left, width - margin.right]);
-	*/
-
+					.domain([0, upper_x_domain_bound])
+					.rangeRound([margin.left, width - margin.right])
+					.clamp(true);
+	
+	/*
 	var x_position = d3.scalePow()
 					.exponent(0.6)
 					.domain([0, 3])
 					//.domain(d3.extent(data, d => d.ratio))
 					.rangeRound([margin.left, width - margin.right])
 					.clamp(true);
-
+	*/
 
 	var y_position = d3.scaleBand()
     	.domain(d3.range(data.length))
@@ -192,21 +212,20 @@ function create_graph(data) {
 
 
 	yAxis = g => g
-    .attr("transform", `translate(${x_position(0)},0)`)
+    .attr("transform", `translate(${x_position(1)},0)`)
     .call(d3.axisLeft(y_position).tickFormat(i => data[i].name).tickSize(0).tickPadding(6))
-    .call(g => g.selectAll(".tick text").filter(i => data[i].ratio < 0)
+    .call(g => g.selectAll(".tick text").filter(i => data[i].ratio < 1)
         .attr("text-anchor", "start")
         .attr("x", 6))
+   	//.call(g => g.select(".domain").remove())
 
     xAxis = g => g
     	.attr("transform", `translate(0,${margin.top})`)
     	.call(d3.axisTop(x_position).ticks(width / 80).tickFormat(d => get_x_axis_tick(d) ))
     	.call(g => g.select(".domain").remove())
 
-    /*
     canvas.append("g")
     	.call(yAxis);
-	*/
 
     canvas.append("g")
     	.call(xAxis);
@@ -224,13 +243,9 @@ function create_graph(data) {
 	    difference_string = format_seconds(difference_seconds)
 
 	    return "<strong>" + d.name + "</strong><div><span>" + current_period_string + "</span>" + current_tracked + "</div><div><span>" + average_label + "</span>" + average + "</div><div><span>Difference: </span>" + difference_string + "</div>";
-	    //return "<strong>Frequency:</strong> <span style='color:red'>" + d.frequency + "</span>";
 	  })
 
 	canvas.call(tip)
-
-
-
 
 	canvas.append("g")
 		.selectAll("rect")
@@ -255,9 +270,7 @@ function create_graph(data) {
 			.attr("x", d => x_position(d.ratio) + Math.sign(d.ratio - 1) * 4)
 			.attr("y", (d, i) => y_position(i) + y_position.bandwidth() / 2)
 			.attr("dy", "0.35em")
-			//.text(format_percentage(d.ratio))
-			.text(d => format_percentage(d.ratio))
-			//.text(d => Math.abs(Math.round(d.ratio*100) - 100) + '%')
+			.text(d => format_percentage(d.ratio));
 
 	
 
