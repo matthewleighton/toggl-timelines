@@ -6,17 +6,11 @@ $(document).ready(function() {
 	*/
 
 	$( "#comparison_form" ).on( "submit", function( event ) {
-		console.log('dfighdf')
-
-		event.preventDefault();
-
 		
-
+		event.preventDefault();
 
 		serialized_data = $( this ).serializeArray();
 		serialized_data = format_serialized_data(serialized_data);
-		
-
 
 		$.ajax({
 			"type": "POST",
@@ -29,22 +23,7 @@ $(document).ready(function() {
 				//console.log(response)
 			}
 		})
-
-		/*
-		$.ajax($SCRIPT_ROOT + '/comparison_data',{
-			'beforeSend': function() {
-				
-			},
-			'complete': function() {
-				
-			}
-		}).done(function(data) {
-			
-		})
-		*/
-	});
-
-	
+	});	
 })
 
 function format_serialized_data(data) {
@@ -66,6 +45,8 @@ function format_serialized_data(data) {
 
 
 function create_graph(data) {
+
+	console.log(data)
 
 	/*
 	data = [
@@ -104,21 +85,26 @@ function create_graph(data) {
 	
 	var bar_height = 25
 
+
+
 	var height = Math.ceil((data.length + 0.1) * bar_height) + margin.top + margin.bottom
 
+	console.log('Height: ')
+	console.log(height)
+	console.log(data.length)
 
 
 
 	/*
 	var x_position = d3.scaleLinear()
-					.domain(d3.extent(data, d => d.value))
+					.domain(d3.extent(data, d => d.ratio))
 					.rangeRound([margin.left, width - margin.right]);
 	*/
 
 	var x_position = d3.scalePow()
 					.exponent(0.6)
 					.domain([0, 3])
-					//.domain(d3.extent(data, d => d.value))
+					//.domain(d3.extent(data, d => d.ratio))
 					.rangeRound([margin.left, width - margin.right])
 					.clamp(true);
 
@@ -151,7 +137,7 @@ function create_graph(data) {
 	yAxis = g => g
     .attr("transform", `translate(${x_position(0)},0)`)
     .call(d3.axisLeft(y_position).tickFormat(i => data[i].name).tickSize(0).tickPadding(6))
-    .call(g => g.selectAll(".tick text").filter(i => data[i].value < 0)
+    .call(g => g.selectAll(".tick text").filter(i => data[i].ratio < 0)
         .attr("text-anchor", "start")
         .attr("x", 6))
 
@@ -175,11 +161,11 @@ function create_graph(data) {
 		.selectAll("rect")
 		.data(data)
 		.join("rect")
-			//.attr("fill", d => d3.schemeSet1[d.value > 1 ? 1 : 0])
+			//.attr("fill", d => d3.schemeSet1[d.ratio > 1 ? 1 : 0])
 			.attr("fill", d => d.color)
-			.attr("x", d => x_position(Math.min(d.value, 1)))
+			.attr("x", d => x_position(Math.min(d.ratio, 1)))
 			.attr("y", (d, i) => y_position(i))
-			.attr("width", d => Math.abs(x_position(d.value) - x_position(1)))
+			.attr("width", d => Math.abs(x_position(d.ratio) - x_position(1)))
 			.attr("height", y_position.bandwidth());
 			
 	
@@ -189,12 +175,12 @@ function create_graph(data) {
 		.selectAll("text")
 		.data(data)
 		.join("text")
-			.attr("text-anchor", d => d.value < 1 ? "end" : "start")
-			.attr("x", d => x_position(d.value) + Math.sign(d.value - 1) * 4)
+			.attr("text-anchor", d => d.ratio < 1 ? "end" : "start")
+			.attr("x", d => x_position(d.ratio) + Math.sign(d.ratio - 1) * 4)
 			.attr("y", (d, i) => y_position(i) + y_position.bandwidth() / 2)
 			.attr("dy", "0.35em")
-			.text(d => Math.round(d.value*100) + '%')
-			//.text(d => d.value)
+			.text(d => Math.round(d.ratio*100) + '%')
+			//.text(d => d.ratio)
 
 	
 

@@ -84,26 +84,31 @@ def averages_page():
 def comparison_data():
 
 
-	timeframe = request.json.get('timeframe')
-	datarange = request.json.get('datarange')
+	timeframe = int(request.json.get('timeframe'))
+	datarange = int(request.json.get('datarange'))
 	weekdays = request.json.get('weekdays')
 
-	
 
 	historic_projects = {}
 
-	number_of_now_days = 1
+	number_of_now_days = timeframe
 
 	now_days = get_days_list(False, number_of_now_days)
 
 	historic_days = get_days_list(True, number_of_now_days)
+	historic_days = historic_days[:datarange]
+
 
 	number_of_historic_days = len(historic_days)
 
+	print(len(historic_days))
+	print(datarange)
+
 	project_colors = {'None': '#C8C8C8'}
 
-
+	print('Historic Days: ')
 	for day in historic_days:
+		print(day['date'])
 		entries = day['entries']
 		for entry in entries:
 			if not 'project' in entry.keys():
@@ -115,45 +120,99 @@ def comparison_data():
 			project_colors[project] = entry['project_hex_color']
 
 			if not project in historic_projects.keys():
-				historic_projects[project] = 0
+				historic_projects[project] = {
+					'name': project,
+					'historic_tracked': 0,
+					'current_tracked': 0,
+					'color': entry['project_hex_color']
+				}
 
-			historic_projects[project] += duration
+			historic_projects[project]['historic_tracked'] += duration
+
+	
 
 	for project in historic_projects:
-		seconds = historic_projects[project]
-		average = seconds/number_of_historic_days
+		seconds = historic_projects[project]['historic_tracked']
+		average = (seconds/number_of_historic_days)*timeframe
 
-		historic_projects[project] = average
+		historic_projects[project]['average'] = average
 		#This now contains the average seconds per day of each project
+
+
+	#print(historic_projects)
+
 
 	
 	now_projects = dict.fromkeys(historic_projects.keys(),0)
 
+	#print(now_projects)
 
+	print('Current Days: ')
 	for day in now_days:
+		print(day['date'])
 		entries = day['entries']
 		for entry in entries:
-			if not 'project' in entry.keys():
+			
+
+
+			if not 'project' in entry.keys(): # Skips untracked time
 				continue
+
+			#print(entry)
 
 			project = entry['project']
 			duration = entry['dur']/1000
+			color = entry['project_hex_color']
 
+			print(duration)
+
+			if not project in historic_projects.keys():
+				historic_projects[project] = {
+					'name': project,
+					'historic_tracked': 0,
+					'average': 0,
+					'current_tracked': 0,
+					'color': color
+				}
+
+			historic_projects[project]['current_tracked'] += duration
+
+			"""
 			if not project in now_projects.keys():
 				now_projects[project] = 0
 
 			now_projects[project] += duration
+			"""
 
-
-	current_comparison = {}
-
+	##current_comparison = {}
+	response = []
 	for project in historic_projects:
-		average_seconds = historic_projects[project]
-		current_seconds = now_projects[project]
+		
+	
 
-		current_comparison[project] = current_seconds/average_seconds
+		
+		current_tracked = historic_projects[project]['current_tracked']
 
-	current_comparison['None'] = current_comparison.pop(None) #Fixing problems caused by 'None' entry.
+		average = historic_projects[project]['average']
+
+		if average == 0:
+			ratio = 100
+		else:
+			ratio = current_tracked/average
+
+		historic_projects[project]['ratio'] = ratio
+
+		if current_tracked > 0:
+			response.append(historic_projects[project])
+
+	
+
+
+
+	return jsonify(response)
+
+
+	#current_comparison['None'] = current_comparison.pop(None, None) #Fixing problems caused by 'None' entry.
 
 
 	#current_comparison.pop('Self') # Temporarily removing this category.
@@ -166,6 +225,8 @@ def comparison_data():
 			'value' : time,
 			'color': project_colors[project]
 			})
+
+	print(prepared_data)
 
 	return jsonify(prepared_data)
 

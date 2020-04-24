@@ -10,29 +10,29 @@
 			<label for="timeframe">Timeframe:</label>
 			
 			<select id="timeframe" name="timeframe">
-				<option value="today">Today</option>
-				<option value="week">Past Week</option>
-				<option value="month">Past Month</option>
-				<option value="year">Past Year</option>
+				<option value="1">Today</option>
+				<option value="7" selected="selected">Past Week</option>
+				<option value="30">Past Month</option>
+				<option value="365">Past Year</option>
 			</select>
 
 			<label for="datarange">Data Range:</label>
 			<select id="datarange" name="datarange">
-				<option value="week">Past Week</option>
-				<option value="month">Past Month</option>
-				<option value="year">Past Year</option>
-				<option value="all">All Time</option>
+				<option value="7">Past Week</option>
+				<option value="30" selected="selected">Past Month</option>
+				<option value="365">Past Year</option>
+				<option value="1000">All Time</option>
 			</select>
 
 			<label for="days">Days:</label>
 			<select id="days" name="weekdays" multiple>
-				<option value="monday" selected="selected">Monday</option>
-				<option value="tuesday" selected="selected">Tuesday</option>
-				<option value="wednesday" selected="selected">Wednesday</option>
-				<option value="thursday" selected="selected">Thursday</option>
-				<option value="friday" selected="selected">Friday</option>
-				<option value="saturday" selected="selected">Saturday</option>
-				<option value="sunday" selected="selected">Sunday</option>
+				<option value="Mon" selected="selected">Monday</option>
+				<option value="Tue" selected="selected">Tuesday</option>
+				<option value="Wed" selected="selected">Wednesday</option>
+				<option value="Thu" selected="selected">Thursday</option>
+				<option value="Fri" selected="selected">Friday</option>
+				<option value="Sat" selected="selected">Saturday</option>
+				<option value="Sun" selected="selected">Sunday</option>
 			</select>
 			<button type="submit" class="btn btn-primary" id="comparison_update">Update</button>
 		</form>
