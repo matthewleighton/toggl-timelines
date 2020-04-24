@@ -311,3 +311,12 @@ body {
   top: 100%;
   left: 0;
 }
+
+#comparison_form_contents {
+  margin: 0 auto;
+  max-width: 33%;
+}
+
+#comparison_weekday_selection {
+  text-align: center;
+}

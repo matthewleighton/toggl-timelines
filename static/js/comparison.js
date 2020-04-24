@@ -114,9 +114,6 @@ function get_average_label() {
 	var current_period_number = $('#timeframe').val();
 	var comparison_period_number = $('#datarange').val();
 
-	console.log(current_period_number)
-	console.log(comparison_period_number)
-
 	if (current_period_number !== comparison_period_number) {
 		return "Average: ";
 	}
