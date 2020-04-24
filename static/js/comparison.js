@@ -95,16 +95,12 @@ function get_current_period_string() {
 	switch (current_period_number) {
 		case '1':
 			return 'Today: '
-			break
 		case '7':
 			return 'Past 7 days: '
-			break
 		case '30':
 			return 'Past 30 days: '
-			break
 		case '365':
 			return 'Past 365 days: '
-			break
 	}
 
 	return 'This period: '
@@ -115,22 +111,29 @@ function get_average_label() {
 	var comparison_period_number = $('#datarange').val();
 
 	if (current_period_number !== comparison_period_number) {
+		switch (current_period_number) {
+			case '1':
+				return 'Daily average: '
+			case '7':
+				return '7 day average: '
+			case '30':
+				return '30 day average: '
+			case '365':
+				return '365 day average: '
+		}		
+
 		return "Average: ";
 	}
 
 	switch (current_period_number) {
 		case '1':
 			return 'Yesterday: '
-			break
 		case '7':
 			return 'Previous 7 days: '
-			break
 		case '30':
 			return 'Previous 30 days: '
-			break
 		case '365':
 			return 'Previous 365 days: '
-			break
 	}
 
 	return 'Average: '

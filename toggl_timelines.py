@@ -193,7 +193,12 @@ def comparison_data():
 		if current_tracked > 0: # Don't include projects with no recently tracked time.
 			response.append(historic_projects[project])
 
-	return jsonify(response)
+	# Sort by ratio
+	sorted_response = sorted(response, key=lambda k: k['ratio'])
+
+	print(sorted_response)
+
+	return jsonify(sorted_response)
 
 
 
