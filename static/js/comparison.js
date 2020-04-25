@@ -1,22 +1,8 @@
 $(document).ready(function() {
 	
 	$( "#comparison_form" ).on( "submit", function( event ) {
-		
 		event.preventDefault();
-
-		serialized_data = $( this ).serializeArray();
-		serialized_data = format_serialized_data(serialized_data);
-
-		$.ajax({
-			"type": "POST",
-			"url": "/comparison_data",
-			"contentType": "application/json",
-			"dataType": "json",
-			"data": JSON.stringify(serialized_data),
-			success: function(response) {
-				create_graph(response)				
-			}
-		})
+		submit_comparison_form()
 	});
 
 	$('#comparison_form').change(function() {
@@ -24,7 +10,33 @@ $(document).ready(function() {
 	});
 
 	$('#comparison_form').submit()
+
+	$('#comparison_reload').click(function() {
+		submit_comparison_form(true)
+	})
 })
+
+function submit_comparison_form(reload=false) {
+	serialized_data = $("#comparison_form").serializeArray();
+	
+	if (reload) {
+		serialized_data.push({name: 'reload', value: true})
+		console.log(serialized_data)
+	}
+
+	serialized_data = format_serialized_data(serialized_data);
+
+	$.ajax({
+		"type": "POST",
+		"url": "/comparison_data",
+		"contentType": "application/json",
+		"dataType": "json",
+		"data": JSON.stringify(serialized_data),
+		success: function(response) {
+			create_graph(response)				
+		}
+	})
+}
 
 function format_serialized_data(data) {
 	array = {}

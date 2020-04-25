@@ -320,3 +320,7 @@ body {
 #comparison_weekday_selection {
   text-align: center;
 }
+
+#comparison_reload {
+  cursor: pointer;
+}

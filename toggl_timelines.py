@@ -82,7 +82,10 @@ def averages_page():
 
 @app.route('/comparison_data', methods=['POST'])
 def comparison_data():
+	reload_data = request.json.get('reload')
 
+	if reload_data:
+		update_database(1)
 
 	timeframe = int(request.json.get('timeframe'))
 	datarange = int(request.json.get('datarange'))
@@ -196,7 +199,7 @@ def comparison_data():
 	# Sort by ratio
 	sorted_response = sorted(response, key=lambda k: k['ratio'])
 
-	print(sorted_response)
+	#print(sorted_response)
 
 	return jsonify(sorted_response)
 
