@@ -111,29 +111,19 @@ function get_average_label() {
 	var comparison_period_number = $('#datarange').val();
 
 	if (current_period_number !== comparison_period_number) {
-		switch (current_period_number) {
-			case '1':
-				return 'Daily average: '
-			case '7':
-				return '7 day average: '
-			case '30':
-				return '30 day average: '
-			case '365':
-				return '365 day average: '
-		}		
+		if (current_period_number == 1) {
+			return 'Daily average: '
+		} else {
+			return current_period_number + ' day average: '
+		}
 
 		return "Average: ";
 	}
 
-	switch (current_period_number) {
-		case '1':
-			return 'Yesterday: '
-		case '7':
-			return 'Previous 7 days: '
-		case '30':
-			return 'Previous 30 days: '
-		case '365':
-			return 'Previous 365 days: '
+	if (current_period_number == 1) {
+		return 'Yesterday: '
+	} else {
+		return 'Previous ' + current_period_number + ' days: '
 	}
 
 	return 'Average: '
@@ -153,14 +143,13 @@ function get_upper_x_domain_bound(data) {
 
 	for (var i = data.length - 1; i >= 0; i--) {
 		ratio = data[i]['ratio']
-		console.log(ratio)
 
-		if (ratio > max_ratio && ratio < 7) {
+		if (ratio > max_ratio && ratio < 6) {
 			max_ratio = ratio
 		}
 	}
 
-	return max_ratio + 0.1;
+	return (max_ratio < 1) ? 2 : max_ratio + 0.1
 }
 
 function create_graph(data) {
@@ -189,15 +178,6 @@ function create_graph(data) {
 					.rangeRound([margin.left, width - margin.right])
 					.clamp(true);
 	
-	/*
-	var x_position = d3.scalePow()
-					.exponent(0.6)
-					.domain([0, 3])
-					//.domain(d3.extent(data, d => d.ratio))
-					.rangeRound([margin.left, width - margin.right])
-					.clamp(true);
-	*/
-
 	var y_position = d3.scaleBand()
     	.domain(d3.range(data.length))
     	.rangeRound([margin.top, height - margin.bottom])
