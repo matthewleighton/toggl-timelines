@@ -91,6 +91,9 @@ def comparison_data():
 	datarange = int(request.json.get('datarange'))
 	target_weekdays = request.json.get('weekdays')
 
+	period_type = request.json.get('period_type')
+	print(period_type)
+
 	if type(target_weekdays) is not list:
 		target_weekdays = [target_weekdays]
 
@@ -301,7 +304,7 @@ def delete_days_from_database(start_days_ago, end_days_ago=0):
 
 	db.session.commit()
 
-def fill_untracked_time(entries, target_time):
+def fill_untracked_time(entries):
 	completed_entries = []
 
 	target_time = entries[0].start.replace(hour=0, minute=0, second=0)
@@ -347,16 +350,18 @@ def fill_untracked_time(entries, target_time):
 
 	return completed_entries
 
-def get_entries_from_database(start = False):
-	if not start:
-		start = datetime.today() - timedelta(days=365*10) # Ten years ago
-		start = start.replace(microsecond=0).isoformat()
+def get_entries_from_database(start = False, end = False):
+	query = Entry.query
 
-	
-	entries = Entry.query.order_by(Entry.start).all()
-	#entries = Entry.query.order_by(Entry.start).limit(300).all() # Uncomment for faster load times during development
+	if start:
+		query.filter(Entry.start >= start)
 
-	completed_entries = fill_untracked_time(entries, start)
+	if end:
+		query.filter(Entry.end >= end)
+
+	entries = query.order_by(Entry.start).all()
+
+	completed_entries = fill_untracked_time(entries)
 
 	return completed_entries
 

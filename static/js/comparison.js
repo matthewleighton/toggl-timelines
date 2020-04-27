@@ -165,7 +165,7 @@ function get_upper_x_domain_bound(data) {
 }
 
 function create_graph(data) {
-	console.log(data)
+	//console.log(data)
 	
 	$('svg').remove()
 	$('.d3-tip').remove()
@@ -180,10 +180,6 @@ function create_graph(data) {
 	var tooltip = d3.select("body").append("div").attr("class", "toolTip");
 
 	var current_period_string = get_current_period_string()
-	
-
-	console.log(d3.extent(data, d => d.ratio))
-	console.log([margin.left, width - margin.right])
 	
 	var x_position = d3.scaleLinear()
 					.domain([0, upper_x_domain_bound])
