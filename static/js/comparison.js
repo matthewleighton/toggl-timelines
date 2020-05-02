@@ -105,42 +105,90 @@ function format_seconds(seconds) {
 }
 
 function get_current_period_string() {
-	var current_period_number = $('#timeframe').val();
-	switch (current_period_number) {
-		case '1':
-			return 'Today: '
-		case '7':
-			return 'Past 7 days: '
-		case '30':
-			return 'Past 30 days: '
-		case '365':
-			return 'Past 365 days: '
-	}
+	var period_type = $('input[name="period_type"]:checked').val();
 
-	return 'This period: '
+	if (period_type == 'custom') {
+
+		var current_period_number = $('#timeframe').val();
+		switch (current_period_number) {
+			case '1':
+				return 'Today: '
+			case '7':
+				return 'Past 7 days: '
+			case '30':
+				return 'Past 30 days: '
+			case '365':
+				return 'Past 365 days: '
+		}
+
+		return 'This period: '
+
+	} else {
+		var calendar_period = $("#calendar_period").val()
+
+		switch (calendar_period) {
+			case 'day':
+				return 'Today: '
+			case 'week':
+				return 'This week: '
+			case 'month':
+				return 'This month: '
+			case 'quarter':
+				return 'This quarter: '
+			case 'half-year':
+				return 'This year half: '
+			case 'year':
+				return 'This year: '
+		}
+	}
 }
 
 function get_average_label() {
-	var current_period_number = $('#timeframe').val();
-	var comparison_period_number = $('#datarange').val();
+	var period_type = $('input[name="period_type"]:checked').val();
 
-	if (current_period_number !== comparison_period_number) {
-		if (current_period_number == 1) {
-			return 'Daily average: '
-		} else {
-			return current_period_number + ' day average: '
+	if (period_type == 'custom') {
+		
+		var current_period_number = $('#timeframe').val();
+		var comparison_period_number = $('#datarange').val();
+
+		if (current_period_number !== comparison_period_number) {
+			if (current_period_number == 1) {
+				return 'Daily average: '
+			} else {
+				return current_period_number + ' day average: '
+			}
+
+			return "Average: ";
 		}
 
-		return "Average: ";
-	}
+		if (current_period_number == 1) {
+			return 'Yesterday: '
+		} else {
+			return 'Previous ' + current_period_number + ' days: '
+		}
 
-	if (current_period_number == 1) {
-		return 'Yesterday: '
+		return 'Average: '
+
 	} else {
-		return 'Previous ' + current_period_number + ' days: '
-	}
 
-	return 'Average: '
+		var calendar_period = $("#calendar_period").val()
+
+		switch (calendar_period) {
+			case 'day':
+				return 'Yesterday: '
+			case 'week':
+				return 'Last week: '
+			case 'month':
+				return 'Last month: '
+			case 'quarter':
+				return 'Last quarter: '
+			case 'half-year':
+				return 'Last year half: '
+			case 'year':
+				return 'Last year: '
+		}
+
+	}
 }
 
 function get_x_axis_tick(d) {
