@@ -10,15 +10,15 @@
 			
 			
 			<div id="comparison_form_contents">
-				<div class="btn-group btn-group-toggle" data-toggle="buttons">
+				<div class="btn-group btn-group-toggle comparison_mode_radio" data-toggle="buttons">
 					<label class="btn btn-secondary active">
-						<input type="radio" name="period_type" id="calendar_mode" autocomplete="off" value="calendar"> Calendar
+						<input type="radio" name="period_type" id="calendar_mode" autocomplete="off" value="calendar" checked> Calendar
 					</label>
 					<label class="btn btn-secondary">
-						<input type="radio" name="period_type" id="custom_mode" autocomplete="off" value="custom" checked> Custom
+						<input type="radio" name="period_type" id="custom_mode" autocomplete="off" value="custom"> Custom
 					</label>
 				</div>
-				<div class="form-row">
+				<div class="form-row custom_comparison_settings">
 					<div class="col-md-6">
 						<label for="timeframe">Compare...</label>
 						<select class="form-control" id="timeframe" name="timeframe">
@@ -41,6 +41,27 @@
 							<option value="365">Previous 365 before that</option>
 							<option value="1000">All Time before that</option>
 						</select>
+					</div>
+				</div>
+
+				<div class="form-row calendar_comparison_settings">
+					<div class="col-md-6">
+						<!--<label for="calendar_period">Period: </label>-->
+						<select class="form-control" id="calendar_period" name="calendar_period">
+							<option value="day">Today vs. Yesterday</option>
+							<option value="week" selected="selected">This week vs. Last week</option>
+							<option value="month">This month vs. Last month</option>
+							<option value="quarter">This quarter vs. Last quarter</option>
+							<option value="half-year">This year half vs. Last year half</option>
+							<option value="year">This year vs. Last year</option>
+						</select>
+					</div>
+					<div class="col-md-6 live_mode_container">
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" name="live_mode" id="live_mode" checked>
+							<label class="custom-control-label" for="live_mode">Live mode</label>
+							<!--<span class="comparison_reload">&#x21bb;</span>-->
+						</div>
 					</div>
 				</div>
 
@@ -73,28 +94,7 @@
 						<input class="form-check-input" type="checkbox" value="6" checked="checked" name="weekdays" id="sunday-checkbox">
 						<label class="form-check-label active" for="sunday-checkbox">Sun</label>
 					</div>
-					<span id="comparison_reload">&#x21bb;</span>
-				</div>
-
-				<div class="form-row">
-					<div class="col-md-6">
-						<label for="calendar_period">Period: </label>
-						<select class="form-control" id="calendar_period" name="calendar_period">
-							<option value="day">Today vs. Yesterday</option>
-							<option value="week" selected="selected">This week vs. Last week</option>
-							<option value="month">This month vs. Last month</option>
-							<option value="quarter">This quarter vs. Last quarter</option>
-							<option value="half-year">This year half vs. Last year half</option>
-							<option value="year">This year vs. Last year</option>
-						</select>
-					</div>
-					<div class="col-md-6">
-						<div class="custom-control custom-checkbox">
-							<input type="checkbox" class="custom-control-input" name="live_mode" id="live_mode" checked>
-							<label class="custom-control-label" for="live_mode">Live mode</label>
-							<span id="comparison_reload">&#x21bb;</span>
-						</div>
-					</div>
+					<span class="comparison_reload">&#x21bb;</span>
 				</div>
 
 			</div>

@@ -11,9 +11,20 @@ $(document).ready(function() {
 
 	$('#comparison_form').submit()
 
-	$('#comparison_reload').click(function() {
+	$('.comparison_reload').click(function() {
 		submit_comparison_form(true)
 	})
+
+	$('input[type=radio][name=period_type]').change(function() {
+    if (this.value == 'calendar') {
+        $('.custom_comparison_settings').hide()
+        $('.calendar_comparison_settings').css('display', 'flex')
+    }
+    else if (this.value == 'custom') {
+        $('.calendar_comparison_settings').hide()
+        $('.custom_comparison_settings').css('display', 'flex')
+    }
+});
 })
 
 function submit_comparison_form(reload=false) {

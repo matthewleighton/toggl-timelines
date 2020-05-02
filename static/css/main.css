@@ -315,12 +315,26 @@ body {
 #comparison_form_contents {
   margin: 0 auto;
   max-width: 33%;
+  text-align: center;
 }
 
 #comparison_weekday_selection {
   text-align: center;
+  margin-top: 5px;
 }
 
-#comparison_reload {
+.comparison_reload {
   cursor: pointer;
+}
+
+.live_mode_container {
+  padding-top: 6px;
+}
+
+.custom_comparison_settings {
+  display: none;
+}
+
+.comparison_mode_radio {
+  margin-bottom: 10px;
 }
