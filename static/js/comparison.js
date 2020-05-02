@@ -21,10 +21,12 @@ function submit_comparison_form(reload=false) {
 	
 	if (reload) {
 		serialized_data.push({name: 'reload', value: true})
-		console.log(serialized_data)
+		//console.log(serialized_data)
 	}
 
 	serialized_data = format_serialized_data(serialized_data);
+
+	console.log(serialized_data)
 
 	$.ajax({
 		"type": "POST",
@@ -156,17 +158,15 @@ function get_upper_x_domain_bound(data) {
 	for (var i = data.length - 1; i >= 0; i--) {
 		ratio = data[i]['ratio']
 
-		if (ratio > max_ratio && ratio < 6) {
+		if (ratio > max_ratio && ratio < 4) {
 			max_ratio = ratio
 		}
 	}
 
-	return (max_ratio < 1) ? 2 : max_ratio + 0.1
+	return (max_ratio < 2) ? 2 : max_ratio + 0.1
 }
 
-function create_graph(data) {
-	//console.log(data)
-	
+function create_graph(data) {	
 	$('svg').remove()
 	$('.d3-tip').remove()
 

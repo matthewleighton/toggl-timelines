@@ -12,6 +12,9 @@ def is_entry_next_day(target_time, entry_time):
 	else:
 		return True
 
+def get_day_in_month():
+	print('test')
+
 def end_of_day(timestamp):
 	dt = timestamp_to_datetime(timestamp)
 

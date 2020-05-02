@@ -1,4 +1,5 @@
 from datetime import datetime, date, time, timedelta
+import calendar
 import csv
 import pytz
 
@@ -80,6 +81,178 @@ def averages_page():
 
 
 
+def get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode):
+	now = datetime.now()
+	today_end = now.replace(hour=23, minute=59, second=59)
+	today_start = now.replace(hour=0, minute=0, second=0)
+	
+	today_day = now.day
+	today_hour = now.hour
+	today_minute = now.minute
+
+	current_end = now
+
+	print('---------------------------------------------------------')
+	print(now.day)
+
+	if period_type == 'custom':
+		current_start = (now - timedelta(days=number_of_current_days-1)).replace(hour=0, minute=0, second=0)
+
+		historic_end = current_start - timedelta(seconds=1)
+		historic_start = (historic_end - timedelta(days=number_of_historic_days-1)).replace(hour=0, minute=0, second=0)
+	else:
+		if calendar_period == 'day':
+			current_start = now.replace(hour=0, minute=0, second=0)
+
+			historic_end = (current_end - timedelta(days=1)) if live_mode else (today_end - timedelta(days=1))
+			historic_start = historic_end.replace(hour=0, minute=0, second=0)
+		
+		elif calendar_period == 'week':
+			days_since_week_start = now.weekday()
+			current_start = today_start - timedelta(days=days_since_week_start)
+
+			historic_start = current_start - timedelta(days=7)
+			historic_end = (now - timedelta(days=7)) if live_mode else (historic_start + timedelta(days=6, hours=23, minutes=59, seconds=59))
+		
+		elif calendar_period == 'month':
+			previous_month = (now.month-1) or 12
+			historic_year = now.year if previous_month != 12 else now.year - 1
+
+			last_day_of_previous_month = calendar.monthrange(historic_year, previous_month)[1]
+			
+
+			current_start = today_start.replace(day=1)
+
+			historic_start = (current_start - timedelta(days=1)).replace(day=1)
+
+			if live_mode:
+				historic_end = historic_start.replace(day=min(now.day, last_day_of_previous_month), hour=now.hour, minute=now.minute)
+			else:
+				historic_end = historic_start.replace(day=last_day_of_previous_month, hour=23, minute=59, second=59)
+
+		elif calendar_period == 'quarter':
+			current_quarter = (now.month-1)//3 # First quarter is 0
+			first_month_of_current_quarter = 1 + current_quarter*3
+
+			previous_quarter = (current_quarter - 1) if current_quarter > 0 else 3
+			first_month_of_previous_quarter = 1 + previous_quarter*3
+
+			historic_year = now.year if current_quarter > previous_quarter else now.year - 1
+
+			month_of_current_quarter = (now.month-1) % 3  # First month of quarter is 0
+			equivalent_month_of_previous_quarter = first_month_of_previous_quarter + month_of_current_quarter #If we're in the 2nd month of this quarter, this will be the 2nd month of last quarter.
+			last_day_of_equivalent_month = calendar.monthrange(historic_year, equivalent_month_of_previous_quarter)[1]
+
+			last_month_of_previous_quarter = first_month_of_previous_quarter + 2
+			last_day_of_previous_quarter = calendar.monthrange(historic_year, last_month_of_previous_quarter)[1]
+
+			current_start = today_start.replace(month=first_month_of_current_quarter, day=1)
+
+			historic_start = today_start.replace(year=historic_year, month=first_month_of_previous_quarter, day=1)
+
+			if live_mode:
+				historic_end = historic_start.replace(
+					year = historic_year,
+					month = equivalent_month_of_previous_quarter,
+					day = min(now.day, equivalent_month_of_previous_quarter),
+					hour = now.hour,
+					minute = now.minute
+				)
+			else:
+				historic_end = historic_start.replace(
+					year = historic_year,
+					month = last_month_of_previous_quarter,
+					day = last_day_of_previous_quarter,
+					hour = 23,
+					minute = 59
+				)
+
+		elif calendar_period == 'half-year': # TODO: Combine this and 'quarter' logic. They should be the same except for some of the numbers.
+			current_half = (now.month-1)//6 # First half is 0
+			first_month_of_current_half = 1 + current_half*6
+
+			previous_half = 0 if (current_half == 1) else 1
+			first_month_of_previous_half = 1 + previous_half*6
+
+			historic_year = now.year if current_half > previous_half else now.year - 1
+
+			month_of_current_half = (now.month-1) % 6 # First month of half is 0
+			equivalent_month_of_previous_half = first_month_of_previous_half + month_of_current_half
+			last_day_of_equivalent_half = calendar.monthrange(historic_year, equivalent_month_of_previous_half)[1]
+
+			last_month_of_previous_half = first_month_of_previous_half + 5
+			last_day_of_previous_half = calendar.monthrange(historic_year, last_month_of_previous_half)[1]
+
+			current_start = today_start.replace(month=first_month_of_current_half, day=1)
+
+			historic_start = today_start.replace(year=historic_year, month=first_month_of_previous_half, day=1)
+
+			if live_mode:
+				historic_end = historic_start.replace(
+					year = historic_year,
+					month = equivalent_month_of_previous_half,
+					day = min(now.day, equivalent_month_of_previous_half),
+					hour = now.hour,
+					minute = now.minute
+				)
+			else:
+				historic_end = historic_start.replace(
+					year = historic_year,
+					month = last_month_of_previous_half,
+					day = last_day_of_previous_half,
+					hour = 23,
+					minute = 59
+				)
+
+		elif calendar_period == 'year':
+			current_start = today_start.replace(month=1, day=1)
+
+			historic_start = today_start.replace(year=now.year-1, month=1, day=1)
+
+			if live_mode:
+				historic_day = now.day
+				if historic_day == 29 and now.month == 2:
+					historic_day = 28 # Leap years.
+
+				historic_end = today_start.replace(
+					year = now.year - 1,
+					month = now.month,
+					day = historic_day,
+					hour = now.hour,
+					minute = now.minute
+				)
+			else:
+				historic_end = today_start.replace(
+					year = now.year - 1,
+					month = 12,
+					day = 31,
+					hour = 23,
+					minute = 59
+				)
+			
+
+
+			
+
+
+
+			
+
+
+
+	print('Current start: ' + str(current_start))
+	print('Current end: ' + str(current_end))
+	print('Historic start: ' + str(historic_start))
+	print('Historic end: ' + str(historic_end))
+
+
+	return {
+		'current_start': current_start,
+		'current_end': current_end,
+		'historic_start': historic_start,
+		'historic_end': historic_end
+	}
+
 @app.route('/comparison_data', methods=['POST'])
 def comparison_data():
 	reload_data = request.json.get('reload')
@@ -87,31 +260,48 @@ def comparison_data():
 	if reload_data:
 		update_database(1)
 
-	timeframe = int(request.json.get('timeframe'))
-	datarange = int(request.json.get('datarange'))
+	number_of_current_days = int(request.json.get('timeframe'))
+	number_of_historic_days = int(request.json.get('datarange'))
 	target_weekdays = request.json.get('weekdays')
 
+
+
 	period_type = request.json.get('period_type')
-	print(period_type)
+
+	calendar_period = request.json.get('calendar_period')
+
+
 
 	if type(target_weekdays) is not list:
 		target_weekdays = [target_weekdays]
 
 
-	historic_projects = {}
+	live_mode = bool(request.json.get('live_mode'))
+	start_end_values = get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode)
 
-	number_of_now_days = timeframe
+	project_data = {}
 
-	now_days = get_days_list(False, number_of_now_days)
+	current_days = get_days_list(
+		start=start_end_values['current_start'],
+		end=start_end_values['current_end'],
+		amount = False
+	)
 
-	historic_days = get_days_list(True, number_of_now_days)
-	historic_days = historic_days[:datarange]
+	number_of_current_days = len(current_days)
+
+
+	historic_days=get_days_list(
+		start=start_end_values['historic_start'],
+		end=start_end_values['historic_end'],
+		amount = False
+	)
 
 
 	number_of_historic_days = len(historic_days)
 
 
 	project_colors = {'None': '#C8C8C8'}
+
 
 	#print('Historic Days: ')
 	for day in historic_days:
@@ -123,39 +313,38 @@ def comparison_data():
 
 			weekday = str(entry['start'].weekday())
 			if weekday not in target_weekdays:
-				#print('Invalid day: ' + str(weekday))
 				continue
 
 			project = entry['project']
 			duration = entry['dur']/1000
-			
-
-			#weekday = #helpers.get_weekday_from_date(entry['start'])
 
 			project_colors[project] = entry['project_hex_color']
 
-			if not project in historic_projects.keys():
-				historic_projects[project] = {
+			if not project in project_data.keys():
+				project_data[project] = {
 					'name': project,
 					'historic_tracked': 0,
 					'current_tracked': 0,
 					'color': entry['project_hex_color']
 				}
 
-			historic_projects[project]['historic_tracked'] += duration
+			project_data[project]['historic_tracked'] += duration
 
-	
 
-	for project in historic_projects:
-		seconds = historic_projects[project]['historic_tracked']
-		average = (seconds/number_of_historic_days)*timeframe
-
-		historic_projects[project]['average'] = average
+	for project in project_data:
+		seconds = project_data[project]['historic_tracked']
+		
+		if period_type == 'custom':
+			average = (seconds/number_of_historic_days)*number_of_current_days	
+		else:
+			average = seconds # When using calendar mode, we aren't actually taking an average, but just the amount of time tracked in that period.
+		
+		project_data[project]['average'] = average
 
 	
 	
 	#print('Current Days: ')
-	for day in now_days:
+	for day in current_days:
 		#print(day['date'])
 		entries = day['entries']
 		for entry in entries:
@@ -171,8 +360,8 @@ def comparison_data():
 			duration = entry['dur']/1000
 			color = entry['project_hex_color']
 
-			if not project in historic_projects.keys():
-				historic_projects[project] = {
+			if not project in project_data.keys():
+				project_data[project] = {
 					'name': project,
 					'historic_tracked': 0,
 					'average': 0,
@@ -180,29 +369,33 @@ def comparison_data():
 					'color': color
 				}
 
-			historic_projects[project]['current_tracked'] += duration
+			project_data[project]['current_tracked'] += duration
 
 	response = []
-	for project in historic_projects:
+	for project in project_data:
 		
-		current_tracked = historic_projects[project]['current_tracked']
+		current_tracked = project_data[project]['current_tracked']
 
-		average = historic_projects[project]['average']
+		average = project_data[project]['average']
 
 		if average == 0:
 			ratio = 100
 		else:
 			ratio = current_tracked/average
 
-		historic_projects[project]['ratio'] = ratio
+		project_data[project]['ratio'] = ratio
 
 		if current_tracked > 0: # Don't include projects with no recently tracked time.
-			response.append(historic_projects[project])
+			response.append(project_data[project])
 
 	# Sort by ratio
 	sorted_response = sorted(response, key=lambda k: k['ratio'])
 
-	#print(sorted_response)
+	"""	
+	for project in sorted_response:
+		print(project)
+		print('')
+	"""
 
 	return jsonify(sorted_response)
 
@@ -211,9 +404,8 @@ def comparison_data():
 
 
 
-
-def get_days_list(loading_additional_days = False, amount = 8):
-	db_entries = get_entries_from_database()
+def get_days_list(loading_additional_days = False, amount = 8, start = False, end = False):
+	db_entries = get_entries_from_database(start, end)
 	days = sort_entries_by_day(db_entries)
 	
 	days_list = []
@@ -224,10 +416,13 @@ def get_days_list(loading_additional_days = False, amount = 8):
 
 	#return days_list[:1]
 
-	if loading_additional_days:
-		return days_list[amount:]
-	else:
-		return days_list[:amount]
+	if amount:
+		if loading_additional_days:
+			return days_list[amount:]
+		else:
+			return days_list[:amount]
+
+	return days_list
 
 def update_database(start_days_ago, end_days_ago=0):	
 	start = datetime.today() - timedelta(days=start_days_ago)
@@ -351,15 +546,16 @@ def fill_untracked_time(entries):
 	return completed_entries
 
 def get_entries_from_database(start = False, end = False):
-	query = Entry.query
+	#query = Entry.query
 
-	if start:
-		query.filter(Entry.start >= start)
-
-	if end:
-		query.filter(Entry.end >= end)
-
-	entries = query.order_by(Entry.start).all()
+	if start and end:
+		entries = Entry.query.filter(Entry.start >= start).filter(Entry.end <= end).order_by(Entry.start).all()
+	elif start:
+		entries = Entry.query.filter(Entry.start >= start).order_by(Entry.start).order_by(Entry.start).all()
+	elif end:
+		entries = Entry.query.filter(Entry.end <= end).order_by(Entry.start).order_by(Entry.start).all()
+	else:
+		entries = Entry.query.order_by(Entry.start).all()
 
 	completed_entries = fill_untracked_time(entries)
 
