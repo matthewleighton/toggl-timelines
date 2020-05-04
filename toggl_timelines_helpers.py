@@ -235,6 +235,9 @@ def get_untracked_time(target_time, entry, after_midnight=False):
 		if next_day > days_in_month:
 			month += 1
 			next_day = 1
+
+		if month == 13:
+			month = 1
 		
 		untracked_end = target_time.replace(month=month, day=next_day, hour=0, minute=0, second=0)
 		
