@@ -340,8 +340,14 @@ def comparison_data():
 			if weekday not in target_weekdays:
 				continue
 
-			project = entry['project']		
-			duration = entry['dur']/1000
+			project = entry['project']
+
+			if day == historic_days[0] and entry == entries[-1]: # If this is the most recent historic entry...
+				now = datetime.now()
+
+				duration = (entry['start'].replace(hour=now.hour, minute=now.minute) - entry['start']).seconds #...Find duration based on how much of entry is complete.
+			else:
+				duration = entry['dur']/1000
 
 			project_data[project]['historic_tracked'] += duration
 
