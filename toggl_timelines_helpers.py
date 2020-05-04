@@ -1,10 +1,74 @@
 from datetime import datetime, time, timedelta
+import calendar
 from calendar import monthrange
 import pytz
 import csv
 import getpass
+from TogglPy import Toggl
 
 import toggl_timelines_config as config
+
+# Get a ratio (0 to 1) describing how much a certain period of time (e.g. today/this week/month/year) is complete/over.
+def get_period_completion_ratio(period):
+	now = datetime.now()
+	
+	hour_of_day = now.hour
+	minute_of_hour = now.minute
+
+	minutes_complete_today = hour_of_day * 60 + minute_of_hour
+	minutes_in_a_day = 60*24
+
+	if period == 'day':
+		completion_ratio = minutes_complete_today / minutes_in_a_day
+
+	elif period == 'week':
+		weekday = now.weekday()
+
+		minutes_complete_this_week = weekday * minutes_in_a_day + minutes_complete_today
+		minutes_in_a_week = minutes_in_a_day * 7
+
+		completion_ratio = minutes_complete_this_week / minutes_in_a_week
+
+	elif period == 'month':
+		days_complete_this_month = now.day - 1
+
+		minutes_complete_this_week = minutes_in_a_day * days_complete_this_month + minutes_complete_today
+
+		days_in_this_month = calendar.monthrange(now.year, now.month)[1]
+		minutes_in_this_month = minutes_in_a_day * days_in_this_month
+
+		completion_ratio = minutes_complete_this_week / minutes_in_this_month
+
+	elif period == 'year':
+		days_complete_this_year = datetime.now().timetuple().tm_yday - 1
+		minutes_complete_this_year = minutes_in_a_day * days_complete_this_year + minutes_complete_today
+
+		days_this_year = 366 if (calendar.isleap(now.year)) else 365
+		minutes_in_this_year = days_this_year * minutes_in_a_day
+
+		completion_ratio = minutes_complete_this_year / minutes_in_this_year
+
+	return completion_ratio
+
+def get_project_data(comparison_mode = False):
+	toggl = Toggl()
+	toggl.setAPIKey(config.api_key)
+
+	raw_project_data = toggl.request("https://www.toggl.com/api/v8/me?with_related_data=true")['data']['projects']
+	project_data = {}
+
+	for project in raw_project_data:
+		project_name = project['name']
+		project_data.update( {project_name: project} )
+		project['color'] = project['hex_color']
+
+		if comparison_mode:
+			project_data[project_name]['historic_tracked'] = 0
+			project_data[project_name]['current_tracked'] = 0
+			project_data[project_name]['average'] = 0
+
+	return project_data
+
 
 def is_entry_next_day(target_time, entry_time):
 	if target_time.day == entry_time.day:

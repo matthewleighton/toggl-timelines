@@ -79,7 +79,15 @@ def averages_page():
 
 	return response
 
+def get_comparison_goals():
+	goals = []
 
+	with open ('goals.csv', 'r') as file:
+		reader = csv.DictReader(file)
+		for row in reader:
+			goals.append(row)
+
+	return goals
 
 def get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode):
 	now = datetime.now()
@@ -91,9 +99,6 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 	today_minute = now.minute
 
 	current_end = now
-
-	print('---------------------------------------------------------')
-	print(now.day)
 
 	if period_type == 'custom':
 		current_start = (now - timedelta(days=number_of_current_days-1)).replace(hour=0, minute=0, second=0)
@@ -229,16 +234,6 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 					hour = 23,
 					minute = 59
 				)
-			
-
-
-			
-
-
-
-			
-
-
 
 	print('Current start: ' + str(current_start))
 	print('Current end: ' + str(current_end))
@@ -260,24 +255,56 @@ def comparison_data():
 	if reload_data:
 		update_database(1)
 
+	live_mode_calendar = bool(request.json.get('live_mode_calendar'))
+
 	number_of_current_days = int(request.json.get('timeframe'))
 	number_of_historic_days = int(request.json.get('datarange'))
 	target_weekdays = request.json.get('weekdays')
 
-
-
 	period_type = request.json.get('period_type')
 
-	calendar_period = request.json.get('calendar_period')
+	if period_type == 'goals':
+		calendar_period = request.json.get('goals_period')
+		live_mode_goals = request.json.get('live_mode_goals')
 
 
+		goals_raw = get_comparison_goals()
+		goals_projects = []
+		goals = {}
+
+		for goal in goals_raw:
+			goals_projects.append(goal['project'])
+
+			goal_period = goal['time_period']
+			goal_value_in_seconds = int(goal['goal_value']) * 60
+
+			day = 60*60*24
+			now = datetime.now()
+
+			seconds = {
+				'day': day,
+				'week': day * 7,
+				'month': day * calendar.monthrange(now.year, now.month)[1],
+				'year': day * (366 if (calendar.isleap(now.year)) else 365)
+			}
+
+			period_ratio 				= seconds[calendar_period] / seconds[goal_period]
+			goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
+
+			if live_mode_goals: # If live mode, reduce the goal relative to how much of the period is over. E.g. if we're halfway through a day, the daily goal is half.
+				period_completion = helpers.get_period_completion_ratio(calendar_period)
+				goal_seconds_in_view_period = goal_seconds_in_view_period * period_completion
+
+
+			goals.update( {goal['project']: goal_seconds_in_view_period })
+	else:
+		calendar_period = request.json.get('calendar_period')
 
 	if type(target_weekdays) is not list:
 		target_weekdays = [target_weekdays]
 
 
-	live_mode = bool(request.json.get('live_mode'))
-	start_end_values = get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode)
+	start_end_values = get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode_calendar)
 
 	project_data = {}
 
@@ -296,52 +323,47 @@ def comparison_data():
 		amount = False
 	)
 
-
 	number_of_historic_days = len(historic_days)
 
-
-	project_colors = {'None': '#C8C8C8'}
-
+	project_data = helpers.get_project_data(comparison_mode=True)
 
 	#print('Historic Days: ')
 	for day in historic_days:
 		#print(day['date'])
 		entries = day['entries']
 		for entry in entries:
-			if not 'project' in entry.keys():
+	
+			if not 'project' in entry.keys() or entry['project'] == None:
 				continue
 
 			weekday = str(entry['start'].weekday())
 			if weekday not in target_weekdays:
 				continue
 
-			project = entry['project']
+			project = entry['project']		
 			duration = entry['dur']/1000
-
-			project_colors[project] = entry['project_hex_color']
-
-			if not project in project_data.keys():
-				project_data[project] = {
-					'name': project,
-					'historic_tracked': 0,
-					'current_tracked': 0,
-					'color': entry['project_hex_color']
-				}
 
 			project_data[project]['historic_tracked'] += duration
 
 
+	non_goal_projects = []
+
+	
 	for project in project_data:
+
 		seconds = project_data[project]['historic_tracked']
 		
 		if period_type == 'custom':
 			average = (seconds/number_of_historic_days)*number_of_current_days	
-		else:
+		elif period_type == 'calendar':
 			average = seconds # When using calendar mode, we aren't actually taking an average, but just the amount of time tracked in that period.
+		elif period_type == 'goals':
+			if not project in goals_projects:
+				non_goal_projects.append(project)
+				continue
+			average = goals[project]
 		
 		project_data[project]['average'] = average
-
-	
 	
 	#print('Current Days: ')
 	for day in current_days:
@@ -349,7 +371,7 @@ def comparison_data():
 		entries = day['entries']
 		for entry in entries:
 			
-			if not 'project' in entry.keys(): # Skips untracked time
+			if not 'project' in entry.keys() or entry['project'] == None: # Skips untracked time
 				continue
 
 			weekday = str(entry['start'].weekday())
@@ -359,15 +381,6 @@ def comparison_data():
 			project = entry['project']
 			duration = entry['dur']/1000
 			color = entry['project_hex_color']
-
-			if not project in project_data.keys():
-				project_data[project] = {
-					'name': project,
-					'historic_tracked': 0,
-					'average': 0,
-					'current_tracked': 0,
-					'color': color
-				}
 
 			project_data[project]['current_tracked'] += duration
 
@@ -385,7 +398,11 @@ def comparison_data():
 
 		project_data[project]['ratio'] = ratio
 
-		if current_tracked > 0: # Don't include projects with no recently tracked time.
+		if current_tracked > 0 or period_type == 'goals': # Don't include projects with no recently tracked time.
+			
+			if period_type == 'goals' and project not in goals.keys():
+				continue # Don't include projects which don't have goals.
+
 			response.append(project_data[project])
 
 	# Sort by ratio

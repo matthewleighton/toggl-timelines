@@ -331,7 +331,7 @@ body {
   padding-top: 6px;
 }
 
-.custom_comparison_settings {
+.custom_comparison_settings, .goals_comparison_settings {
   display: none;
 }
 

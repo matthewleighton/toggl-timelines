@@ -15,6 +15,9 @@
 						<input type="radio" name="period_type" id="calendar_mode" autocomplete="off" value="calendar" checked> Calendar
 					</label>
 					<label class="btn btn-secondary">
+						<input type="radio" name="period_type" id="goals_mode" autocomplete="off" value="goals"> Goals
+					</label>
+					<label class="btn btn-secondary">
 						<input type="radio" name="period_type" id="custom_mode" autocomplete="off" value="custom"> Custom
 					</label>
 				</div>
@@ -46,7 +49,6 @@
 
 				<div class="form-row calendar_comparison_settings">
 					<div class="col-md-6">
-						<!--<label for="calendar_period">Period: </label>-->
 						<select class="form-control" id="calendar_period" name="calendar_period">
 							<option value="day">Today vs. Yesterday</option>
 							<option value="week" selected="selected">This week vs. Last week</option>
@@ -58,9 +60,25 @@
 					</div>
 					<div class="col-md-6 live_mode_container">
 						<div class="custom-control custom-checkbox">
-							<input type="checkbox" class="custom-control-input" name="live_mode" id="live_mode" checked>
-							<label class="custom-control-label" for="live_mode">Live mode</label>
-							<!--<span class="comparison_reload">&#x21bb;</span>-->
+							<input type="checkbox" class="custom-control-input" name="live_mode_calendar" id="live_mode_calendar" checked>
+							<label class="custom-control-label" for="live_mode_calendar">Live mode</label>
+						</div>
+					</div>
+				</div>
+
+				<div class="form-row goals_comparison_settings">
+					<div class="col-md-6">
+						<select class="form-control" id="goals_period" name="goals_period">
+							<option value="day">Today</option>
+							<option value="week">This week</option>
+							<option value="month" selected="selected">This month</option>
+							<option value="year">This year</option>
+						</select>
+					</div>
+					<div class="col-md-6 live_mode_container">
+						<div class="custom-control custom-checkbox">
+							<input type="checkbox" class="custom-control-input" name="live_mode_goals" id="live_mode_goals" checked>
+							<label class="custom-control-label" for="live_mode_goals">Live mode</label>
 						</div>
 					</div>
 				</div>
