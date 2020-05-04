@@ -1,2 +1,2 @@
-project,time_period,goal_value
-Reading,day,60
+project,time_period,goal_value,working_time_start,working_time_end
+Physics,week,2100,09:00,18:00

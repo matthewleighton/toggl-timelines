@@ -292,7 +292,7 @@ def comparison_data():
 			goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
 
 			if live_mode_goals: # If live mode, reduce the goal relative to how much of the period is over. E.g. if we're halfway through a day, the daily goal is half.
-				period_completion = helpers.get_period_completion_ratio(calendar_period)
+				period_completion = helpers.get_period_completion_ratio(calendar_period, goal['working_time_start'], goal['working_time_end'])
 				goal_seconds_in_view_period = goal_seconds_in_view_period * period_completion
 
 
@@ -351,9 +351,6 @@ def comparison_data():
 
 			project_data[project]['historic_tracked'] += duration
 
-
-	non_goal_projects = []
-
 	
 	for project in project_data:
 
@@ -364,8 +361,7 @@ def comparison_data():
 		elif period_type == 'calendar':
 			average = seconds # When using calendar mode, we aren't actually taking an average, but just the amount of time tracked in that period.
 		elif period_type == 'goals':
-			if not project in goals_projects:
-				non_goal_projects.append(project)
+			if not project in goals_projects: # Ignore projects which don't have goals.
 				continue
 			average = goals[project]
 		

@@ -9,15 +9,34 @@ from TogglPy import Toggl
 import toggl_timelines_config as config
 
 # Get a ratio (0 to 1) describing how much a certain period of time (e.g. today/this week/month/year) is complete/over.
-def get_period_completion_ratio(period):
+def get_period_completion_ratio(period, working_time_start=False, working_time_end=False):
 	now = datetime.now()
 	
 	hour_of_day = now.hour
 	minute_of_hour = now.minute
 
-	minutes_complete_today = hour_of_day * 60 + minute_of_hour
-	minutes_in_a_day = 60*24
+	#------ Figuring out how long a workday is based on the start and end times.
+	if working_time_start:
+		dt = datetime.strptime(working_time_start, '%H:%M')
+		work_start_datetime = now.replace(hour=dt.hour, minute=dt.minute)
+	else:
+		work_start_datetime = now.replace(hour=0, minute=0, second=0)
 
+	if working_time_end:
+		dt = datetime.strptime(working_time_end, '%H:%M')
+		work_end_datetime = now.replace(hour=dt.hour, minute=dt.minute)
+	else:
+		work_end_datetime = now.replace(hour=23, minute=59, second=59) + timedelta(seconds=1)
+
+	worked_until_today = now if now < work_end_datetime else work_end_datetime
+	minutes_complete_today = (worked_until_today - work_start_datetime).seconds/60
+
+	minutes_in_a_day = (work_end_datetime - work_start_datetime).seconds/60
+	if minutes_in_a_day == 0: # Fixing weird case of above line returning 0.
+		minutes_in_a_day = 60*24
+
+
+	#------ Now figuring out how much of the workday is complete.
 	if period == 'day':
 		completion_ratio = minutes_complete_today / minutes_in_a_day
 
