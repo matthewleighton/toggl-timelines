@@ -8,6 +8,7 @@ from toggl_timelines import db, Entry
 
 
 def populate_database():
+	print('Starting to populate database...')
 	import_complete = False
 	days_per_request = 50
 

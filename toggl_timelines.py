@@ -291,10 +291,11 @@ def comparison_data():
 			period_ratio 				= seconds[calendar_period] / seconds[goal_period]
 			goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
 
+
+
 			if live_mode_goals: # If live mode, reduce the goal relative to how much of the period is over. E.g. if we're halfway through a day, the daily goal is half.
 				period_completion = helpers.get_period_completion_ratio(calendar_period, goal['working_time_start'], goal['working_time_end'])
 				goal_seconds_in_view_period = goal_seconds_in_view_period * period_completion
-
 
 			goals.update( {goal['project']: goal_seconds_in_view_period })
 	else:

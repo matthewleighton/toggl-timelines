@@ -28,7 +28,11 @@ def get_period_completion_ratio(period, working_time_start=False, working_time_e
 	else:
 		work_end_datetime = now.replace(hour=23, minute=59, second=59) + timedelta(seconds=1)
 
-	worked_until_today = now if now < work_end_datetime else work_end_datetime
+	if now > work_start_datetime: # If work day has started...
+		worked_until_today = min(now, work_end_datetime)
+	else:
+		worked_until_today = work_start_datetime
+
 	minutes_complete_today = (worked_until_today - work_start_datetime).seconds/60
 
 	minutes_in_a_day = (work_end_datetime - work_start_datetime).seconds/60
