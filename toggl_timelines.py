@@ -263,6 +263,8 @@ def comparison_data():
 
 	period_type = request.json.get('period_type')
 
+	project_data = helpers.get_project_data(comparison_mode=True)
+
 	if period_type == 'goals':
 		calendar_period = request.json.get('goals_period')
 		live_mode_goals = request.json.get('live_mode_goals')
@@ -293,8 +295,14 @@ def comparison_data():
 
 
 
-			if live_mode_goals: # If live mode, reduce the goal relative to how much of the period is over. E.g. if we're halfway through a day, the daily goal is half.
+			if live_mode_goals: # If live mode, reduce the goal relative to how much of the period is over.
+								# E.g. if we're halfway through a day, the daily goal is half.
 				period_completion = helpers.get_period_completion_ratio(calendar_period, goal['working_time_start'], goal['working_time_end'])
+
+				if period_completion == 0: # Don't show projects which have goals currently requiring 0 time.
+										   # i.e. working hours haven't started.
+					del project_data[goal['project']]
+
 				goal_seconds_in_view_period = goal_seconds_in_view_period * period_completion
 
 			goals.update( {goal['project']: goal_seconds_in_view_period })
@@ -306,8 +314,6 @@ def comparison_data():
 
 
 	start_end_values = get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode_calendar)
-
-	project_data = {}
 
 	current_days = get_days_list(
 		start=start_end_values['current_start'],
@@ -325,8 +331,6 @@ def comparison_data():
 	)
 
 	number_of_historic_days = len(historic_days)
-
-	project_data = helpers.get_project_data(comparison_mode=True)
 
 	#print('Historic Days: ')
 	for day in historic_days:
