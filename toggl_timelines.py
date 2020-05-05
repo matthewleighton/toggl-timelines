@@ -344,15 +344,16 @@ def comparison_data():
 
 			if day == historic_days[0] and entry == entries[-1]: # If this is the most recent historic entry...
 				now = datetime.now()
-
 				duration = (entry['start'].replace(hour=now.hour, minute=now.minute) - entry['start']).seconds #...Find duration based on how much of entry is complete.
+
 			else:
 				duration = entry['dur']/1000
 
 			project_data[project]['historic_tracked'] += duration
 
-	
+
 	for project in project_data:
+
 
 		seconds = project_data[project]['historic_tracked']
 		
@@ -565,14 +566,17 @@ def fill_untracked_time(entries):
 	return completed_entries
 
 def get_entries_from_database(start = False, end = False):
-	#query = Entry.query
+	
+	# Times are stored in database as UTC. So we need to convert the given times to UTC.
+	start = start.astimezone(pytz.utc)
+	end = end.astimezone(pytz.utc)
 
 	if start and end:
-		entries = Entry.query.filter(Entry.start >= start).filter(Entry.end <= end).order_by(Entry.start).all()
+		entries = Entry.query.filter(Entry.start >= start).filter(Entry.start <= end).order_by(Entry.start).all()
 	elif start:
 		entries = Entry.query.filter(Entry.start >= start).order_by(Entry.start).order_by(Entry.start).all()
 	elif end:
-		entries = Entry.query.filter(Entry.end <= end).order_by(Entry.start).order_by(Entry.start).all()
+		entries = Entry.query.filter(Entry.start <= end).order_by(Entry.start).order_by(Entry.start).all()
 	else:
 		entries = Entry.query.order_by(Entry.start).all()
 
