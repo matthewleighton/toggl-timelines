@@ -568,8 +568,12 @@ def fill_untracked_time(entries):
 def get_entries_from_database(start = False, end = False):
 	
 	# Times are stored in database as UTC. So we need to convert the given times to UTC.
-	start = start.astimezone(pytz.utc)
-	end = end.astimezone(pytz.utc)
+	
+	if start:
+		start = start.astimezone(pytz.utc)
+
+	if end:
+		end = end.astimezone(pytz.utc)
 
 	if start and end:
 		entries = Entry.query.filter(Entry.start >= start).filter(Entry.start <= end).order_by(Entry.start).all()
