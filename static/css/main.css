@@ -114,6 +114,12 @@ body {
 	margin-top: 25px;
 }
 
+.timelines_reload {
+    position: absolute;
+    right: 0px;
+    cursor: pointer;
+}
+
 /* -----------------Loading Spinners--------------- */
 #loading_div {
 	display: none;

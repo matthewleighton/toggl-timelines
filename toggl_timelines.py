@@ -55,10 +55,20 @@ def home_page():
 
 	return response
 
-@app.route('/load_more')
+@app.route('/load_more', methods=['GET', 'POST'])
 def load_more():
-	displayed_days = get_days_list(True)
-	
+	reloading = request.json.get('reload')
+
+	if reloading:
+		skip_first_days = False
+		days = 1
+		update_database(1)
+	else:
+		skip_first_days = True
+		days = 8
+
+	displayed_days = get_days_list(skip_first_days, days)
+
 	page_data = {
 		'days': displayed_days
 	}
@@ -66,7 +76,13 @@ def load_more():
 	return jsonify(render_template('day.html', data=page_data))
 
 
+@app.route('/frequency')
+def frequency_page():
+	update_database(3)
 
+	response = make_response(render_template('frequency.html'))
+
+	return response
 
 
 
@@ -269,7 +285,6 @@ def comparison_data():
 		calendar_period = request.json.get('goals_period')
 		live_mode_goals = request.json.get('live_mode_goals')
 
-
 		goals_raw = get_comparison_goals()
 		goals_projects = []
 		goals = {}
@@ -292,8 +307,6 @@ def comparison_data():
 
 			period_ratio 				= seconds[calendar_period] / seconds[goal_period]
 			goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
-
-
 
 			if live_mode_goals: # If live mode, reduce the goal relative to how much of the period is over.
 								# E.g. if we're halfway through a day, the daily goal is half.
@@ -358,7 +371,6 @@ def comparison_data():
 
 
 	for project in project_data:
-
 
 		seconds = project_data[project]['historic_tracked']
 		
@@ -439,15 +451,11 @@ def get_days_list(loading_additional_days = False, amount = 8, start = False, en
 
 	days_list.reverse()
 
-	#return days_list[:1]
+	if loading_additional_days:
+		return days_list[amount:]
+	else:
+		return days_list[:amount]
 
-	if amount:
-		if loading_additional_days:
-			return days_list[amount:]
-		else:
-			return days_list[:amount]
-
-	return days_list
 
 def update_database(start_days_ago, end_days_ago=0):	
 	start = datetime.today() - timedelta(days=start_days_ago)
@@ -572,8 +580,7 @@ def fill_untracked_time(entries):
 
 def get_entries_from_database(start = False, end = False):
 	
-	# Times are stored in database as UTC. So we need to convert the given times to UTC.
-	
+	# Times are stored in database as UTC. So we need to convert the request times to UTC.
 	if start:
 		start = start.astimezone(pytz.utc)
 

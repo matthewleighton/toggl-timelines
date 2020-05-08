@@ -250,9 +250,29 @@ function remove_listeners() {
 
 $(document).ready(function(){
 	assign_listeners()
+
+	$('.timelines_reload').click(function() {
+		$.ajax({
+			"type": "POST",
+			"url": $SCRIPT_ROOT + "/load_more",
+			"contentType": "application/json",
+			"dataType": "json",
+			"data": JSON.stringify({reload: true}),
+			success: function(response) {
+				$('.day_row').first().replaceWith(response)
+				remove_listeners()
+				assign_listeners()
+			}
+		})
+	})
 	
 	$('#load_more').click(function() {
+		data = {reload: false}
+
 		$.ajax($SCRIPT_ROOT + '/load_more',{
+			'type': 'POST',
+			"contentType": "application/json",
+			'data': JSON.stringify(data),
 			'beforeSend': function() {
 				$('#load_more').hide()
 				$('#loading_div').show()

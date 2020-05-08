@@ -16,22 +16,22 @@ $(document).ready(function() {
 	})
 
 	$('input[type=radio][name=period_type]').change(function() {
-    if (this.value == 'calendar') {
-        $('.custom_comparison_settings').hide()
-        $('.goals_comparison_settings').hide()
-        $('.calendar_comparison_settings').css('display', 'flex')
-    }
-    else if (this.value == 'custom') {
-        $('.calendar_comparison_settings').hide()
-        $('.goals_comparison_settings').hide()
-        $('.custom_comparison_settings').css('display', 'flex')
-    }
-    else if (this.value == 'goals') {
-        $('.calendar_comparison_settings').hide()
-        $('.custom_comparison_settings').hide()
-        $('.goals_comparison_settings').css('display', 'flex')
-    }
-});
+	    if (this.value == 'calendar') {
+	        $('.custom_comparison_settings').hide()
+	        $('.goals_comparison_settings').hide()
+	        $('.calendar_comparison_settings').css('display', 'flex')
+	    }
+	    else if (this.value == 'custom') {
+	        $('.calendar_comparison_settings').hide()
+	        $('.goals_comparison_settings').hide()
+	        $('.custom_comparison_settings').css('display', 'flex')
+	    }
+	    else if (this.value == 'goals') {
+	        $('.calendar_comparison_settings').hide()
+	        $('.custom_comparison_settings').hide()
+	        $('.goals_comparison_settings').css('display', 'flex')
+	    }
+	});
 })
 
 function submit_comparison_form(reload=false) {
