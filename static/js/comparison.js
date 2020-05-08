@@ -39,7 +39,6 @@ function submit_comparison_form(reload=false) {
 	
 	if (reload) {
 		serialized_data.push({name: 'reload', value: true})
-		//console.log(serialized_data)
 	}
 
 	serialized_data = format_serialized_data(serialized_data);

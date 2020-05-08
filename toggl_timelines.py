@@ -451,10 +451,13 @@ def get_days_list(loading_additional_days = False, amount = 8, start = False, en
 
 	days_list.reverse()
 
-	if loading_additional_days:
-		return days_list[amount:]
+	if amount:
+		if loading_additional_days:
+			return days_list[amount:]
+		else:
+			return days_list[:amount]
 	else:
-		return days_list[:amount]
+		return days_list
 
 
 def update_database(start_days_ago, end_days_ago=0):	
