@@ -390,8 +390,8 @@ def comparison_data():
 		#print(day['date'])
 		entries = day['entries']
 		for entry in entries:
-			
-			if not 'project' in entry.keys() or entry['project'] == None: # Skips untracked time
+
+			if not 'project' in entry.keys() or entry['project'] in (None, 'No Project'): # Skips untracked time
 				continue
 
 			weekday = str(entry['start'].weekday())
