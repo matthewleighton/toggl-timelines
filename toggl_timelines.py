@@ -585,10 +585,12 @@ def get_entries_from_database(start = False, end = False):
 	
 	# Times are stored in database as UTC. So we need to convert the request times to UTC.
 	if start:
-		start = start.astimezone(pytz.utc)
+		if start.tzinfo is not None and start.tzinfo.utcoffset(start) is not None:
+			start = start.astimezone(pytz.utc)
 
 	if end:
-		end = end.astimezone(pytz.utc)
+		if end.tzinfo is not None and end.tzinfo.utcoffset(end) is not None:
+			end = end.astimezone(pytz.utc)
 
 	if start and end:
 		entries = Entry.query.filter(Entry.start >= start).filter(Entry.start <= end).order_by(Entry.start).all()
