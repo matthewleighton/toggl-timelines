@@ -221,8 +221,6 @@ def get_local_utc_offset():
 
 # Return a datetime for the current time in the user's current timezone.
 def get_current_datetime_in_user_timezone():
-	timezone_name = 'Europe/Berlin'
-
 	with open ('utc_offsets.csv', 'r') as file:
 		reader = csv.DictReader(file)
 		timezone_name = next(reader)['location']

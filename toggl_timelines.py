@@ -251,11 +251,12 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 					minute = 59
 				)
 
+	"""
 	print('Current start: ' + str(current_start))
 	print('Current end: ' + str(current_end))
 	print('Historic start: ' + str(historic_start))
 	print('Historic end: ' + str(historic_end))
-
+	"""
 
 	return {
 		'current_start': current_start,
