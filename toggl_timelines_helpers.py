@@ -10,7 +10,7 @@ import toggl_timelines_config as config
 
 # Get a ratio (0 to 1) describing how much a certain period of time (e.g. today/this week/month/year) is complete/over.
 def get_period_completion_ratio(period, working_time_start=False, working_time_end=False):
-	now = datetime.now()
+	now = get_current_datetime_in_user_timezone()
 	
 	hour_of_day = now.hour
 	minute_of_hour = now.minute
@@ -218,6 +218,20 @@ def get_local_utc_offset():
 	utc_offset = local_hours - utc_hours
 
 	return utc_offset
+
+# Return a datetime for the current time in the user's current timezone.
+def get_current_datetime_in_user_timezone():
+	timezone_name = 'Europe/Berlin'
+
+	with open ('utc_offsets.csv', 'r') as file:
+		reader = csv.DictReader(file)
+		timezone_name = next(reader)['location']
+
+	timezone = pytz.timezone(timezone_name)
+
+	user_time = datetime.now(timezone)
+
+	return user_time
 
 def get_untracked_time(target_time, entry, after_midnight=False):
 	# The after_midnight variable indicates that we're now running the function for a second time,
