@@ -251,12 +251,11 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 					minute = 59
 				)
 
-	"""
 	print('Current start: ' + str(current_start))
 	print('Current end: ' + str(current_end))
 	print('Historic start: ' + str(historic_start))
 	print('Historic end: ' + str(historic_end))
-	"""
+	
 
 	return {
 		'current_start': current_start,
@@ -362,7 +361,8 @@ def comparison_data():
 			project = entry['project']
 
 			if day == historic_days[0] and entry == entries[-1]: # If this is the most recent historic entry...
-				now = datetime.now()
+				print(entry)
+				now = helpers.get_current_datetime_in_user_timezone()
 				duration = (entry['start'].replace(hour=now.hour, minute=now.minute) - entry['start']).seconds #...Find duration based on how much of entry is complete.
 
 			else:
@@ -586,12 +586,12 @@ def get_entries_from_database(start = False, end = False):
 	
 	# Times are stored in database as UTC. So we need to convert the request times to UTC.
 	if start:
-		if start.tzinfo is not None and start.tzinfo.utcoffset(start) is not None:
-			start = start.astimezone(pytz.utc)
+		#if start.tzinfo is not None and start.tzinfo.utcoffset(start) is not None:
+		start = start.astimezone(pytz.utc)
 
 	if end:
-		if end.tzinfo is not None and end.tzinfo.utcoffset(end) is not None:
-			end = end.astimezone(pytz.utc)
+		#if end.tzinfo is not None and end.tzinfo.utcoffset(end) is not None:
+		end = end.astimezone(pytz.utc)
 
 	if start and end:
 		entries = Entry.query.filter(Entry.start >= start).filter(Entry.start <= end).order_by(Entry.start).all()
@@ -675,4 +675,4 @@ def sort_entries_by_day(entries):
 
 	return sorted_by_day
 
-#app.run(host='0.0.0.0', port=config.port)
+app.run(host='0.0.0.0', port=config.port, debug=True)
