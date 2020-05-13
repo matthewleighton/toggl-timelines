@@ -19,6 +19,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///toggl-timelines.db'
 
 db = SQLAlchemy(app)
 
+tags = db.Table('tags',
+    db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True),
+    db.Column('entry_id', db.Integer, db.ForeignKey('entry.id'), primary_key=True)
+)
+
 class Entry(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	description = db.Column(db.String(200))
@@ -28,13 +33,14 @@ class Entry(db.Model):
 	project = db.Column(db.String(50))
 	client = db.Column(db.String(50))
 	project_hex_color = db.Column(db.String(7))
-	tags = db.Column(db.String(200))
+	tags = db.relationship('Tag', secondary=tags, backref=db.backref('entries', lazy=True), lazy='dynamic')
 	user_id = db.Column(db.Integer)
 	utc_offset = db.Column(db.Integer)
-	"""
-	def __repr__(self):
-		return f"Entry('{self.id}', '{self.description}', '{self.start}', '{self.end}', '{self.dur}', '{self.project}', '{self.client}', '{self.project_hex_color}', '{self.user_id}',)"
-	"""
+
+class Tag(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	tag_name = db.Column(db.String(50))
+
 
 
 @app.route('/')
@@ -287,6 +293,7 @@ def comparison_data():
 
 		goals_raw = get_comparison_goals()
 		goals_projects = []
+		goal_tags = []
 		goals = {}
 
 		for goal in goals_raw:
@@ -325,7 +332,6 @@ def comparison_data():
 	if type(target_weekdays) is not list:
 		target_weekdays = [target_weekdays]
 
-
 	start_end_values = get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode_calendar)
 
 	current_days = get_days_list(
@@ -347,6 +353,10 @@ def comparison_data():
 
 	#print('Historic Days: ')
 	for day in historic_days:
+		
+		if period_type == 'goals':
+			break # Only do the below if we're not in goals mode.
+
 		#print(day['date'])
 		entries = day['entries']
 		for entry in entries:
@@ -361,10 +371,8 @@ def comparison_data():
 			project = entry['project']
 
 			if day == historic_days[0] and entry == entries[-1]: # If this is the most recent historic entry...
-				print(entry)
 				now = helpers.get_current_datetime_in_user_timezone()
 				duration = (entry['start'].replace(hour=now.hour, minute=now.minute) - entry['start']).seconds #...Find duration based on how much of entry is complete.
-
 			else:
 				duration = entry['dur']/1000
 
@@ -439,7 +447,9 @@ def comparison_data():
 
 
 
-
+# -----------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------
 
 
 def get_days_list(loading_additional_days = False, amount = 8, start = False, end = False):
@@ -521,6 +531,18 @@ def update_database(start_days_ago, end_days_ago=0):
 		)
 		db.session.add(db_entry)
 
+		tags = entry['tags']
+		for tag_name in tags:
+			db_tag = Tag.query.filter_by(tag_name=tag_name).first()
+
+			if not db_tag:
+				db_tag = Tag(
+					tag_name = tag_name
+				)
+				db.session.add(db_tag)
+
+			db_tag.entries.append(db_entry)
+				
 	db.session.commit()
 
 	return entries
@@ -542,7 +564,20 @@ def fill_untracked_time(entries):
 	target_time = entries[0].start.replace(hour=0, minute=0, second=0)
 
 	for entry in entries:
+		
+
+		tags = []
+		
+		for tag in entry.tags:
+			tags.append(tag.tag_name)
+
+
+		#print(tags)
+
 		entry = entry.__dict__
+
+		entry['tags'] = tags
+
 
 		entry.pop('_sa_instance_state', None)
 
@@ -632,7 +667,6 @@ def get_currently_tracking():
 	end_string = helpers.datetime_to_timestamp(end_datetime)
 
 	current['dur'] = milliseconds
-	current['tags'] = '' # We get no tags info from this request.
 	current['end'] = end_string
 	current['project_hex_color'] = '#C8C8C8'
 
