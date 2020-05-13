@@ -297,7 +297,19 @@ def comparison_data():
 		goals = {}
 
 		for goal in goals_raw:
-			goals_projects.append(goal['project'])
+			goals_projects.append(goal['name'])
+			goal_name = goal['name']
+
+			if goal['type'] == 'tag':
+				project_data[goal_name] = {
+					'historic_tracked': 0,
+					'current_tracked': 0,
+					'average': 0,
+					'name': goal_name
+				}
+
+			if goal['color']:
+				project_data[goal_name]['color'] = goal['color']
 
 			goal_period = goal['time_period']
 			goal_value_in_seconds = int(goal['goal_value']) * 60
@@ -321,13 +333,14 @@ def comparison_data():
 
 				if period_completion == 0: # Don't show projects which have goals currently requiring 0 time.
 										   # i.e. working hours haven't started.
-					del project_data[goal['project']]
+					del project_data[goal['name']]
 
 				goal_seconds_in_view_period = goal_seconds_in_view_period * period_completion
 
-			goals.update( {goal['project']: goal_seconds_in_view_period })
+			goals.update( {goal['name']: goal_seconds_in_view_period })
 	else:
 		calendar_period = request.json.get('calendar_period')
+
 
 	if type(target_weekdays) is not list:
 		target_weekdays = [target_weekdays]
@@ -412,6 +425,13 @@ def comparison_data():
 			color = entry['project_hex_color']
 
 			project_data[project]['current_tracked'] += duration
+
+			tags = entry['tags']
+			if period_type == 'goals' and tags:
+
+				for tag in tags:
+					if tag in project_data:
+						project_data[tag]['current_tracked'] += duration
 
 	response = []
 	for project in project_data:
@@ -531,7 +551,6 @@ def update_database(start_days_ago, end_days_ago=0):
 		)
 		db.session.add(db_entry)
 
-		print(entry)
 		tags = entry['tags']
 		for tag_name in tags:
 			db_tag = Tag.query.filter_by(tag_name=tag_name).first()
