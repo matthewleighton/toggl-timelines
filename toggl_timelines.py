@@ -355,7 +355,7 @@ def comparison_data():
 	for day in historic_days:
 		
 		if period_type == 'goals':
-			break # Only do the below if we're not in goals mode.
+			break
 
 		#print(day['date'])
 		entries = day['entries']
@@ -531,6 +531,7 @@ def update_database(start_days_ago, end_days_ago=0):
 		)
 		db.session.add(db_entry)
 
+		print(entry)
 		tags = entry['tags']
 		for tag_name in tags:
 			db_tag = Tag.query.filter_by(tag_name=tag_name).first()
@@ -669,6 +670,9 @@ def get_currently_tracking():
 	current['dur'] = milliseconds
 	current['end'] = end_string
 	current['project_hex_color'] = '#C8C8C8'
+	
+	if 'tags' not in current:
+		current['tags'] = []
 
 	current['project'] = 'No Project'
 	client_id = False

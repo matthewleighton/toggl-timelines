@@ -126,8 +126,8 @@ def remove_colon_from_timezone(timezone_string):
 		return timezone_string
 
 def get_toggl_entry_utc_offset(entry):
+	
 	tags = entry['tags']
-
 	for tag in tags:
 		if tag[0:3] == 'UTC':
 			return int(tag.replace('UTC', ''))
