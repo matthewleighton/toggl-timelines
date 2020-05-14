@@ -43,7 +43,7 @@ function submit_comparison_form(reload=false) {
 
 	serialized_data = format_serialized_data(serialized_data);
 
-	console.log(serialized_data)
+	sort_type = 'ratio'
 
 	$.ajax({
 		"type": "POST",
@@ -52,7 +52,7 @@ function submit_comparison_form(reload=false) {
 		"dataType": "json",
 		"data": JSON.stringify(serialized_data),
 		success: function(response) {
-			create_graph(response)				
+			create_graph(response, sort_type)
 		}
 	})
 }
@@ -75,28 +75,47 @@ function format_serialized_data(data) {
 }
 
 
-function format_percentage(ratio) {
-	value = Math.round(ratio*100) - 100
+function get_bar_value_label(value, sort_type) {
+	if (sort_type == 'ratio') {
+		value = Math.round(value*100) - 100
 
-	if (value == 9900) {
-		return "∞"
+		if (value == 9900) {
+			return "∞"
+		}
+
+		sign = Math.sign(value) > 0 ? '+' : '-'
+
+		return sign + Math.abs(Math.round(ratio*100) - 100) + '%'	
+	} else if (sort_type == 'difference') {
+		return format_seconds(Math.abs(value), true)
 	}
-
-	sign = Math.sign(value) > 0 ? '+' : '-'
-
-	return sign + Math.abs(Math.round(ratio*100) - 100) + '%'
 }
 
-function format_seconds(seconds) {
+function format_seconds(seconds, short=false) {
+	if (short) {
+		hour_singular = hour_plural = 'H '
+		minute_singular = minute_plural = 'M '
+		second_singular = second_plural = 'S '
+	} else {
+		hour_singular = 'hour, '
+		hour_plural = 'hours, '
+
+		minute_singular = 'minute, '
+		minute_plural = 'minutes, '
+
+		second_singular = 'second '
+		second_plural = ' seconds '
+	}
+
 	var timestamp = 9462;
 
 	var hours = Math.floor(seconds / 60 / 60);
 	var minutes = Math.floor(seconds / 60) - (hours * 60);
 	var seconds = Math.floor(seconds % 60);
 
-	var hours_label = (hours == 1) ? " hour, " : " hours, "
-	var minutes_label = (minutes == 1) ? " minute, " : " minutes, "
-	var seconds_label = (minutes == 1) ? " second " : " seconds "
+	var hours_label = (hours == 1) ? hour_singular : hour_plural
+	var minutes_label = (minutes == 1) ? minute_singular : minute_plural
+	var seconds_label = (minutes == 1) ? second_singular : second_plural
 
 	return_string = ""
 
@@ -113,7 +132,7 @@ function format_seconds(seconds) {
 	}
 
 	if (return_string == "") {
-		return_string = "0 seconds"
+		return_string = "0 " + second_plural
 	}
 
 	return return_string
@@ -209,22 +228,35 @@ function get_average_label() {
 	}
 }
 
-function get_x_axis_tick(d) {
-	percentage =  ((d - 1) * 100).toFixed(0)
-	if (percentage > 0) {
-		percentage = "+" + percentage
-	}
+function get_x_axis_tick(value, sort_type) {
+	if (sort_type == 'ratio') {
+		percentage =  ((value - 1) * 100).toFixed(0)
+		if (percentage > 0) {
+			percentage = "+" + percentage
+		}
 
-	return percentage + "%"
+		return percentage + "%"
+	} else if (sort_type == 'difference') {
+		return format_seconds(Math.abs(value), true)
+	}
 }
 
-function get_upper_x_domain_bound(data) {
+function get_upper_x_domain_bound(data, sort_type) {
+	var max_allowed
+	switch (sort_type) {
+		case 'ratio':
+			max_allowed = 4
+			break
+		case 'difference':
+			max_allowed = 60*60*1000 //20 hours
+	}
+
 	max_ratio = 0
 
 	for (var i = data.length - 1; i >= 0; i--) {
-		ratio = data[i]['ratio']
+		ratio = data[i][sort_type]
 
-		if (ratio > max_ratio && ratio < 4) {
+		if (ratio > max_ratio && ratio < max_allowed) {
 			max_ratio = ratio
 		}
 	}
@@ -232,11 +264,31 @@ function get_upper_x_domain_bound(data) {
 	return (max_ratio < 2) ? 2 : max_ratio + 0.1
 }
 
-function create_graph(data) {	
+function get_lower_x_domain_bound(data, sort_type) {
+	if (sort_type == 'ratio') {
+		return 0
+	}
+
+	min_ratio = 0
+
+	for (var i = data.length - 1; i >= 0; i--) {
+		ratio = data[i][sort_type]
+
+		if (ratio < min_ratio) {
+			min_ratio = ratio
+		}
+	}
+
+	return min_ratio	
+}
+
+function create_graph(data, sort_type) {	
 	$('svg').remove()
 	$('.d3-tip').remove()
 
-	var upper_x_domain_bound = get_upper_x_domain_bound(data)
+	var lower_x_domain_bound = get_lower_x_domain_bound(data, sort_type)
+	var upper_x_domain_bound = get_upper_x_domain_bound(data, sort_type)
+
 
 	var width = $('#graph_container').width()
 	var half_width = width/2
@@ -248,7 +300,7 @@ function create_graph(data) {
 	var current_period_string = get_current_period_string()
 	
 	var x_position = d3.scaleLinear()
-					.domain([0, upper_x_domain_bound])
+					.domain([lower_x_domain_bound, upper_x_domain_bound])
 					.rangeRound([margin.left, width - margin.right])
 					.clamp(true);
 	
@@ -268,14 +320,14 @@ function create_graph(data) {
 	yAxis = g => g
     .attr("transform", `translate(${x_position(1)},0)`)
     .call(d3.axisLeft(y_position).tickFormat(i => data[i].name).tickSize(0).tickPadding(6))
-    .call(g => g.selectAll(".tick text").filter(i => data[i].ratio < 1)
+    .call(g => g.selectAll(".tick text").filter(i => data[i][sort_type] < 1)
         .attr("text-anchor", "start")
         .attr("x", 6))
    	//.call(g => g.select(".domain").remove())
 
     xAxis = g => g
     	.attr("transform", `translate(0,${margin.top})`)
-    	.call(d3.axisTop(x_position).ticks(width / 80).tickFormat(d => get_x_axis_tick(d) ))
+    	.call(d3.axisTop(x_position).ticks(width / 80).tickFormat(d => get_x_axis_tick(d, sort_type) ))
     	.call(g => g.select(".domain").remove())
 
     canvas.append("g")
@@ -293,7 +345,7 @@ function create_graph(data) {
 
 	    average_label = get_average_label()
 
-	    difference_seconds = Math.abs(d.average - d.current_tracked)
+	    difference_seconds = Math.abs(d.difference)
 	    difference_string = format_seconds(difference_seconds)
 
 	    return "<strong>" + d.name + "</strong><div><span>" + current_period_string + "</span>" + current_tracked + "</div><div><span>" + average_label + "</span>" + average + "</div><div><span>Difference: </span>" + difference_string + "</div>";
@@ -306,9 +358,9 @@ function create_graph(data) {
 		.data(data)
 		.join("rect")
 			.attr("fill", d => d.color)
-			.attr("x", d => x_position(Math.min(d.ratio, 1)))
+			.attr("x", d => x_position(Math.min(d[sort_type], 1)))
 			.attr("y", (d, i) => y_position(i))
-			.attr("width", d => Math.abs(x_position(d.ratio) - x_position(1)))
+			.attr("width", d => Math.abs(x_position(d[sort_type]) - x_position(1)))
 			.attr("height", y_position.bandwidth())
 			.on('mouseover', tip.show)
       		.on('mouseout', tip.hide)
@@ -320,16 +372,11 @@ function create_graph(data) {
 		.selectAll("text")
 		.data(data)
 		.join("text")
-			.attr("text-anchor", d => d.ratio < 1 ? "end" : "start")
-			.attr("x", d => x_position(d.ratio) + Math.sign(d.ratio - 1) * 4)
+			.attr("text-anchor", d => d[sort_type] < 1 ? "end" : "start")
+			.attr("x", d => x_position(d[sort_type]) + Math.sign(d[sort_type] - 1) * 4)
 			.attr("y", (d, i) => y_position(i) + y_position.bandwidth() / 2)
 			.attr("dy", "0.35em")
-			.text(d => format_percentage(d.ratio));
-
-	
-
-	
-
+			.text(d => get_bar_value_label(d[sort_type], sort_type));
 }
 
 

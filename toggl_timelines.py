@@ -356,40 +356,39 @@ def comparison_data():
 	number_of_current_days = len(current_days)
 
 
-	historic_days=get_days_list(
-		start=start_end_values['historic_start'],
-		end=start_end_values['historic_end'],
-		amount = False
-	)
+	if period_type != "goals": # Don't need to do historic days work if we're in goals mode.
 
-	number_of_historic_days = len(historic_days)
+		historic_days=get_days_list(
+			start=start_end_values['historic_start'],
+			end=start_end_values['historic_end'],
+			amount = False
+		)
 
-	#print('Historic Days: ')
-	for day in historic_days:
+		number_of_historic_days = len(historic_days)
+
+		#print('Historic Days: ')
+		for day in historic_days:
+
+			#print(day['date'])
+			entries = day['entries']
+			for entry in entries:
 		
-		if period_type == 'goals':
-			break
+				if not 'project' in entry.keys() or entry['project'] == None:
+					continue
 
-		#print(day['date'])
-		entries = day['entries']
-		for entry in entries:
-	
-			if not 'project' in entry.keys() or entry['project'] == None:
-				continue
+				weekday = str(entry['start'].weekday())
+				if weekday not in target_weekdays:
+					continue
 
-			weekday = str(entry['start'].weekday())
-			if weekday not in target_weekdays:
-				continue
+				project = entry['project']
 
-			project = entry['project']
+				if day == historic_days[0] and entry == entries[-1]: # If this is the most recent historic entry...
+					now = helpers.get_current_datetime_in_user_timezone()
+					duration = (entry['start'].replace(hour=now.hour, minute=now.minute) - entry['start']).seconds #...Find duration based on how much of entry is complete.
+				else:
+					duration = entry['dur']/1000
 
-			if day == historic_days[0] and entry == entries[-1]: # If this is the most recent historic entry...
-				now = helpers.get_current_datetime_in_user_timezone()
-				duration = (entry['start'].replace(hour=now.hour, minute=now.minute) - entry['start']).seconds #...Find duration based on how much of entry is complete.
-			else:
-				duration = entry['dur']/1000
-
-			project_data[project]['historic_tracked'] += duration
+				project_data[project]['historic_tracked'] += duration
 
 
 	for project in project_data:
@@ -440,6 +439,8 @@ def comparison_data():
 
 		average = project_data[project]['average']
 
+		project_data[project]['difference'] = current_tracked - average
+
 		if average == 0:
 			ratio = 100
 		else:
@@ -454,10 +455,11 @@ def comparison_data():
 
 			response.append(project_data[project])
 
-	# Sort by ratio
-	sorted_response = sorted(response, key=lambda k: k['ratio'])
 
-	"""	
+	sort_type = 'ratio' # difference, ratio
+	sorted_response = sorted(response, key=lambda k: k[sort_type])
+
+	"""
 	for project in sorted_response:
 		print(project)
 		print('')
