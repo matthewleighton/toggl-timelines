@@ -341,6 +341,6 @@ body {
   display: none;
 }
 
-.comparison_mode_radio {
+.comparison_mode_radio, .sort_type_radio {
   margin-bottom: 10px;
 }

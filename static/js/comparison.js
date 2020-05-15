@@ -43,7 +43,7 @@ function submit_comparison_form(reload=false) {
 
 	serialized_data = format_serialized_data(serialized_data);
 
-	sort_type = 'ratio'
+	sort_type = $('input[type=radio][name=sort_type]:checked').val()
 
 	$.ajax({
 		"type": "POST",
@@ -87,7 +87,9 @@ function get_bar_value_label(value, sort_type) {
 
 		return sign + Math.abs(Math.round(ratio*100) - 100) + '%'	
 	} else if (sort_type == 'difference') {
-		return format_seconds(Math.abs(value), true)
+		sign = value < 0 ? '-' : ''
+
+		return sign + format_seconds(Math.abs(value), true)
 	}
 }
 
@@ -97,13 +99,13 @@ function format_seconds(seconds, short=false) {
 		minute_singular = minute_plural = 'M '
 		second_singular = second_plural = 'S '
 	} else {
-		hour_singular = 'hour, '
-		hour_plural = 'hours, '
+		hour_singular = ' hour, '
+		hour_plural = ' hours, '
 
-		minute_singular = 'minute, '
-		minute_plural = 'minutes, '
+		minute_singular = ' minute, '
+		minute_plural = ' minutes, '
 
-		second_singular = 'second '
+		second_singular = ' second '
 		second_plural = ' seconds '
 	}
 

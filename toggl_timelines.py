@@ -277,14 +277,14 @@ def comparison_data():
 	if reload_data:
 		update_database(1)
 
-	live_mode_calendar = bool(request.json.get('live_mode_calendar'))
-
-	number_of_current_days = int(request.json.get('timeframe'))
+	live_mode_calendar 		= bool(request.json.get('live_mode_calendar'))
+	number_of_current_days  = int(request.json.get('timeframe'))
 	number_of_historic_days = int(request.json.get('datarange'))
-	target_weekdays = request.json.get('weekdays')
+	target_weekdays 		= request.json.get('weekdays')
+	sort_type 				= request.json.get('sort_type')
+	period_type 			= request.json.get('period_type')
 
-	period_type = request.json.get('period_type')
-
+	# TODO: Write new function to get this from our projects table instead of API request.
 	project_data = helpers.get_project_data(comparison_mode=True)
 
 	if period_type == 'goals':
@@ -456,7 +456,6 @@ def comparison_data():
 			response.append(project_data[project])
 
 
-	sort_type = 'ratio' # difference, ratio
 	sorted_response = sorted(response, key=lambda k: k[sort_type])
 
 	"""
