@@ -81,17 +81,8 @@ function get_bar_value_label(value, sort_type) {
 		if (value == 100) {
 			return "∞"
 		}
-
-		console.log(Math.round(value*100) - 100)
-
 		
 		value = Math.round(value*100) - 100
-
-		//return value
-
-		//console.log(value)
-
-		
 
 		sign = Math.sign(value) > 0 ? '+' : ''
 
@@ -105,10 +96,14 @@ function get_bar_value_label(value, sort_type) {
 
 function format_seconds(seconds, short=false) {
 	if (short) {
-		hour_singular = hour_plural = 'H '
-		minute_singular = minute_plural = 'M '
-		second_singular = second_plural = 'S '
+		day_singular = day_plural = 'd '
+		hour_singular = hour_plural = 'h '
+		minute_singular = minute_plural = 'm '
+		second_singular = second_plural = 's '
 	} else {
+		day_singular = ' day, '
+		day_plural = ' days, '
+
 		hour_singular = ' hour, '
 		hour_plural = ' hours, '
 
@@ -121,15 +116,23 @@ function format_seconds(seconds, short=false) {
 
 	var timestamp = 9462;
 
+	var days = Math.floor(seconds / (3600 * 24));
+	seconds = seconds - days * 3600*24
+
 	var hours = Math.floor(seconds / 60 / 60);
 	var minutes = Math.floor(seconds / 60) - (hours * 60);
 	var seconds = Math.floor(seconds % 60);
 
+	var days_label = (days == 1) ? day_singular : day_plural
 	var hours_label = (hours == 1) ? hour_singular : hour_plural
 	var minutes_label = (minutes == 1) ? minute_singular : minute_plural
 	var seconds_label = (minutes == 1) ? second_singular : second_plural
 
 	return_string = ""
+
+	if (days > 0) {
+		return_string += days + days_label
+	}	
 
 	if (hours > 0) {
 		return_string += hours + hours_label
