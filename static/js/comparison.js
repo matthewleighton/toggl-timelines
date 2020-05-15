@@ -77,15 +77,25 @@ function format_serialized_data(data) {
 
 function get_bar_value_label(value, sort_type) {
 	if (sort_type == 'ratio') {
-		value = Math.round(value*100) - 100
-
-		if (value == 9900) {
+		
+		if (value == 100) {
 			return "∞"
 		}
 
-		sign = Math.sign(value) > 0 ? '+' : '-'
+		console.log(Math.round(value*100) - 100)
 
-		return sign + Math.abs(Math.round(ratio*100) - 100) + '%'	
+		
+		value = Math.round(value*100) - 100
+
+		//return value
+
+		//console.log(value)
+
+		
+
+		sign = Math.sign(value) > 0 ? '+' : ''
+
+		return sign + value + '%'
 	} else if (sort_type == 'difference') {
 		sign = value < 0 ? '-' : ''
 
@@ -230,6 +240,7 @@ function get_average_label() {
 	}
 }
 
+// Get the formatting of the x axis ticks.
 function get_x_axis_tick(value, sort_type) {
 	if (sort_type == 'ratio') {
 		percentage =  ((value - 1) * 100).toFixed(0)
@@ -243,6 +254,60 @@ function get_x_axis_tick(value, sort_type) {
 	}
 }
 
+// Get the values at which we display ticks on the x axis.
+function get_x_axis_tick_values(data, sort_type, width) {
+	if (sort_type == 'ratio') {
+		return null // Use default value calculated by d3.
+	} else if (sort_type == 'difference') {
+		lowest = 0
+		highest = 0
+
+		for (var i = data.length - 1; i >= 0; i--) {
+			value = data[i].difference
+
+			if (value < lowest) {
+				lowest = value
+			} else if (value > highest) {
+				highest = value
+			}
+
+		}
+
+		max_allowed_ticks = Math.floor(width / 80)
+
+		negative_hours = Math.floor(lowest / 3600)
+		positive_hours = Math.ceil(highest / 3600)
+
+		total_ticks = positive_hours + Math.abs(negative_hours)
+
+		step = Math.ceil(total_ticks / max_allowed_ticks)
+
+		if (total_ticks < max_allowed_ticks) {
+			step = total_ticks / max_allowed_ticks
+			step = Math.round(step / 0.25) * 0.25
+		}		
+		
+
+		ticks = [0]
+
+		for (var i = -step; i >= negative_hours; i -= step) {
+			tick_value = i * 3600
+			if (tick_value > lowest - 3600/4) {
+				ticks.push(tick_value)
+			}
+		}
+
+		for (var i = step; i <= positive_hours; i += step) {
+			tick_value = i * 3600
+			if (tick_value < highest + 3600/4) {
+				ticks.push(tick_value)
+			}
+		}
+
+		return ticks
+	}
+}
+
 function get_upper_x_domain_bound(data, sort_type) {
 	var max_allowed
 	switch (sort_type) {
@@ -250,20 +315,26 @@ function get_upper_x_domain_bound(data, sort_type) {
 			max_allowed = 4
 			break
 		case 'difference':
-			max_allowed = 60*60*1000 //20 hours
+			max_allowed = 60*60*1000 //1000 hours
 	}
 
-	max_ratio = 0
+	max_value = 0
 
 	for (var i = data.length - 1; i >= 0; i--) {
-		ratio = data[i][sort_type]
+		value = data[i][sort_type]
 
-		if (ratio > max_ratio && ratio < max_allowed) {
-			max_ratio = ratio
+		if (value > max_value && value < max_allowed) {
+			max_value = value
 		}
 	}
 
-	return (max_ratio < 2) ? 2 : max_ratio + 0.1
+	if (sort_type == 'ratio') {
+		return (max_value < 2) ? 2 : max_value + 0.1	
+	} else if (sort_type == 'difference') {
+		return max_value + 3600/4
+	}
+
+	
 }
 
 function get_lower_x_domain_bound(data, sort_type) {
@@ -281,7 +352,7 @@ function get_lower_x_domain_bound(data, sort_type) {
 		}
 	}
 
-	return min_ratio	
+	return min_ratio - 3600
 }
 
 function create_graph(data, sort_type) {	
@@ -318,6 +389,7 @@ function create_graph(data, sort_type) {
 				.attr("width", width)
 				.attr("height", height);
 
+	x_axis_tick_values = get_x_axis_tick_values(data, sort_type, width)
 
 	yAxis = g => g
     .attr("transform", `translate(${x_position(1)},0)`)
@@ -329,7 +401,12 @@ function create_graph(data, sort_type) {
 
     xAxis = g => g
     	.attr("transform", `translate(0,${margin.top})`)
-    	.call(d3.axisTop(x_position).ticks(width / 80).tickFormat(d => get_x_axis_tick(d, sort_type) ))
+    	.call(d3
+    		.axisTop(x_position)
+    		.ticks(width / 80)
+    		.tickFormat(d => get_x_axis_tick(d, sort_type))
+    		.tickValues(x_axis_tick_values)
+    	)
     	.call(g => g.select(".domain").remove())
 
     canvas.append("g")

@@ -344,3 +344,7 @@ body {
 .comparison_mode_radio, .sort_type_radio {
   margin-bottom: 10px;
 }
+
+svg {
+  overflow: visible;
+}
