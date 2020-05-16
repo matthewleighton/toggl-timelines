@@ -231,61 +231,6 @@ def get_current_datetime_in_user_timezone():
 
 	return user_time
 
-def get_untracked_time(target_time, entry, after_midnight=False):
-	# The after_midnight variable indicates that we're now running the function for a second time,
-	# getting the second half of untracked time, which appears after midnight.
-
-	untracked_time_list = []
-
-	if not after_midnight and is_entry_next_day(target_time, entry['start']):
-
-		run_again_after_midnight = True
-
-		next_day = target_time.day + 1
-		
-		month = target_time.month
-		next_month = month + 1
-
-		days_in_month = monthrange(target_time.year, target_time.month)[1]
-
-		if next_day > days_in_month:
-			month += 1
-			next_day = 1
-
-		if month == 13:
-			month = 1
-		
-		untracked_end = target_time.replace(month=month, day=next_day, hour=0, minute=0, second=0)
-		
-
-		new_target_time = untracked_end
-
-	else:
-		untracked_end = entry['start']
-		new_target_time = entry['end']
-		run_again_after_midnight = False
-
-	dur = (untracked_end - target_time).seconds*1000
-
-	untracked_time = {
-		'start': target_time,
-		'end': entry['end'],
-		'dur' : dur,
-		'class': 'untracked_time ',
-		'tooltip': 'Untracked'
-		#'tooltip': 'Untracked<br/>{0}<br/>{1}'.format(target_time, untracked_end)
-	}
-
-	if after_midnight:
-		return untracked_time
-
-	untracked_time_list.append(untracked_time)
-	
-	if run_again_after_midnight:
-		untracked_time_list.append(get_untracked_time(new_target_time, entry, True))
-
-	return untracked_time_list
-
 def get_client_hex_color(client):
 	hex_color_config = config.client_colors
 

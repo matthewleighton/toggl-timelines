@@ -37,6 +37,30 @@ class Entry(db.Model):
 	user_id = db.Column(db.Integer)
 	utc_offset = db.Column(db.Integer)
 
+	def get_tooltip(self):
+		start_time = self.start.strftime('%H:%M')
+		end_time = self.end.strftime('%H:%M')
+
+		project = self.project
+		description = self.description
+		duration = helpers.format_duration(self.dur)
+		client = self.client
+
+		return '<b>{0}</b>: {1}<br/>Client: {2}<br/>{3}-{4}<br/>{5}'.format(project, description, client, start_time, end_time, duration)
+
+	def get_day_percentage(self):
+		duration = self.dur/1000
+		seconds_in_day = 86400
+
+		return (duration/seconds_in_day)*100
+
+	def get_start_percentage(self):
+		seconds_since_midnight = (self.start - self.start.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+
+		return (seconds_since_midnight / 86400) * 100
+
+
+
 class Tag(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	tag_name = db.Column(db.String(50))
@@ -478,9 +502,9 @@ def comparison_data():
 def get_days_list(loading_additional_days = False, amount = 8, start = False, end = False):
 	db_entries = get_entries_from_database(start, end)
 
-	apply_utc_offsets(db_entries)
-	assign_day_percentage(db_entries)
-	assign_start_percentage(db_entries)
+	#assign_day_percentage(db_entries)
+	#assign_start_percentage(db_entries)
+	#assign_entry_tooltip(db_entries)
 	
 
 	days = sort_entries_by_day(db_entries)
@@ -501,30 +525,11 @@ def get_days_list(loading_additional_days = False, amount = 8, start = False, en
 
 def apply_utc_offsets(entries):
 	for entry in entries:
-		new_start = entry['start'] + timedelta(hours=entry['utc_offset'])
-		new_end = entry['end'] + timedelta(hours=entry['utc_offset'])
+		new_start = entry.start + timedelta(hours=entry.utc_offset)
+		new_end = entry.end + timedelta(hours=entry.utc_offset)
 
-		entry['start'] = new_start
-		entry['end'] = new_end
-
-def assign_day_percentage(entries):
-	for entry in entries:
-		duration = entry['dur']/1000
-		seconds_in_day = 86400
-
-		entry['day_percentage'] = (duration/seconds_in_day)*100
-
-
-
-def assign_start_percentage(entries):
-	for entry in entries:		
-		start_time = entry['start']
-
-		seconds_since_midnight = (start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
-
-		start_percentage = (seconds_since_midnight / 86400) * 100
-
-		entry['start_percentage'] = start_percentage
+		entry.start = new_start
+		entry.end = new_end
 
 def update_database(start_days_ago, end_days_ago=0):	
 	start = datetime.today() - timedelta(days=start_days_ago)
@@ -613,10 +618,8 @@ def delete_days_from_database(start_days_ago, end_days_ago=0):
 
 	db.session.commit()
 
-def fill_untracked_time(entries):
+def split_entries_over_midnight(entries):
 	completed_entries = []
-
-	target_time = entries[0].start.replace(hour=0, minute=0, second=0)
 
 	for entry in entries:
 		
@@ -625,9 +628,6 @@ def fill_untracked_time(entries):
 		for tag in entry.tags:
 			tags.append(tag.tag_name)
 
-
-		#print(tags)
-
 		entry = entry.__dict__
 
 		entry['tags'] = tags
@@ -635,19 +635,7 @@ def fill_untracked_time(entries):
 
 		entry.pop('_sa_instance_state', None)
 
-		
-		#entry['start'] = entry['start'] + timedelta(hours=entry['utc_offset'])
-		#entry['end'] = entry['end'] + timedelta(hours=entry['utc_offset'])
 
-		# ----------------------------------Untracked Time---------------------
-		"""
-		if target_time < entry['start']:
-
-			untracked_time = helpers.get_untracked_time(target_time, entry)
-
-			for period in untracked_time:
-				completed_entries.append(period)
-		"""
 		entry_halves = helpers.split_entry_over_midnight(entry)
 
 		for entry_half in entry_halves:
@@ -657,21 +645,6 @@ def fill_untracked_time(entries):
 
 			completed_entries.append(entry_half)
 			
-		target_time = entry['end']
-
-
-	# ----------------------------Adding percentages-------------------	
-	
-	"""
-	for entry in completed_entries:
-		entry_seconds = entry['dur']/1000
-		seconds_in_day = 60*60*24
-
-		entry['day_percentage'] = (entry_seconds/seconds_in_day)*100
-
-		if not entry.get('class'):
-			entry['class'] = 'tracked_time'
-	"""
 	return completed_entries
 
 def get_entries_from_database(start = False, end = False):
@@ -694,11 +667,12 @@ def get_entries_from_database(start = False, end = False):
 	else:
 		entries = Entry.query.order_by(Entry.start).all()
 
-	completed_entries = fill_untracked_time(entries)
+
+	apply_utc_offsets(entries)
 
 
 
-	return completed_entries
+	return entries
 
 # Get the currently tracking entry, and add/format the required data so it matches the historic entries.
 def get_currently_tracking():
@@ -759,12 +733,13 @@ def sort_entries_by_day(entries):
 	sorted_by_day = {}
 
 	for entry in entries:
-		entry_date = entry['start'].strftime('%Y-%m-%d')
+
+		entry_date = entry.start.strftime('%Y-%m-%d')
 		
 		if entry_date not in sorted_by_day:
 			sorted_by_day[entry_date] = {
 				'entries': [],
-				'date': entry['start'].strftime('%a %d %b, %Y')
+				'date': entry.start.strftime('%a %d %b, %Y')
 			}
 
 		sorted_by_day[entry_date]['entries'].append(entry)
