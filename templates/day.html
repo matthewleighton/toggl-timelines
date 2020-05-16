@@ -8,7 +8,7 @@
 
 		{%for entry in day.entries%}
 
-			<span class='track_block {{entry.class}}' style="background-color:{{entry.project_hex_color}}; width:{{entry.day_percentage}}%; left:{{entry.start_percentage}}%" data-toggle="tooltip" data-html="true" title="{{entry.tooltip}}" data-project="{{entry.project}}" data-description="{{entry.description}}" data-percentage="{{entry.day_percentage}}" data-date="{{day.date}}" data-client="{{entry.client}}" data-client-hex="{{entry.client_hex_color}}" data-project-hex="{{entry.project_hex_color}}" data-tags="{{entry.tags}}">
+			<span class='track_block tracked_time {{entry.class}}' style="background-color:{{entry.project_hex_color}}; width:{{entry.day_percentage}}%; left:{{entry.start_percentage}}%" data-toggle="tooltip" data-html="true" title="{{entry.tooltip}}" data-project="{{entry.project}}" data-description="{{entry.description}}" data-percentage="{{entry.day_percentage}}" data-date="{{day.date}}" data-client="{{entry.client}}" data-client-hex="{{entry.client_hex_color}}" data-project-hex="{{entry.project_hex_color}}" data-tags="{{entry.tags}}">
 				<span>‏‏‎&#32</span>
 			</span>
 

@@ -478,7 +478,10 @@ def comparison_data():
 def get_days_list(loading_additional_days = False, amount = 8, start = False, end = False):
 	db_entries = get_entries_from_database(start, end)
 
+	apply_utc_offsets(db_entries)
+	assign_day_percentage(db_entries)
 	assign_start_percentage(db_entries)
+	
 
 	days = sort_entries_by_day(db_entries)
 	
@@ -496,6 +499,23 @@ def get_days_list(loading_additional_days = False, amount = 8, start = False, en
 	else:
 		return days_list
 
+def apply_utc_offsets(entries):
+	for entry in entries:
+		new_start = entry['start'] + timedelta(hours=entry['utc_offset'])
+		new_end = entry['end'] + timedelta(hours=entry['utc_offset'])
+
+		entry['start'] = new_start
+		entry['end'] = new_end
+
+def assign_day_percentage(entries):
+	for entry in entries:
+		duration = entry['dur']/1000
+		seconds_in_day = 86400
+
+		entry['day_percentage'] = (duration/seconds_in_day)*100
+
+
+
 def assign_start_percentage(entries):
 	for entry in entries:		
 		start_time = entry['start']
@@ -505,8 +525,6 @@ def assign_start_percentage(entries):
 		start_percentage = (seconds_since_midnight / 86400) * 100
 
 		entry['start_percentage'] = start_percentage
-
-	return True
 
 def update_database(start_days_ago, end_days_ago=0):	
 	start = datetime.today() - timedelta(days=start_days_ago)
@@ -602,7 +620,6 @@ def fill_untracked_time(entries):
 
 	for entry in entries:
 		
-
 		tags = []
 		
 		for tag in entry.tags:
@@ -619,8 +636,8 @@ def fill_untracked_time(entries):
 		entry.pop('_sa_instance_state', None)
 
 		
-		entry['start'] = entry['start'] + timedelta(hours=entry['utc_offset'])
-		entry['end'] = entry['end'] + timedelta(hours=entry['utc_offset'])
+		#entry['start'] = entry['start'] + timedelta(hours=entry['utc_offset'])
+		#entry['end'] = entry['end'] + timedelta(hours=entry['utc_offset'])
 
 		# ----------------------------------Untracked Time---------------------
 		"""
@@ -644,6 +661,8 @@ def fill_untracked_time(entries):
 
 
 	# ----------------------------Adding percentages-------------------	
+	
+	"""
 	for entry in completed_entries:
 		entry_seconds = entry['dur']/1000
 		seconds_in_day = 60*60*24
@@ -652,7 +671,7 @@ def fill_untracked_time(entries):
 
 		if not entry.get('class'):
 			entry['class'] = 'tracked_time'
-
+	"""
 	return completed_entries
 
 def get_entries_from_database(start = False, end = False):
@@ -676,6 +695,8 @@ def get_entries_from_database(start = False, end = False):
 		entries = Entry.query.order_by(Entry.start).all()
 
 	completed_entries = fill_untracked_time(entries)
+
+
 
 	return completed_entries
 
