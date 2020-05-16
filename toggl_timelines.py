@@ -47,7 +47,9 @@ class Tag(db.Model):
 def home_page():
 	update_database(3)
 
-	displayed_days = get_days_list()
+	start = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=7)
+
+	displayed_days = get_days_list(start=start)
 
 	heart = helpers.display_heart()
 
@@ -475,6 +477,9 @@ def comparison_data():
 
 def get_days_list(loading_additional_days = False, amount = 8, start = False, end = False):
 	db_entries = get_entries_from_database(start, end)
+
+	assign_start_percentage(db_entries)
+
 	days = sort_entries_by_day(db_entries)
 	
 	days_list = []
@@ -491,6 +496,17 @@ def get_days_list(loading_additional_days = False, amount = 8, start = False, en
 	else:
 		return days_list
 
+def assign_start_percentage(entries):
+	for entry in entries:		
+		start_time = entry['start']
+
+		seconds_since_midnight = (start_time - start_time.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+
+		start_percentage = (seconds_since_midnight / 86400) * 100
+
+		entry['start_percentage'] = start_percentage
+
+	return True
 
 def update_database(start_days_ago, end_days_ago=0):	
 	start = datetime.today() - timedelta(days=start_days_ago)
@@ -607,13 +623,14 @@ def fill_untracked_time(entries):
 		entry['end'] = entry['end'] + timedelta(hours=entry['utc_offset'])
 
 		# ----------------------------------Untracked Time---------------------
+		"""
 		if target_time < entry['start']:
 
 			untracked_time = helpers.get_untracked_time(target_time, entry)
 
 			for period in untracked_time:
 				completed_entries.append(period)
-			
+		"""
 		entry_halves = helpers.split_entry_over_midnight(entry)
 
 		for entry_half in entry_halves:

@@ -183,6 +183,7 @@ function assign_listeners() {
 		e.preventDefault()
 	})
 
+	/*
 	// Move date labels if necessary, so they aren't covered by entries shortly after midnight.
 	row = 1
 	$('.day_row').each(function() {
@@ -240,6 +241,7 @@ function assign_listeners() {
 		})
 		row += 1
 	})
+	*/
 
 }
 
