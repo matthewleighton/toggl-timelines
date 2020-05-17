@@ -190,9 +190,9 @@ def get_entries_from_database(start = False, end = False):
 	if start and end:
 		entries = Entry.query.filter(Entry.start >= start).filter(Entry.start <= end).order_by(Entry.start).all()
 	elif start:
-		entries = Entry.query.filter(Entry.start >= start).order_by(Entry.start).order_by(Entry.start).all()
+		entries = Entry.query.filter(Entry.start >= start).order_by(Entry.start).all()
 	elif end:
-		entries = Entry.query.filter(Entry.start <= end).order_by(Entry.start).order_by(Entry.start).all()
+		entries = Entry.query.filter(Entry.start <= end).order_by(Entry.start).all()
 	else:
 		entries = Entry.query.order_by(Entry.start).all()
 
@@ -305,21 +305,9 @@ def get_currently_tracking():
 def get_days_list(loading_additional_days = False, amount = 8, start = False, end = False):
 	db_entries = get_entries_from_database(start, end)
 
-	days = sort_entries_by_day(db_entries)
+	days_list = sort_entries_by_day(db_entries)
 	
-	days_list = []
-	for day in days.values():
-		days_list.append(day)
-
-	days_list.reverse()
-
-	if amount:
-		if loading_additional_days:
-			return days_list[amount:]
-		else:
-			return days_list[:amount]
-	else:
-		return days_list
+	return days_list
 
 # For each entry, adjust its start and end times such that they match the location where the entry was recorded.
 def apply_utc_offsets(entries):
@@ -345,7 +333,13 @@ def sort_entries_by_day(entries):
 
 		sorted_by_day[entry_date]['entries'].append(entry)
 
-	return sorted_by_day
+	days_list = []
+	for day in sorted_by_day.values():
+		days_list.append(day)
+
+	days_list.reverse()
+
+	return days_list
 
 #------------- END OF COMMON PURPOSE FUNCTIONS -----------------------------
 
@@ -355,11 +349,13 @@ def sort_entries_by_day(entries):
 # ------------------------------------Timelines Page----------------------------------
 # -------------------------------------------------------------------------------------
 
+initial_timelines_page_load_amount = 7
+
 @app.route('/')
 def home_page():
 	update_database(3)
 
-	start = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=7)
+	start = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=initial_timelines_page_load_amount)
 
 	displayed_days = get_days_list(start=start)
 
@@ -380,14 +376,16 @@ def load_more():
 	reloading = request.json.get('reload')
 
 	if reloading:
-		skip_first_days = False
-		days = 1
 		update_database(1)
-	else:
-		skip_first_days = True
-		days = 8
 
-	displayed_days = get_days_list(skip_first_days, days)
+		start = datetime.now().replace(hour=0, minute=0, second=0)
+		end = False
+		
+	else:
+		start = False
+		end =datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=initial_timelines_page_load_amount)
+
+	displayed_days = get_days_list(start=start, end=end)
 
 	page_data = {
 		'days': displayed_days
