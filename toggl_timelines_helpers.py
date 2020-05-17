@@ -73,26 +73,6 @@ def get_period_completion_ratio(period, working_time_start=False, working_time_e
 
 	return completion_ratio
 
-def get_project_data(comparison_mode = False):
-	toggl = Toggl()
-	toggl.setAPIKey(config.api_key)
-
-	raw_project_data = toggl.request("https://www.toggl.com/api/v8/me?with_related_data=true")['data']['projects']
-	project_data = {}
-
-	for project in raw_project_data:
-		project_name = project['name']
-		project_data.update( {project_name: project} )
-		project['color'] = project['hex_color']
-
-		if comparison_mode:
-			project_data[project_name]['historic_tracked'] = 0
-			project_data[project_name]['current_tracked'] = 0
-			project_data[project_name]['average'] = 0
-
-	return project_data
-
-
 def is_entry_next_day(target_time, entry_time):
 	if target_time.day == entry_time.day:
 		return False

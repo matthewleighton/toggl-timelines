@@ -387,6 +387,26 @@ def sort_entries_by_day(entries):
 
 	return days_list
 
+def get_project_data(comparison_mode = False):
+	projects = Project.query.all()
+
+	project_data = {}
+
+	for project in projects:
+		project_name = project.project_name
+
+		project_data[project_name] = {
+			'name': project_name,
+			'color': project.project_hex_color
+		}
+
+		if comparison_mode:
+			project_data[project_name]['historic_tracked'] = 0
+			project_data[project_name]['current_tracked'] = 0
+			project_data[project_name]['average'] = 0
+
+	return project_data
+
 #------------- END OF COMMON PURPOSE FUNCTIONS -----------------------------
 
 
@@ -471,7 +491,7 @@ def comparison_data():
 	period_type 			= request.json.get('period_type')
 
 	# TODO: Write new function to get this from our projects table instead of API request.
-	project_data = helpers.get_project_data(comparison_mode=True)
+	project_data = get_project_data(comparison_mode=True)
 
 	goals_projects = []
 	goals = {}
