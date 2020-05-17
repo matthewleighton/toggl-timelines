@@ -33,7 +33,7 @@ class Entry(db.Model):
 	project = db.Column(db.String(50))
 	client = db.Column(db.String(50))
 	project_hex_color = db.Column(db.String(7))
-	tags = db.relationship('Tag', secondary=tags, backref=db.backref('entries', lazy=True), lazy='dynamic')
+	tags = db.relationship('Tag', secondary=tags, backref=db.backref('entries', lazy=True), lazy='select')
 	user_id = db.Column(db.Integer)
 	utc_offset = db.Column(db.Integer)
 
@@ -76,6 +76,8 @@ class Tag(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	tag_name = db.Column(db.String(50))
 
+	def __repr__(self):
+		return "<Tag Name: " + self.tag_name + ")"
 
 
 
@@ -469,10 +471,9 @@ def comparison_data():
 
 			tags = entry.tags
 			if period_type == 'goals' and tags:
-
 				for tag in tags:
-					if tag in project_data:
-						project_data[tag]['current_tracked'] += duration
+					if tag.tag_name in project_data:
+						project_data[tag.tag_name]['current_tracked'] += duration
 
 	response = []
 	for project in project_data:
