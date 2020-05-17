@@ -156,45 +156,6 @@ def get_toggl_entry_utc_offset(entry):
 
 	return get_local_utc_offset()
 
-# If an entry spans over midnight, split it into two.
-def split_entry_over_midnight(entry):
-	start = entry['start']
-	end = entry['end']
-
-	if start.day == end.day:
-		return [entry]
-
-	midnight_datetime = entry['end'].replace(hour=0, minute=0, second=0)
-
-	before_midnight = entry.copy()
-	before_midnight['end'] = midnight_datetime
-	duration_before = (midnight_datetime - before_midnight['start']).seconds*1000
-	before_midnight['dur'] = duration_before
-
-	after_midnight = entry.copy()
-	after_midnight['start'] = midnight_datetime
-	duration_after = (after_midnight['end'] - midnight_datetime).seconds*1000
-	after_midnight['dur'] = duration_after
-
-	halves = [before_midnight, after_midnight]
-
-	return [before_midnight, after_midnight]
-
-def get_entry_tooltip(entry):
-	start_time = entry['start'].strftime('%H:%M')
-	end_time = entry['end'].strftime('%H:%M')
-
-	project = entry.get('project')
-	description = entry.get('description', '')
-	duration = format_duration(entry.get('dur'))
-	client = entry.get('client', '')
-
-	if not project:
-		project = 'No Project'
-		entry['project_hex_color'] = '#C8C8C8'
-
-	return '<b>{0}</b>: {1}<br/>Client: {2}<br/>{3}-{4}<br/>{5}'.format(project, description, client, start_time, end_time, duration)
-
 # Turn an amount of milliseconds into "x hours, y minutes"
 def format_duration(milliseconds):
 	seconds=(milliseconds/1000)%60

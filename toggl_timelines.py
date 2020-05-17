@@ -37,6 +37,9 @@ class Entry(db.Model):
 	user_id = db.Column(db.Integer)
 	utc_offset = db.Column(db.Integer)
 
+	def __repr__(self):
+		return "<Entry (Description: " + self.description + ") (Start: " + str(self.start) + ") (End: " + str(self.end) + ") (Duration: " + str(self.dur) + ")"
+
 	def get_tooltip(self):
 		start_time = self.start.strftime('%H:%M')
 		end_time = self.end.strftime('%H:%M')
@@ -58,6 +61,14 @@ class Entry(db.Model):
 		seconds_since_midnight = (self.start - self.start.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
 
 		return (seconds_since_midnight / 86400) * 100
+
+	def get_client_hex_color(self):
+		hex_color_config = config.client_colors
+
+		if self.client in hex_color_config.keys():
+			return hex_color_config[self.client]
+		else:
+			return '#a6a6a6'
 
 
 
@@ -283,11 +294,12 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 					minute = 59
 				)
 
+	"""
 	print('Current start: ' + str(current_start))
 	print('Current end: ' + str(current_end))
 	print('Historic start: ' + str(historic_start))
 	print('Historic end: ' + str(historic_end))
-	
+	"""
 
 	return {
 		'current_start': current_start,
@@ -623,25 +635,37 @@ def split_entries_over_midnight(entries):
 
 	for entry in entries:
 		
-		tags = []
-		
-		for tag in entry.tags:
-			tags.append(tag.tag_name)
+		start = entry.start
+		end = entry.end
 
-		entry = entry.__dict__
-
-		entry['tags'] = tags
-
-
-		entry.pop('_sa_instance_state', None)
-
-
-		entry_halves = helpers.split_entry_over_midnight(entry)
-
-		for entry_half in entry_halves:
+		if start.day == end.day:
+			halves = [entry]
+		else:
+			midnight_datetime = entry.end.replace(hour=0, minute=0, second=0)
 			
-			entry_half['tooltip'] = helpers.get_entry_tooltip(entry_half)
-			entry_half['client_hex_color'] = helpers.get_client_hex_color(entry['client'])
+
+			duration_before = (midnight_datetime - entry.start).seconds*1000
+			entry.dur = duration_before
+
+			duration_after = (entry.end - midnight_datetime).seconds*1000
+			entry.end = midnight_datetime
+			
+
+			second_half = Entry(
+				description 	  = entry.description,
+				start 			  = midnight_datetime,
+				end 			  = end,
+				dur 			  = duration_after,
+				project 		  = entry.project,
+				client 			  = entry.client,
+				project_hex_color = entry.project_hex_color,
+				utc_offset 		  = entry.utc_offset,
+				user_id 		  = entry.user_id
+			)
+
+			halves = [entry, second_half]
+
+		for entry_half in halves:
 
 			completed_entries.append(entry_half)
 			
@@ -670,6 +694,7 @@ def get_entries_from_database(start = False, end = False):
 
 	apply_utc_offsets(entries)
 
+	entries = split_entries_over_midnight(entries)
 
 
 	return entries
