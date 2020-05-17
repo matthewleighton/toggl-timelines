@@ -12,10 +12,12 @@ from TogglPy import Toggl
 import toggl_timelines_helpers as helpers
 
 app = Flask(__name__)
-initial_load_number = 8
-
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///toggl-timelines.db'
+
+# -------------------------------------------------------------------------------------
+# ------------------------------------Database-----------------------------------------
+# -------------------------------------------------------------------------------------
 
 db = SQLAlchemy(app)
 
@@ -71,7 +73,6 @@ class Entry(db.Model):
 			return '#a6a6a6'
 
 
-
 class Tag(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	tag_name = db.Column(db.String(50))
@@ -79,10 +80,280 @@ class Tag(db.Model):
 	def __repr__(self):
 		return "<Tag Name: " + self.tag_name + ")"
 
+#------------- END OF DATABASE CODE -----------------------------
 
 
 
+# -------------------------------------------------------------------------------------
+# ------------------------------------Common Purpose Functions-------------------------
+# -------------------------------------------------------------------------------------
 
+# Update the local database from Toggl's API
+def update_database(start_days_ago, end_days_ago=0):
+	start = datetime.today() - timedelta(days=start_days_ago)
+	end   = datetime.today() - timedelta(days=end_days_ago)
+
+	request_data = {
+	    'workspace_id': config.workspace_id,
+	    'since': start,
+	    'until': end,
+	}
+
+	toggl = Toggl()
+	toggl.setAPIKey(config.api_key)
+
+	entries = toggl.getDetailedReportPages(request_data)['data']
+	
+	currently_tracking = get_currently_tracking()
+	if currently_tracking:
+		entries.append(currently_tracking)
+	
+	delete_days_from_database(start_days_ago, end_days_ago)
+
+	for entry in entries:
+
+		location_utc_offset = helpers.get_toggl_entry_utc_offset(entry)
+		# This is the utc offset of the location I was in when the entry was recorded.
+		
+		entry_id = entry['id']
+		
+		existing_entry = Entry.query.filter_by(id=entry_id).first()
+		
+		if existing_entry:
+			db.session.delete(existing_entry)
+
+		start = helpers.remove_colon_from_timezone(entry['start'])
+		start = helpers.timestamp_to_datetime(start)
+				
+		toggl_utc_offset = int(start.utcoffset().total_seconds()/(60*60))
+		# Toggl's values are adjusted based on whatever the current account timezone is.
+		# toggl_utc_offset is the number of hours we need to SUBTRACT from the time to get it into UTC.
+
+		start = start - timedelta(hours = toggl_utc_offset)
+
+		end = helpers.remove_colon_from_timezone(entry['end'])
+		end = helpers.timestamp_to_datetime(end)
+		end = end - timedelta(hours = toggl_utc_offset)
+
+		db_entry = Entry(
+			id 				  = entry['id'],
+			description 	  = entry['description'],
+			start 			  = start,
+			end 			  = end,
+			dur 			  = entry['dur'],
+			project 		  = entry['project'],
+			client 			  = entry['client'],
+			project_hex_color = entry['project_hex_color'],
+			utc_offset 		  = location_utc_offset,
+			user_id 		  = entry['uid']
+		)
+		db.session.add(db_entry)
+
+		tags = entry['tags']
+		for tag_name in tags:
+			db_tag = Tag.query.filter_by(tag_name=tag_name).first()
+
+			if not db_tag:
+				db_tag = Tag(
+					tag_name = tag_name
+				)
+				db.session.add(db_tag)
+
+			db_tag.entries.append(db_entry)
+				
+	db.session.commit()
+
+	return entries
+
+def delete_days_from_database(start_days_ago, end_days_ago=0):
+	start = datetime.today() - timedelta(days=start_days_ago)
+	end   = datetime.today() - timedelta(days=end_days_ago)
+
+	db_entries = Entry.query.filter(Entry.start <= end).filter(Entry.start >= start)
+
+	for entry in db_entries:
+		db.session.delete(entry)
+
+	db.session.commit()
+
+def get_entries_from_database(start = False, end = False):
+	
+	# Times are stored in database as UTC. So we need to convert the request times to UTC.
+	if start:
+		#if start.tzinfo is not None and start.tzinfo.utcoffset(start) is not None:
+		start = start.astimezone(pytz.utc)
+
+	if end:
+		#if end.tzinfo is not None and end.tzinfo.utcoffset(end) is not None:
+		end = end.astimezone(pytz.utc)
+
+	if start and end:
+		entries = Entry.query.filter(Entry.start >= start).filter(Entry.start <= end).order_by(Entry.start).all()
+	elif start:
+		entries = Entry.query.filter(Entry.start >= start).order_by(Entry.start).order_by(Entry.start).all()
+	elif end:
+		entries = Entry.query.filter(Entry.start <= end).order_by(Entry.start).order_by(Entry.start).all()
+	else:
+		entries = Entry.query.order_by(Entry.start).all()
+
+
+	apply_utc_offsets(entries)
+
+	entries = split_entries_over_midnight(entries)
+
+
+	return entries
+
+# Return a version of the entries list, where any entries which span midnight are split in two.
+def split_entries_over_midnight(entries):
+	completed_entries = []
+
+	for entry in entries:
+		
+		start = entry.start
+		end = entry.end
+
+		if start.day == end.day:
+			halves = [entry]
+		else:
+			midnight_datetime = entry.end.replace(hour=0, minute=0, second=0)
+			
+
+			duration_before = (midnight_datetime - entry.start).seconds*1000
+			entry.dur = duration_before
+
+			duration_after = (entry.end - midnight_datetime).seconds*1000
+			entry.end = midnight_datetime
+			
+
+			second_half = Entry(
+				description 	  = entry.description,
+				start 			  = midnight_datetime,
+				end 			  = end,
+				dur 			  = duration_after,
+				project 		  = entry.project,
+				client 			  = entry.client,
+				project_hex_color = entry.project_hex_color,
+				utc_offset 		  = entry.utc_offset,
+				user_id 		  = entry.user_id
+			)
+
+			halves = [entry, second_half]
+
+		for entry_half in halves:
+
+			completed_entries.append(entry_half)
+			
+	return completed_entries
+
+# Get the currently tracking entry, and add/format the required data so it matches the historic entries.
+def get_currently_tracking():
+	toggl = Toggl()
+	toggl.setAPIKey(config.api_key)
+
+	user_data = toggl.request("https://www.toggl.com/api/v8/me?with_related_data=true")
+	projects = user_data['data']['projects']
+	clients = user_data['data']['clients']
+
+	current = toggl.currentRunningTimeEntry()
+
+	if not current:
+		return False
+
+	start_string = helpers.remove_colon_from_timezone(current['start'])
+	start = helpers.timestamp_to_datetime(start_string).replace(tzinfo=None)
+	utc_now = datetime.utcnow()
+	difference = utc_now - start
+	seconds = difference.seconds
+	milliseconds = seconds*1000
+
+	start_datetime = helpers.timestamp_to_datetime(current['start'])
+	end_datetime = start_datetime + timedelta(seconds=seconds)
+	end_string = helpers.datetime_to_timestamp(end_datetime)
+
+	current['dur'] = milliseconds
+	current['end'] = end_string
+	current['project_hex_color'] = '#C8C8C8'
+	
+	if 'tags' not in current:
+		current['tags'] = []
+
+	current['project'] = 'No Project'
+	client_id = False
+
+	if 'pid' in current:
+		for project in projects:
+			if project['id'] == current['pid']:
+				current['project'] 			 = project['name']
+				current['project_hex_color'] = project['hex_color']
+				client_id = project['cid']
+				break;
+
+	for client in clients:
+		if client['id'] == client_id:
+			current['client'] = client['name']
+			break
+
+		current['client'] = 'None'
+
+	if not 'description' in current:
+		current['description'] = ''
+
+	return current
+
+# Return a list of days with entries.
+def get_days_list(loading_additional_days = False, amount = 8, start = False, end = False):
+	db_entries = get_entries_from_database(start, end)
+
+	days = sort_entries_by_day(db_entries)
+	
+	days_list = []
+	for day in days.values():
+		days_list.append(day)
+
+	days_list.reverse()
+
+	if amount:
+		if loading_additional_days:
+			return days_list[amount:]
+		else:
+			return days_list[:amount]
+	else:
+		return days_list
+
+# For each entry, adjust its start and end times such that they match the location where the entry was recorded.
+def apply_utc_offsets(entries):
+	for entry in entries:
+		new_start = entry.start + timedelta(hours=entry.utc_offset)
+		new_end = entry.end + timedelta(hours=entry.utc_offset)
+
+		entry.start = new_start
+		entry.end = new_end
+
+def sort_entries_by_day(entries):
+	sorted_by_day = {}
+
+	for entry in entries:
+
+		entry_date = entry.start.strftime('%Y-%m-%d')
+		
+		if entry_date not in sorted_by_day:
+			sorted_by_day[entry_date] = {
+				'entries': [],
+				'date': entry.start.strftime('%a %d %b, %Y')
+			}
+
+		sorted_by_day[entry_date]['entries'].append(entry)
+
+	return sorted_by_day
+
+#------------- END OF COMMON PURPOSE FUNCTIONS -----------------------------
+
+
+
+# -------------------------------------------------------------------------------------
+# ------------------------------------Timelines Page----------------------------------
+# -------------------------------------------------------------------------------------
 
 @app.route('/')
 def home_page():
@@ -124,17 +395,14 @@ def load_more():
 
 	return jsonify(render_template('day.html', data=page_data))
 
-
-@app.route('/frequency')
-def frequency_page():
-	update_database(3)
-
-	response = make_response(render_template('frequency.html'))
-
-	return response
+#------------- END OF TIMELINES PAGE -----------------------------
 
 
 
+
+# -------------------------------------------------------------------------------------
+# ------------------------------------Comparison Page----------------------------------
+# -------------------------------------------------------------------------------------
 
 @app.route('/comparison')
 def averages_page():
@@ -143,176 +411,6 @@ def averages_page():
 	response = make_response(render_template('comparison.html'))
 
 	return response
-
-def get_comparison_goals():
-	goals = []
-
-	with open ('goals.csv', 'r') as file:
-		reader = csv.DictReader(file)
-		for row in reader:
-			goals.append(row)
-
-	return goals
-
-def get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode):
-	now = datetime.now()
-	today_end = now.replace(hour=23, minute=59, second=59)
-	today_start = now.replace(hour=0, minute=0, second=0)
-	
-	today_day = now.day
-	today_hour = now.hour
-	today_minute = now.minute
-
-	current_end = now
-
-	if period_type == 'custom':
-		current_start = (now - timedelta(days=number_of_current_days-1)).replace(hour=0, minute=0, second=0)
-
-		historic_end = current_start - timedelta(seconds=1)
-		historic_start = (historic_end - timedelta(days=number_of_historic_days-1)).replace(hour=0, minute=0, second=0)
-	else:
-		if calendar_period == 'day':
-			current_start = now.replace(hour=0, minute=0, second=0)
-
-			historic_end = (current_end - timedelta(days=1)) if live_mode else (today_end - timedelta(days=1))
-			historic_start = historic_end.replace(hour=0, minute=0, second=0)
-		
-		elif calendar_period == 'week':
-			days_since_week_start = now.weekday()
-			current_start = today_start - timedelta(days=days_since_week_start)
-
-			historic_start = current_start - timedelta(days=7)
-			historic_end = (now - timedelta(days=7)) if live_mode else (historic_start + timedelta(days=6, hours=23, minutes=59, seconds=59))
-		
-		elif calendar_period == 'month':
-			previous_month = (now.month-1) or 12
-			historic_year = now.year if previous_month != 12 else now.year - 1
-
-			last_day_of_previous_month = calendar.monthrange(historic_year, previous_month)[1]
-			
-
-			current_start = today_start.replace(day=1)
-
-			historic_start = (current_start - timedelta(days=1)).replace(day=1)
-
-			if live_mode:
-				historic_end = historic_start.replace(day=min(now.day, last_day_of_previous_month), hour=now.hour, minute=now.minute)
-			else:
-				historic_end = historic_start.replace(day=last_day_of_previous_month, hour=23, minute=59, second=59)
-
-		elif calendar_period == 'quarter':
-			current_quarter = (now.month-1)//3 # First quarter is 0
-			first_month_of_current_quarter = 1 + current_quarter*3
-
-			previous_quarter = (current_quarter - 1) if current_quarter > 0 else 3
-			first_month_of_previous_quarter = 1 + previous_quarter*3
-
-			historic_year = now.year if current_quarter > previous_quarter else now.year - 1
-
-			month_of_current_quarter = (now.month-1) % 3  # First month of quarter is 0
-			equivalent_month_of_previous_quarter = first_month_of_previous_quarter + month_of_current_quarter #If we're in the 2nd month of this quarter, this will be the 2nd month of last quarter.
-			last_day_of_equivalent_month = calendar.monthrange(historic_year, equivalent_month_of_previous_quarter)[1]
-
-			last_month_of_previous_quarter = first_month_of_previous_quarter + 2
-			last_day_of_previous_quarter = calendar.monthrange(historic_year, last_month_of_previous_quarter)[1]
-
-			current_start = today_start.replace(month=first_month_of_current_quarter, day=1)
-
-			historic_start = today_start.replace(year=historic_year, month=first_month_of_previous_quarter, day=1)
-
-			if live_mode:
-				historic_end = historic_start.replace(
-					year = historic_year,
-					month = equivalent_month_of_previous_quarter,
-					day = min(now.day, equivalent_month_of_previous_quarter),
-					hour = now.hour,
-					minute = now.minute
-				)
-			else:
-				historic_end = historic_start.replace(
-					year = historic_year,
-					month = last_month_of_previous_quarter,
-					day = last_day_of_previous_quarter,
-					hour = 23,
-					minute = 59
-				)
-
-		elif calendar_period == 'half-year': # TODO: Combine this and 'quarter' logic. They should be the same except for some of the numbers.
-			current_half = (now.month-1)//6 # First half is 0
-			first_month_of_current_half = 1 + current_half*6
-
-			previous_half = 0 if (current_half == 1) else 1
-			first_month_of_previous_half = 1 + previous_half*6
-
-			historic_year = now.year if current_half > previous_half else now.year - 1
-
-			month_of_current_half = (now.month-1) % 6 # First month of half is 0
-			equivalent_month_of_previous_half = first_month_of_previous_half + month_of_current_half
-			last_day_of_equivalent_half = calendar.monthrange(historic_year, equivalent_month_of_previous_half)[1]
-
-			last_month_of_previous_half = first_month_of_previous_half + 5
-			last_day_of_previous_half = calendar.monthrange(historic_year, last_month_of_previous_half)[1]
-
-			current_start = today_start.replace(month=first_month_of_current_half, day=1)
-
-			historic_start = today_start.replace(year=historic_year, month=first_month_of_previous_half, day=1)
-
-			if live_mode:
-				historic_end = historic_start.replace(
-					year = historic_year,
-					month = equivalent_month_of_previous_half,
-					day = min(now.day, equivalent_month_of_previous_half),
-					hour = now.hour,
-					minute = now.minute
-				)
-			else:
-				historic_end = historic_start.replace(
-					year = historic_year,
-					month = last_month_of_previous_half,
-					day = last_day_of_previous_half,
-					hour = 23,
-					minute = 59
-				)
-
-		elif calendar_period == 'year':
-			current_start = today_start.replace(month=1, day=1)
-
-			historic_start = today_start.replace(year=now.year-1, month=1, day=1)
-
-			if live_mode:
-				historic_day = now.day
-				if historic_day == 29 and now.month == 2:
-					historic_day = 28 # Leap years.
-
-				historic_end = today_start.replace(
-					year = now.year - 1,
-					month = now.month,
-					day = historic_day,
-					hour = now.hour,
-					minute = now.minute
-				)
-			else:
-				historic_end = today_start.replace(
-					year = now.year - 1,
-					month = 12,
-					day = 31,
-					hour = 23,
-					minute = 59
-				)
-
-	"""
-	print('Current start: ' + str(current_start))
-	print('Current end: ' + str(current_end))
-	print('Historic start: ' + str(historic_start))
-	print('Historic end: ' + str(historic_end))
-	"""
-
-	return {
-		'current_start': current_start,
-		'current_end': current_end,
-		'historic_start': historic_start,
-		'historic_end': historic_end
-	}
 
 @app.route('/comparison_data', methods=['POST'])
 def comparison_data():
@@ -509,266 +607,198 @@ def comparison_data():
 
 	return jsonify(sorted_response)
 
+def get_comparison_goals():
+	goals = []
 
+	with open ('goals.csv', 'r') as file:
+		reader = csv.DictReader(file)
+		for row in reader:
+			goals.append(row)
 
-# -----------------------------------------------------------------------------------------------------
-# -----------------------------------------------------------------------------------------------------
-# -----------------------------------------------------------------------------------------------------
+	return goals
 
-
-def get_days_list(loading_additional_days = False, amount = 8, start = False, end = False):
-	db_entries = get_entries_from_database(start, end)
-
-	days = sort_entries_by_day(db_entries)
+def get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode):
+	now = datetime.now()
+	today_end = now.replace(hour=23, minute=59, second=59)
+	today_start = now.replace(hour=0, minute=0, second=0)
 	
-	days_list = []
-	for day in days.values():
-		days_list.append(day)
+	today_day = now.day
+	today_hour = now.hour
+	today_minute = now.minute
 
-	days_list.reverse()
+	current_end = now
 
-	if amount:
-		if loading_additional_days:
-			return days_list[amount:]
-		else:
-			return days_list[:amount]
+	if period_type == 'custom':
+		current_start = (now - timedelta(days=number_of_current_days-1)).replace(hour=0, minute=0, second=0)
+
+		historic_end = current_start - timedelta(seconds=1)
+		historic_start = (historic_end - timedelta(days=number_of_historic_days-1)).replace(hour=0, minute=0, second=0)
 	else:
-		return days_list
+		if calendar_period == 'day':
+			current_start = now.replace(hour=0, minute=0, second=0)
 
-def apply_utc_offsets(entries):
-	for entry in entries:
-		new_start = entry.start + timedelta(hours=entry.utc_offset)
-		new_end = entry.end + timedelta(hours=entry.utc_offset)
+			historic_end = (current_end - timedelta(days=1)) if live_mode else (today_end - timedelta(days=1))
+			historic_start = historic_end.replace(hour=0, minute=0, second=0)
+		
+		elif calendar_period == 'week':
+			days_since_week_start = now.weekday()
+			current_start = today_start - timedelta(days=days_since_week_start)
 
-		entry.start = new_start
-		entry.end = new_end
+			historic_start = current_start - timedelta(days=7)
+			historic_end = (now - timedelta(days=7)) if live_mode else (historic_start + timedelta(days=6, hours=23, minutes=59, seconds=59))
+		
+		elif calendar_period == 'month':
+			previous_month = (now.month-1) or 12
+			historic_year = now.year if previous_month != 12 else now.year - 1
 
-def update_database(start_days_ago, end_days_ago=0):	
-	start = datetime.today() - timedelta(days=start_days_ago)
-	end   = datetime.today() - timedelta(days=end_days_ago)
+			last_day_of_previous_month = calendar.monthrange(historic_year, previous_month)[1]
+			
 
-	request_data = {
-	    'workspace_id': config.workspace_id,
-	    'since': start,
-	    'until': end,
+			current_start = today_start.replace(day=1)
+
+			historic_start = (current_start - timedelta(days=1)).replace(day=1)
+
+			if live_mode:
+				historic_end = historic_start.replace(day=min(now.day, last_day_of_previous_month), hour=now.hour, minute=now.minute)
+			else:
+				historic_end = historic_start.replace(day=last_day_of_previous_month, hour=23, minute=59, second=59)
+
+		elif calendar_period == 'quarter':
+			current_quarter = (now.month-1)//3 # First quarter is 0
+			first_month_of_current_quarter = 1 + current_quarter*3
+
+			previous_quarter = (current_quarter - 1) if current_quarter > 0 else 3
+			first_month_of_previous_quarter = 1 + previous_quarter*3
+
+			historic_year = now.year if current_quarter > previous_quarter else now.year - 1
+
+			month_of_current_quarter = (now.month-1) % 3  # First month of quarter is 0
+			equivalent_month_of_previous_quarter = first_month_of_previous_quarter + month_of_current_quarter #If we're in the 2nd month of this quarter, this will be the 2nd month of last quarter.
+			last_day_of_equivalent_month = calendar.monthrange(historic_year, equivalent_month_of_previous_quarter)[1]
+
+			last_month_of_previous_quarter = first_month_of_previous_quarter + 2
+			last_day_of_previous_quarter = calendar.monthrange(historic_year, last_month_of_previous_quarter)[1]
+
+			current_start = today_start.replace(month=first_month_of_current_quarter, day=1)
+
+			historic_start = today_start.replace(year=historic_year, month=first_month_of_previous_quarter, day=1)
+
+			if live_mode:
+				historic_end = historic_start.replace(
+					year = historic_year,
+					month = equivalent_month_of_previous_quarter,
+					day = min(now.day, equivalent_month_of_previous_quarter),
+					hour = now.hour,
+					minute = now.minute
+				)
+			else:
+				historic_end = historic_start.replace(
+					year = historic_year,
+					month = last_month_of_previous_quarter,
+					day = last_day_of_previous_quarter,
+					hour = 23,
+					minute = 59
+				)
+
+		elif calendar_period == 'half-year': # TODO: Combine this and 'quarter' logic. They should be the same except for some of the numbers.
+			current_half = (now.month-1)//6 # First half is 0
+			first_month_of_current_half = 1 + current_half*6
+
+			previous_half = 0 if (current_half == 1) else 1
+			first_month_of_previous_half = 1 + previous_half*6
+
+			historic_year = now.year if current_half > previous_half else now.year - 1
+
+			month_of_current_half = (now.month-1) % 6 # First month of half is 0
+			equivalent_month_of_previous_half = first_month_of_previous_half + month_of_current_half
+			last_day_of_equivalent_half = calendar.monthrange(historic_year, equivalent_month_of_previous_half)[1]
+
+			last_month_of_previous_half = first_month_of_previous_half + 5
+			last_day_of_previous_half = calendar.monthrange(historic_year, last_month_of_previous_half)[1]
+
+			current_start = today_start.replace(month=first_month_of_current_half, day=1)
+
+			historic_start = today_start.replace(year=historic_year, month=first_month_of_previous_half, day=1)
+
+			if live_mode:
+				historic_end = historic_start.replace(
+					year = historic_year,
+					month = equivalent_month_of_previous_half,
+					day = min(now.day, equivalent_month_of_previous_half),
+					hour = now.hour,
+					minute = now.minute
+				)
+			else:
+				historic_end = historic_start.replace(
+					year = historic_year,
+					month = last_month_of_previous_half,
+					day = last_day_of_previous_half,
+					hour = 23,
+					minute = 59
+				)
+
+		elif calendar_period == 'year':
+			current_start = today_start.replace(month=1, day=1)
+
+			historic_start = today_start.replace(year=now.year-1, month=1, day=1)
+
+			if live_mode:
+				historic_day = now.day
+				if historic_day == 29 and now.month == 2:
+					historic_day = 28 # Leap years.
+
+				historic_end = today_start.replace(
+					year = now.year - 1,
+					month = now.month,
+					day = historic_day,
+					hour = now.hour,
+					minute = now.minute
+				)
+			else:
+				historic_end = today_start.replace(
+					year = now.year - 1,
+					month = 12,
+					day = 31,
+					hour = 23,
+					minute = 59
+				)
+
+	"""
+	print('Current start: ' + str(current_start))
+	print('Current end: ' + str(current_end))
+	print('Historic start: ' + str(historic_start))
+	print('Historic end: ' + str(historic_end))
+	"""
+
+	return {
+		'current_start': current_start,
+		'current_end': current_end,
+		'historic_start': historic_start,
+		'historic_end': historic_end
 	}
 
-	toggl = Toggl()
-	toggl.setAPIKey(config.api_key)
-
-	entries = toggl.getDetailedReportPages(request_data)['data']
-	
-	currently_tracking = get_currently_tracking()
-	if currently_tracking:
-		entries.append(currently_tracking)
-	
-	delete_days_from_database(start_days_ago, end_days_ago)
-
-	for entry in entries:
-
-		location_utc_offset = helpers.get_toggl_entry_utc_offset(entry)
-		# This is the utc offset of the location I was in when the entry was recorded.
-		
-		entry_id = entry['id']
-		
-		existing_entry = Entry.query.filter_by(id=entry_id).first()
-		
-		if existing_entry:
-			db.session.delete(existing_entry)
-
-		start = helpers.remove_colon_from_timezone(entry['start'])
-		start = helpers.timestamp_to_datetime(start)
-				
-		toggl_utc_offset = int(start.utcoffset().total_seconds()/(60*60))
-		# Toggl's values are adjusted based on whatever the current account timezone is.
-		# toggl_utc_offset is the number of hours we need to SUBTRACT from the time to get it into UTC.
-
-		start = start - timedelta(hours = toggl_utc_offset)
-
-		end = helpers.remove_colon_from_timezone(entry['end'])
-		end = helpers.timestamp_to_datetime(end)
-		end = end - timedelta(hours = toggl_utc_offset)
-
-		db_entry = Entry(
-			id 				  = entry['id'],
-			description 	  = entry['description'],
-			start 			  = start,
-			end 			  = end,
-			dur 			  = entry['dur'],
-			project 		  = entry['project'],
-			client 			  = entry['client'],
-			project_hex_color = entry['project_hex_color'],
-			utc_offset 		  = location_utc_offset,
-			user_id 		  = entry['uid']
-		)
-		db.session.add(db_entry)
-
-		tags = entry['tags']
-		for tag_name in tags:
-			db_tag = Tag.query.filter_by(tag_name=tag_name).first()
-
-			if not db_tag:
-				db_tag = Tag(
-					tag_name = tag_name
-				)
-				db.session.add(db_tag)
-
-			db_tag.entries.append(db_entry)
-				
-	db.session.commit()
-
-	return entries
-
-def delete_days_from_database(start_days_ago, end_days_ago=0):
-	start = datetime.today() - timedelta(days=start_days_ago)
-	end   = datetime.today() - timedelta(days=end_days_ago)
-
-	db_entries = Entry.query.filter(Entry.start <= end).filter(Entry.start >= start)
-
-	for entry in db_entries:
-		db.session.delete(entry)
-
-	db.session.commit()
-
-def split_entries_over_midnight(entries):
-	completed_entries = []
-
-	for entry in entries:
-		
-		start = entry.start
-		end = entry.end
-
-		if start.day == end.day:
-			halves = [entry]
-		else:
-			midnight_datetime = entry.end.replace(hour=0, minute=0, second=0)
-			
-
-			duration_before = (midnight_datetime - entry.start).seconds*1000
-			entry.dur = duration_before
-
-			duration_after = (entry.end - midnight_datetime).seconds*1000
-			entry.end = midnight_datetime
-			
-
-			second_half = Entry(
-				description 	  = entry.description,
-				start 			  = midnight_datetime,
-				end 			  = end,
-				dur 			  = duration_after,
-				project 		  = entry.project,
-				client 			  = entry.client,
-				project_hex_color = entry.project_hex_color,
-				utc_offset 		  = entry.utc_offset,
-				user_id 		  = entry.user_id
-			)
-
-			halves = [entry, second_half]
-
-		for entry_half in halves:
-
-			completed_entries.append(entry_half)
-			
-	return completed_entries
-
-def get_entries_from_database(start = False, end = False):
-	
-	# Times are stored in database as UTC. So we need to convert the request times to UTC.
-	if start:
-		#if start.tzinfo is not None and start.tzinfo.utcoffset(start) is not None:
-		start = start.astimezone(pytz.utc)
-
-	if end:
-		#if end.tzinfo is not None and end.tzinfo.utcoffset(end) is not None:
-		end = end.astimezone(pytz.utc)
-
-	if start and end:
-		entries = Entry.query.filter(Entry.start >= start).filter(Entry.start <= end).order_by(Entry.start).all()
-	elif start:
-		entries = Entry.query.filter(Entry.start >= start).order_by(Entry.start).order_by(Entry.start).all()
-	elif end:
-		entries = Entry.query.filter(Entry.start <= end).order_by(Entry.start).order_by(Entry.start).all()
-	else:
-		entries = Entry.query.order_by(Entry.start).all()
+#------------- END OF COMPARISON PAGE -----------------------------
 
 
-	apply_utc_offsets(entries)
 
-	entries = split_entries_over_midnight(entries)
+# -------------------------------------------------------------------------------------
+# ------------------------------------Frequency Page-----------------------------------
+# -------------------------------------------------------------------------------------
+
+@app.route('/frequency')
+def frequency_page():
+	update_database(3)
+
+	response = make_response(render_template('frequency.html'))
+
+	return response
+
+#------------- END OF FREQUENCY PAGE -----------------------------
 
 
-	return entries
 
-# Get the currently tracking entry, and add/format the required data so it matches the historic entries.
-def get_currently_tracking():
-	toggl = Toggl()
-	toggl.setAPIKey(config.api_key)
-
-	user_data = toggl.request("https://www.toggl.com/api/v8/me?with_related_data=true")
-	projects = user_data['data']['projects']
-	clients = user_data['data']['clients']
-
-	current = toggl.currentRunningTimeEntry()
-
-	if not current:
-		return False
-
-	start_string = helpers.remove_colon_from_timezone(current['start'])
-	start = helpers.timestamp_to_datetime(start_string).replace(tzinfo=None)
-	utc_now = datetime.utcnow()
-	difference = utc_now - start
-	seconds = difference.seconds
-	milliseconds = seconds*1000
-
-	start_datetime = helpers.timestamp_to_datetime(current['start'])
-	end_datetime = start_datetime + timedelta(seconds=seconds)
-	end_string = helpers.datetime_to_timestamp(end_datetime)
-
-	current['dur'] = milliseconds
-	current['end'] = end_string
-	current['project_hex_color'] = '#C8C8C8'
-	
-	if 'tags' not in current:
-		current['tags'] = []
-
-	current['project'] = 'No Project'
-	client_id = False
-
-	if 'pid' in current:
-		for project in projects:
-			if project['id'] == current['pid']:
-				current['project'] 			 = project['name']
-				current['project_hex_color'] = project['hex_color']
-				client_id = project['cid']
-				break;
-
-	for client in clients:
-		if client['id'] == client_id:
-			current['client'] = client['name']
-			break
-
-		current['client'] = 'None'
-
-	if not 'description' in current:
-		current['description'] = ''
-
-	return current
-
-def sort_entries_by_day(entries):
-	sorted_by_day = {}
-
-	for entry in entries:
-
-		entry_date = entry.start.strftime('%Y-%m-%d')
-		
-		if entry_date not in sorted_by_day:
-			sorted_by_day[entry_date] = {
-				'entries': [],
-				'date': entry.start.strftime('%a %d %b, %Y')
-			}
-
-		sorted_by_day[entry_date]['entries'].append(entry)
-
-	return sorted_by_day
+# -----------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------------
 
 app.run(host='0.0.0.0', port=config.port, debug=True)

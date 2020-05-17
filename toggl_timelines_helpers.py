@@ -192,14 +192,6 @@ def get_current_datetime_in_user_timezone():
 
 	return user_time
 
-def get_client_hex_color(client):
-	hex_color_config = config.client_colors
-
-	if client in hex_color_config.keys():
-		return hex_color_config[client]
-	else:
-		return '#a6a6a6'
-
 def display_heart():
 	system_username = getpass.getuser()
 
