@@ -403,7 +403,7 @@ def load_more():
 # -------------------------------------------------------------------------------------
 
 @app.route('/comparison')
-def averages_page():
+def comparison_page():
 	update_database(3)
 
 	response = make_response(render_template('comparison.html'))
@@ -427,15 +427,16 @@ def comparison_data():
 	# TODO: Write new function to get this from our projects table instead of API request.
 	project_data = helpers.get_project_data(comparison_mode=True)
 
+	goals_projects = []
+	goals = {}
+
 	if period_type == 'goals':
 		calendar_period = request.json.get('goals_period')
 		live_mode_goals = request.json.get('live_mode_goals')
 
 		goals_raw = get_comparison_goals()
-		goals_projects = []
 		goal_tags = []
-		goals = {}
-
+		
 		for goal in goals_raw:
 			goals_projects.append(goal['name'])
 			goal_name = goal['name']
@@ -454,14 +455,14 @@ def comparison_data():
 			goal_period = goal['time_period']
 			goal_value_in_seconds = int(goal['goal_value']) * 60
 
-			day = 60*60*24
+			seconds_in_day = 86400
 			now = datetime.now()
 
 			seconds = {
-				'day': day,
-				'week': day * 7,
-				'month': day * calendar.monthrange(now.year, now.month)[1],
-				'year': day * (366 if (calendar.isleap(now.year)) else 365)
+				'day': seconds_in_day,
+				'week': seconds_in_day * 7,
+				'month': seconds_in_day * calendar.monthrange(now.year, now.month)[1],
+				'year': seconds_in_day * (366 if (calendar.isleap(now.year)) else 365)
 			}
 
 			period_ratio 				= seconds[calendar_period] / seconds[goal_period]
@@ -493,8 +494,6 @@ def comparison_data():
 		amount = False
 	)
 
-	number_of_current_days = len(current_days)
-
 
 	if period_type != "goals": # Don't need to do historic days work if we're in goals mode.
 
@@ -504,106 +503,106 @@ def comparison_data():
 			amount = False
 		)
 
-		number_of_historic_days = len(historic_days)
+		# Assign tracked time to historic data.
+		sum_category_durations(historic_days, project_data, period_type, historic=True, weekdays=target_weekdays)
+	else:
+		historic_days = []
 
-		#print('Historic Days: ')
-		for day in historic_days:
 
-			#print(day['date'])
-			entries = day['entries']
-			for entry in entries:
+	calculate_historic_averages(category_data=project_data,
+								view_type=period_type,
+								historic_days=historic_days,
+								current_days=current_days,
+								goals_projects=goals_projects,
+								goals=goals)
+
+	# Assign tracked time to current data.
+	sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
+
+	response = calculate_ratios(project_data, period_type, goals)
+
+	sorted_response = sorted(response, key=lambda k: k[sort_type])
+
+	return jsonify(sorted_response)
+
+def sum_category_durations(days, categories, view_type, historic=False, weekdays=[]):
+	current_or_historic_tracked = 'historic_tracked' if historic else 'current_tracked'
+
+	for day in days:
+		entries = day['entries']
+		for entry in entries:
+	
+			if entry.project in (None, 'No Project'):
+				continue
+
+			weekday = str(entry.start.weekday())
+			if weekday not in weekdays:
+				continue
+
+			project = entry.project
+
+			if historic and day == days[0] and entry == entries[-1]: # If this is the most recent historic entry...
+				now = helpers.get_current_datetime_in_user_timezone()
+				duration = (entry.start.replace(hour=now.hour, minute=now.minute) - entry.start).seconds #...Find duration based on how much of entry is complete.
+			else:
+				duration = entry.dur/1000
+
+			if not historic and view_type == 'goals':
+				tags = entry.tags
+				if tags:
+					for tag in tags:
+						if tag.tag_name in categories:
+							categories[tag.tag_name]['current_tracked'] += duration
+
+			categories[project][current_or_historic_tracked] += duration
+
+# Calculate the average time spent on various projects in a given historic period. (Or, assign goal time if in goals mode)
+def calculate_historic_averages(category_data, view_type, historic_days, current_days, goals_projects=[], goals=[]):
+	for project in category_data:
+
+		seconds = category_data[project]['historic_tracked']
 		
-				if entry.project == None:
-					continue
+		if view_type == 'custom':
+			
+			number_of_historic_days = len(historic_days)
+			number_of_current_days = len(current_days)
 
-				weekday = str(entry.start.weekday())
-				if weekday not in target_weekdays:
-					continue
-
-				project = entry.project
-
-				if day == historic_days[0] and entry == entries[-1]: # If this is the most recent historic entry...
-					now = helpers.get_current_datetime_in_user_timezone()
-					duration = (entry.start.replace(hour=now.hour, minute=now.minute) - entry.start).seconds #...Find duration based on how much of entry is complete.
-				else:
-					duration = entry.dur/1000
-
-				project_data[project]['historic_tracked'] += duration
-
-
-	for project in project_data:
-
-		seconds = project_data[project]['historic_tracked']
-		
-		if period_type == 'custom':
 			average = (seconds/number_of_historic_days)*number_of_current_days	
-		elif period_type == 'calendar':
+		elif view_type == 'calendar':
 			average = seconds # When using calendar mode, we aren't actually taking an average, but just the amount of time tracked in that period.
-		elif period_type == 'goals':
+		elif view_type == 'goals':
 			if not project in goals_projects: # Ignore projects which don't have goals.
 				continue
 			average = goals[project]
 		
-		project_data[project]['average'] = average
-	
-	#print('Current Days: ')
-	for day in current_days:
-		#print(day['date'])
-		entries = day['entries']
-		for entry in entries:
+		category_data[project]['average'] = average
 
-			if entry.project in (None, 'No Project'): # Skips untracked time
-				continue
-
-			weekday = str(entry.start.weekday())
-			if weekday not in target_weekdays:
-				continue
-
-			project = entry.project
-			duration = entry.dur/1000
-			color = entry.project_hex_color
-
-			project_data[project]['current_tracked'] += duration
-
-			tags = entry.tags
-			if period_type == 'goals' and tags:
-				for tag in tags:
-					if tag.tag_name in project_data:
-						project_data[tag.tag_name]['current_tracked'] += duration
-
+# Calculate how the ratio of time tracked in a current vs historic period. Return as a list.
+def calculate_ratios(category_data, view_type, goals=[]):
 	response = []
-	for project in project_data:
+	for project in category_data:
 		
-		current_tracked = project_data[project]['current_tracked']
+		current_tracked = category_data[project]['current_tracked']
 
-		average = project_data[project]['average']
+		average = category_data[project]['average']
 
-		project_data[project]['difference'] = current_tracked - average
+		category_data[project]['difference'] = current_tracked - average
 
 		if average == 0:
 			ratio = 100
 		else:
 			ratio = current_tracked/average
 
-		project_data[project]['ratio'] = ratio
+		category_data[project]['ratio'] = ratio
 
-		if current_tracked > 0 or period_type == 'goals': # Don't include projects with no recently tracked time.
+		if current_tracked > 0 or view_type == 'goals': # Don't include projects with no recently tracked time.
 			
-			if period_type == 'goals' and project not in goals.keys():
+			if view_type == 'goals' and project not in goals.keys():
 				continue # Don't include projects which don't have goals.
 
-			response.append(project_data[project])
+			response.append(category_data[project])
 
-
-	sorted_response = sorted(response, key=lambda k: k[sort_type])
-
-	"""
-	for project in sorted_response:
-		print(project)
-		print('')
-	"""
-
-	return jsonify(sorted_response)
+	return response
 
 def get_comparison_goals():
 	goals = []
