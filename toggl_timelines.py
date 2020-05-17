@@ -78,6 +78,10 @@ class Tag(db.Model):
 
 
 
+
+
+
+
 @app.route('/')
 def home_page():
 	update_database(3)
@@ -411,20 +415,20 @@ def comparison_data():
 			entries = day['entries']
 			for entry in entries:
 		
-				if not 'project' in entry.keys() or entry['project'] == None:
+				if entry.project == None:
 					continue
 
-				weekday = str(entry['start'].weekday())
+				weekday = str(entry.start.weekday())
 				if weekday not in target_weekdays:
 					continue
 
-				project = entry['project']
+				project = entry.project
 
 				if day == historic_days[0] and entry == entries[-1]: # If this is the most recent historic entry...
 					now = helpers.get_current_datetime_in_user_timezone()
-					duration = (entry['start'].replace(hour=now.hour, minute=now.minute) - entry['start']).seconds #...Find duration based on how much of entry is complete.
+					duration = (entry.start.replace(hour=now.hour, minute=now.minute) - entry.start).seconds #...Find duration based on how much of entry is complete.
 				else:
-					duration = entry['dur']/1000
+					duration = entry.dur/1000
 
 				project_data[project]['historic_tracked'] += duration
 
@@ -450,20 +454,20 @@ def comparison_data():
 		entries = day['entries']
 		for entry in entries:
 
-			if not 'project' in entry.keys() or entry['project'] in (None, 'No Project'): # Skips untracked time
+			if entry.project in (None, 'No Project'): # Skips untracked time
 				continue
 
-			weekday = str(entry['start'].weekday())
+			weekday = str(entry.start.weekday())
 			if weekday not in target_weekdays:
 				continue
 
-			project = entry['project']
-			duration = entry['dur']/1000
-			color = entry['project_hex_color']
+			project = entry.project
+			duration = entry.dur/1000
+			color = entry.project_hex_color
 
 			project_data[project]['current_tracked'] += duration
 
-			tags = entry['tags']
+			tags = entry.tags
 			if period_type == 'goals' and tags:
 
 				for tag in tags:
@@ -513,11 +517,6 @@ def comparison_data():
 
 def get_days_list(loading_additional_days = False, amount = 8, start = False, end = False):
 	db_entries = get_entries_from_database(start, end)
-
-	#assign_day_percentage(db_entries)
-	#assign_start_percentage(db_entries)
-	#assign_entry_tooltip(db_entries)
-	
 
 	days = sort_entries_by_day(db_entries)
 	
