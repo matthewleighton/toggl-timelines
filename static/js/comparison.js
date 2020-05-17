@@ -52,6 +52,7 @@ function submit_comparison_form(reload=false) {
 		"dataType": "json",
 		"data": JSON.stringify(serialized_data),
 		success: function(response) {
+			console.log(response)
 			create_graph(response, sort_type)
 		}
 	})
@@ -288,13 +289,15 @@ function get_x_axis_tick_values(data, sort_type, width) {
 		if (total_ticks < max_allowed_ticks) {
 			step = total_ticks / max_allowed_ticks
 			step = Math.round(step / 0.25) * 0.25
-		}		
-		
+		}
+
+		step = (step != 0) ? step : 0.25
 
 		ticks = [0]
 
 		for (var i = -step; i >= negative_hours; i -= step) {
 			tick_value = i * 3600
+
 			if (tick_value > lowest - 3600/4) {
 				ticks.push(tick_value)
 			}
@@ -302,6 +305,7 @@ function get_x_axis_tick_values(data, sort_type, width) {
 
 		for (var i = step; i <= positive_hours; i += step) {
 			tick_value = i * 3600
+			
 			if (tick_value < highest + 3600/4) {
 				ticks.push(tick_value)
 			}
@@ -336,7 +340,6 @@ function get_upper_x_domain_bound(data, sort_type) {
 	} else if (sort_type == 'difference') {
 		return max_value + 3600/4
 	}
-
 	
 }
 
@@ -384,8 +387,6 @@ function create_graph(data, sort_type) {
     	.domain(d3.range(data.length))
     	.rangeRound([margin.top, height - margin.bottom])
     	.padding(0.1)
-
-
 	  
 	var canvas = d3.select("#graph_container")
 				.append("svg")
