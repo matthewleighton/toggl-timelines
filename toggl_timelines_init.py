@@ -36,4 +36,4 @@ def populate_database():
 
 db.create_all()
 
-populate_database()
+#populate_database()

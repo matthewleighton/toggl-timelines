@@ -32,7 +32,10 @@ class Entry(db.Model):
 	start = db.Column(db.DateTime(timezone=True))
 	end = db.Column(db.DateTime(timezone=True))
 	dur = db.Column(db.Integer)
-	project = db.Column(db.String(50))
+	#project = db.Column(db.String(50))
+
+	project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
+
 	client = db.Column(db.String(50))
 	project_hex_color = db.Column(db.String(7))
 	tags = db.relationship('Tag', secondary=tags, backref=db.backref('entries', lazy=True), lazy='select')
@@ -46,7 +49,7 @@ class Entry(db.Model):
 		start_time = self.start.strftime('%H:%M')
 		end_time = self.end.strftime('%H:%M')
 
-		project = self.project
+		project = self.get_project_name()
 		description = self.description
 		duration = helpers.format_duration(self.dur)
 		client = self.client
@@ -71,6 +74,30 @@ class Entry(db.Model):
 			return hex_color_config[self.client]
 		else:
 			return '#a6a6a6'
+
+	def get_project_color(self):
+		project = self.project
+
+		if project:
+			return project.project_hex_color
+		else:
+			return '#C8C8C8'
+
+	def get_project_name(self):
+		project = self.project
+
+		if project:
+			return project.project_name
+		else:
+			return 'No Project'
+
+
+class Project(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	project_name = db.Column(db.String(50))
+	project_hex_color = db.Column(db.String(7))
+	entries = db.relationship('Entry', backref='project')
+
 
 
 class Tag(db.Model):
@@ -135,19 +162,38 @@ def update_database(start_days_ago, end_days_ago=0):
 		end = helpers.timestamp_to_datetime(end)
 		end = end - timedelta(hours = toggl_utc_offset)
 
+
+		if entry['project']:
+			db_project = Project.query.filter_by(id=entry['pid']).first()
+			if not db_project:
+				db_project = Project(
+					id = entry['pid'],
+					project_name = entry['project'],
+					project_hex_color = entry['project_hex_color']
+				)
+
+				db.session.add(db_project)
+		else:
+			db_project = False
+
+
 		db_entry = Entry(
 			id 				  = entry['id'],
 			description 	  = entry['description'],
 			start 			  = start,
 			end 			  = end,
 			dur 			  = entry['dur'],
-			project 		  = entry['project'],
+			project_id		  = entry['pid'],
 			client 			  = entry['client'],
-			project_hex_color = entry['project_hex_color'],
 			utc_offset 		  = location_utc_offset,
 			user_id 		  = entry['uid']
 		)
+
+		if db_project:
+			db_entry.project = db_project	
+
 		db.session.add(db_entry)
+
 
 		tags = entry['tags']
 		for tag_name in tags:
@@ -539,7 +585,7 @@ def sum_category_durations(days, categories, view_type, historic=False, weekdays
 			if weekday not in weekdays:
 				continue
 
-			project = entry.project
+			project_name = entry.get_project_name()
 
 			if historic and day == days[0] and entry == entries[-1]: # If this is the most recent historic entry...
 				now = helpers.get_current_datetime_in_user_timezone()
@@ -554,13 +600,13 @@ def sum_category_durations(days, categories, view_type, historic=False, weekdays
 						if tag.tag_name in categories:
 							categories[tag.tag_name]['current_tracked'] += duration
 
-			categories[project][current_or_historic_tracked] += duration
+			categories[project_name][current_or_historic_tracked] += duration
 
 # Calculate the average time spent on various projects in a given historic period. (Or, assign goal time if in goals mode)
 def calculate_historic_averages(category_data, view_type, historic_days, current_days, goals_projects=[], goals=[]):
-	for project in category_data:
+	for project_name in category_data:
 
-		seconds = category_data[project]['historic_tracked']
+		seconds = category_data[project_name]['historic_tracked']
 		
 		if view_type == 'custom':
 			
@@ -571,36 +617,36 @@ def calculate_historic_averages(category_data, view_type, historic_days, current
 		elif view_type == 'calendar':
 			average = seconds # When using calendar mode, we aren't actually taking an average, but just the amount of time tracked in that period.
 		elif view_type == 'goals':
-			if not project in goals_projects: # Ignore projects which don't have goals.
+			if not project_name in goals_projects: # Ignore projects which don't have goals.
 				continue
-			average = goals[project]
+			average = goals[project_name]
 		
-		category_data[project]['average'] = average
+		category_data[project_name]['average'] = average
 
 # Calculate how the ratio of time tracked in a current vs historic period. Return as a list.
 def calculate_ratios(category_data, view_type, goals=[]):
 	response = []
-	for project in category_data:
+	for project_name in category_data:
 		
-		current_tracked = category_data[project]['current_tracked']
+		current_tracked = category_data[project_name]['current_tracked']
 
-		average = category_data[project]['average']
+		average = category_data[project_name]['average']
 
-		category_data[project]['difference'] = current_tracked - average
+		category_data[project_name]['difference'] = current_tracked - average
 
 		if average == 0:
 			ratio = 100
 		else:
 			ratio = current_tracked/average
 
-		category_data[project]['ratio'] = ratio
+		category_data[project_name]['ratio'] = ratio
 
 		if current_tracked > 0 or view_type == 'goals': # Don't include projects with no recently tracked time.
 			
-			if view_type == 'goals' and project not in goals.keys():
+			if view_type == 'goals' and project_name not in goals.keys():
 				continue # Don't include projects which don't have goals.
 
-			response.append(category_data[project])
+			response.append(category_data[project_name])
 
 	return response
 
