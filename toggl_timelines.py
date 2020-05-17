@@ -483,14 +483,13 @@ def comparison_data():
 	if reload_data:
 		update_database(1)
 
-	live_mode_calendar 		= bool(request.json.get('live_mode_calendar'))
+	live_mode 				= bool(request.json.get('live_mode_calendar'))
 	number_of_current_days  = int(request.json.get('timeframe'))
 	number_of_historic_days = int(request.json.get('datarange'))
 	target_weekdays 		= request.json.get('weekdays')
 	sort_type 				= request.json.get('sort_type')
 	period_type 			= request.json.get('period_type')
 
-	# TODO: Write new function to get this from our projects table instead of API request.
 	project_data = get_project_data(comparison_mode=True)
 
 	goals_projects = []
@@ -536,7 +535,7 @@ def comparison_data():
 
 			if live_mode_goals: # If live mode, reduce the goal relative to how much of the period is over.
 								# E.g. if we're halfway through a day, the daily goal is half.
-				period_completion = helpers.get_period_completion_ratio(calendar_period, goal['working_time_start'], goal['working_time_end'])
+				period_completion = get_period_completion_ratio(calendar_period, goal['working_time_start'], goal['working_time_end'])
 
 				if period_completion == 0: # Don't show projects which have goals currently requiring 0 time.
 										   # i.e. working hours haven't started.
@@ -552,7 +551,7 @@ def comparison_data():
 	if type(target_weekdays) is not list:
 		target_weekdays = [target_weekdays]
 
-	start_end_values = get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode_calendar)
+	start_end_values = get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode)
 
 	current_days = get_days_list(
 		start=start_end_values['current_start'],
@@ -570,7 +569,7 @@ def comparison_data():
 		)
 
 		# Assign tracked time to historic data.
-		sum_category_durations(historic_days, project_data, period_type, historic=True, weekdays=target_weekdays)
+		sum_category_durations(historic_days, project_data, period_type, historic=True, live_mode=live_mode, weekdays=target_weekdays)
 	else:
 		historic_days = []
 
@@ -591,7 +590,7 @@ def comparison_data():
 
 	return jsonify(sorted_response)
 
-def sum_category_durations(days, categories, view_type, historic=False, weekdays=[]):
+def sum_category_durations(days, categories, view_type, historic=False, live_mode=False, weekdays=[]):
 	current_or_historic_tracked = 'historic_tracked' if historic else 'current_tracked'
 
 	for day in days:
@@ -607,7 +606,7 @@ def sum_category_durations(days, categories, view_type, historic=False, weekdays
 
 			project_name = entry.get_project_name()
 
-			if historic and day == days[0] and entry == entries[-1]: # If this is the most recent historic entry...
+			if historic and live_mode and day == days[0] and entry == entries[-1]: # If this is the most recent historic entry...
 				now = helpers.get_current_datetime_in_user_timezone()
 				duration = (entry.start.replace(hour=now.hour, minute=now.minute) - entry.start).seconds #...Find duration based on how much of entry is complete.
 			else:
@@ -621,6 +620,71 @@ def sum_category_durations(days, categories, view_type, historic=False, weekdays
 							categories[tag.tag_name]['current_tracked'] += duration
 
 			categories[project_name][current_or_historic_tracked] += duration
+
+# Get a ratio (0 to 1) describing how much a certain period of time (e.g. today/this week/month/year) is complete/over.
+def get_period_completion_ratio(period, working_time_start=False, working_time_end=False):
+	now = helpers.get_current_datetime_in_user_timezone()
+	
+	hour_of_day = now.hour
+	minute_of_hour = now.minute
+
+	#------ Figuring out how long a workday is based on the start and end times.
+	if working_time_start:
+		dt = datetime.strptime(working_time_start, '%H:%M')
+		work_start_datetime = now.replace(hour=dt.hour, minute=dt.minute)
+	else:
+		work_start_datetime = now.replace(hour=0, minute=0, second=0)
+
+	if working_time_end:
+		dt = datetime.strptime(working_time_end, '%H:%M')
+		work_end_datetime = now.replace(hour=dt.hour, minute=dt.minute)
+	else:
+		work_end_datetime = now.replace(hour=23, minute=59, second=59) + timedelta(seconds=1)
+
+	if now > work_start_datetime: # If work day has started...
+		worked_until_today = min(now, work_end_datetime)
+	else:
+		worked_until_today = work_start_datetime
+
+	minutes_complete_today = (worked_until_today - work_start_datetime).seconds/60
+
+	minutes_in_a_day = (work_end_datetime - work_start_datetime).seconds/60
+	if minutes_in_a_day == 0: # Fixing weird case of above line returning 0.
+		minutes_in_a_day = 60*24
+
+
+	#------ Now figuring out how much of the workday is complete.
+	if period == 'day':
+		completion_ratio = minutes_complete_today / minutes_in_a_day
+
+	elif period == 'week':
+		weekday = now.weekday()
+
+		minutes_complete_this_week = weekday * minutes_in_a_day + minutes_complete_today
+		minutes_in_a_week = minutes_in_a_day * 7
+
+		completion_ratio = minutes_complete_this_week / minutes_in_a_week
+
+	elif period == 'month':
+		days_complete_this_month = now.day - 1
+
+		minutes_complete_this_week = minutes_in_a_day * days_complete_this_month + minutes_complete_today
+
+		days_in_this_month = calendar.monthrange(now.year, now.month)[1]
+		minutes_in_this_month = minutes_in_a_day * days_in_this_month
+
+		completion_ratio = minutes_complete_this_week / minutes_in_this_month
+
+	elif period == 'year':
+		days_complete_this_year = datetime.now().timetuple().tm_yday - 1
+		minutes_complete_this_year = minutes_in_a_day * days_complete_this_year + minutes_complete_today
+
+		days_this_year = 366 if (calendar.isleap(now.year)) else 365
+		minutes_in_this_year = days_this_year * minutes_in_a_day
+
+		completion_ratio = minutes_complete_this_year / minutes_in_this_year
+
+	return completion_ratio
 
 # Calculate the average time spent on various projects in a given historic period. (Or, assign goal time if in goals mode)
 def calculate_historic_averages(category_data, view_type, historic_days, current_days, goals_projects=[], goals=[]):

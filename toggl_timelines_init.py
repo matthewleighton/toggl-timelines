@@ -1,10 +1,8 @@
-first_init = True
 import csv, pytz, time
 from datetime import datetime, date, timedelta
 
 import toggl_timelines as toggl_timelines
 from toggl_timelines import db, Entry
-
 
 
 def populate_database():
@@ -36,4 +34,4 @@ def populate_database():
 
 db.create_all()
 
-#populate_database()
+populate_database()
