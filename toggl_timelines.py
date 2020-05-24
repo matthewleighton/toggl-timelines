@@ -2,6 +2,7 @@ from datetime import datetime, date, time, timedelta
 import calendar
 import csv
 import pytz
+import math
 
 import toggl_timelines_config as config
 
@@ -924,11 +925,56 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 
 @app.route('/frequency')
 def frequency_page():
-	update_database(3)
+	update_database(1)
 
-	response = make_response(render_template('frequency.html'))
+	response = make_response(render_template('frequency.html'))	
 
 	return response
+
+@app.route('/frequency_data', methods=['POST'])
+def frequency_data():
+	end_datetime = datetime.now()
+
+	#start_datetime = end_datetime.replace(month=1, day=1, hour=0, minute=0, second=0)
+
+	start_datetime = end_datetime - timedelta(days=5)
+
+	entries = get_entries_from_database(start=start_datetime, end=end_datetime)
+	#print(entries)
+
+	day_minutes_list = get_day_minutes_list()
+
+	for entry in entries:
+		duration_minutes = math.ceil(entry.dur / 60000)
+		target_minute = get_minute_of_day(entry.start)
+
+		i = 0
+		while i <= duration_minutes:
+			day_minutes_list[target_minute] += 1
+			target_minute += 1
+			i += 1
+
+	data = {
+		'all': day_minutes_list
+	}
+
+	return jsonify(data)
+
+# Return a dictionary with minutes from 0 to 86399, each with a value of 0.
+def get_day_minutes_list():
+	minutes_list = list(range(0, 1440))
+
+	minutes_dictionary = dict.fromkeys(minutes_list, 0)
+
+	return minutes_dictionary
+
+def get_minute_of_day(dt):
+	hour = dt.hour
+	minute = dt.minute
+
+	minute_of_day = 60*hour + minute
+
+	return minute_of_day
 
 #------------- END OF FREQUENCY PAGE -----------------------------
 
