@@ -6,39 +6,30 @@
 
 	    <div class='container main_container'>
 
-	    	<div class='vertical_line' id='current_time_marker'></div>
+	    	<div class='timeline_container'>
+	    		<div class='vertical_line' id='current_time_marker'></div>
 
-	    	<div class='row time_marker_container fixed-top'>
-	    		{%for time in data.times%}
-	    			<div class="time_marker">
-	    				{{time}}
-	    			</div>
-	    		{%endfor%}
-	    		<span class="timelines_reload">&#x21bb;</span>
+		    	<div class='row time_marker_container fixed-top'>
+		    		{%for time in data.times%}
+		    			<div class="time_marker">
+		    				{{time}}
+		    			</div>
+		    		{%endfor%}
+		    		<span class="timelines_reload">&#x21bb;</span>
+		    	</div>
+
+		    	{% include "day.html" %}
 	    	</div>
 
-	    	{% include "day.html" %}
-
-	    	<!--<div class='row'>
-	    		{%for entry in data.entries%}
-
-					<div class='{{entry.class}}' style="background-color:{{entry.project_hex_color}}; width:{{entry.day_percentage}}%;">
-						<span>‏‏‎&#32</span>
-					</div>
-
-
-				{%endfor%}
-	    	</div>-->
-
-	    	<div class="text-center"> 
-    			<button type="button" class="btn btn-primary" id='load_more'>Load More</button>
+	    	<div class="text-center load_more_container"> 
+				<button type="button" class="btn btn-primary load_more" id='load_all'>Load All</button>
+				<button type="button" class="btn btn-primary load_more" id='load_week'>Load One Week</button>
 		    	<div id='loading_div'>
 		    		{% include "loading.html" %}
 		    	</div>
 			</div>
-
-	    	
 		</div>
+
 
 		<script src="{{ url_for('static', filename='js/timelines.js') }}"></script>
 

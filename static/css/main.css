@@ -99,7 +99,7 @@ body {
 
 .vertical_line {
 	border-left: 3px dotted black;
-	height: 100%;
+	height: calc(100% - 50px);
 	position: absolute;
 	top: 0;
 	left: 200%;
@@ -121,8 +121,13 @@ body {
                                   supported by Chrome, Opera and Firefox */
 }
 
-#load_more {
-	margin-top: 25px;
+.load_more_container {
+  margin-top: 25px;
+  margin-bottom: 150px;
+}
+
+.load_more {
+	
 }
 
 .timelines_reload {

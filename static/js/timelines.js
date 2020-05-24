@@ -1,3 +1,6 @@
+var start_days_ago = 14
+var end_days_ago = 7
+
 function get_day_percentage() {
 	var now  = new Date()
 		then = new Date(
@@ -101,7 +104,6 @@ function assign_listeners() {
 
 	// Selecting Projects
 	$('.tracked_time').on('click', function(e){
-		console.log('CLICK!')
 		entry_clicks++
 		clicked_project = $(this).data('project')
 		clicked_client = $(this).data('client')
@@ -183,66 +185,6 @@ function assign_listeners() {
 		e.preventDefault()
 	})
 
-	/*
-	// Move date labels if necessary, so they aren't covered by entries shortly after midnight.
-	row = 1
-	$('.day_row').each(function() {
-		total_percentage = 0
-		early_tracked_entry = false
-
-
-
-		date_element = $(this).children().first()
-		number_of_children = $(this).children().length
-
-		child_number = 1
-		corrected_date_position = false
-		$(this).children('.track_block').each(function() {
-			previous_percentage = total_percentage
-
-			additional_percentage = $(this).data('percentage')
-
-			if(typeof additional_percentage == 'string'){
-				additional_percentage = parseInt(additional_percentage)
-			}
-
-			total_percentage += additional_percentage
-			
-			if($(this).hasClass('tracked_time')){
-				early_tracked_entry = true
-			}
-
-			if(!corrected_date_position && total_percentage > 8) { // (Date labels cover about 8% of the width).
-				if(early_tracked_entry) {
-					
-					safe_position = (child_number == 1) ? total_percentage : previous_percentage
-
-
-					safe_position += 0.5
-
-					date_element.css('left', safe_position + '%')
-				}
-				corrected_date_position = true
-
-				//return false
-				//The section below is to fix an issue of days reaching percentages higher than 100, and final items overflowing to next row. If I can figure out how to fix it via css, that would be better. Then I can uncomment this line to shorten the amount looped.
-			}
-
-
-			if(child_number == number_of_children-1 && row > 1) {	
-				overflow_percentage = total_percentage - 100
-				current_element_percentage = $(this).data('percentage')
-				new_element_percentage = current_element_percentage - overflow_percentage - 0.03
-				date = $(this).data('date')
-
-				$(this).css('width', new_element_percentage + '%')
-			}
-			child_number += 1
-		})
-		row += 1
-	})
-	*/
-
 }
 
 function remove_listeners() {
@@ -268,23 +210,45 @@ $(document).ready(function(){
 		})
 	})
 	
-	$('#load_more').click(function() {
-		data = {reload: false}
+	$('.load_more').click(function() {
+		load_all = $(this).attr('id') == 'load_all' ? true : false
+		
+		if (load_all) {
+			start_days_ago = false
+		}
+
+		data = {
+			reload: false,
+			start_days_ago: start_days_ago,
+			end_days_ago: end_days_ago
+		}
 
 		$.ajax($SCRIPT_ROOT + '/load_more',{
 			'type': 'POST',
 			"contentType": "application/json",
 			'data': JSON.stringify(data),
 			'beforeSend': function() {
-				$('#load_more').hide()
-				$('#loading_div').show()
+				if (load_all) {
+					$('.load_more').hide()
+					$('#loading_div').show()
+				}
+				
 			},
 			'complete': function() {
 				$('#loading_div').hide()
 			}
 		}).done(function(data) {
-			$('.main_container').append(data)
-			$('#load_more').hide()
+			$('.timeline_container').append(data)
+			
+			if (load_all) {
+				$('#load_more').hide()
+			}
+
+			if (!load_all) {
+				start_days_ago += 7
+				end_days_ago += 7
+			}
+
 			remove_listeners()
 			assign_listeners()
 		})

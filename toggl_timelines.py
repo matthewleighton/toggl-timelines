@@ -440,6 +440,9 @@ def home_page():
 def load_more():
 	reloading = request.json.get('reload')
 
+	start_days_ago = request.json.get('start_days_ago')
+	end_days_ago = request.json.get('end_days_ago')
+
 	if reloading:
 		update_database(1)
 
@@ -447,8 +450,13 @@ def load_more():
 		end = False
 		
 	else:
-		start = False
-		end =datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=initial_timelines_page_load_amount)
+		
+		if start_days_ago:
+			start = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=start_days_ago)
+		else:
+			start = False			
+
+		end = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=end_days_ago)
 
 	displayed_days = get_days_list(start=start, end=end)
 
