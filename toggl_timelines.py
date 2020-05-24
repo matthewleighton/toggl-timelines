@@ -507,13 +507,12 @@ def comparison_data():
 		live_mode_goals = request.json.get('live_mode_goals')
 
 		goals_raw = get_comparison_goals()
-		goal_tags = []
 		
 		for goal in goals_raw:
 			goals_projects.append(goal['name'])
 			goal_name = goal['name']
 
-			if goal['type'] == 'tag':
+			if goal['type']  in ('tag', 'client'):
 				project_data[goal_name] = {
 					'historic_tracked': 0,
 					'current_tracked': 0,
@@ -625,6 +624,10 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 					for tag in tags:
 						if tag.tag_name in categories:
 							categories[tag.tag_name]['current_tracked'] += duration
+
+				if entry.client in categories:
+					print(entry.client)
+					categories[entry.client]['current_tracked'] += duration
 
 			categories[project_name][current_or_historic_tracked] += duration
 
