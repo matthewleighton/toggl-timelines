@@ -176,14 +176,12 @@ def update_database(start_days_ago, end_days_ago=0):
 		else:
 			db_project = False
 
-
 		db_entry = Entry(
 			id 				  = entry['id'],
 			description 	  = entry['description'],
 			start 			  = start,
 			end 			  = end,
 			dur 			  = entry['dur'],
-			project_id		  = entry['pid'],
 			client 			  = entry['client'],
 			utc_offset 		  = location_utc_offset,
 			user_id 		  = entry['uid']
@@ -324,7 +322,7 @@ def get_currently_tracking():
 	if 'tags' not in current:
 		current['tags'] = []
 
-	current['project'] = 'No Project'
+	current['project'] = None
 	client_id = False
 
 	if 'pid' in current:
@@ -332,7 +330,8 @@ def get_currently_tracking():
 			if project['id'] == current['pid']:
 				current['project'] 			 = project['name']
 				current['project_hex_color'] = project['hex_color']
-				client_id = project['cid']
+
+				client_id = project.get('cid')
 				break;
 
 	for client in clients:
@@ -340,7 +339,7 @@ def get_currently_tracking():
 			current['client'] = client['name']
 			break
 
-		current['client'] = 'None'
+		current['client'] = None
 
 	if not 'description' in current:
 		current['description'] = ''
