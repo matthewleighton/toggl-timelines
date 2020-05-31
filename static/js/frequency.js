@@ -75,7 +75,7 @@ function create_frequency_graph(data) {
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
 
 	var line = d3.line()
-					.x(function(d, i){console.log(i);return x(i)})
+					.x(function(d, i){return x(i)})
 					.y(function(d){return y(d)});
 
 	svg.append('path')

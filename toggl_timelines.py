@@ -954,7 +954,7 @@ def frequency_data():
 
 	#start_datetime = end_datetime.replace(month=1, day=1, hour=0, minute=0, second=0)
 
-	start_datetime = end_datetime - timedelta(days=70)
+	start_datetime = end_datetime - timedelta(days=365*3)
 
 	entries = get_entries_from_database(start=start_datetime, end=end_datetime)
 	#print(entries)
@@ -965,10 +965,18 @@ def frequency_data():
 		duration_minutes = math.ceil(entry.dur / 60000)
 		target_minute = get_minute_of_day(entry.start)
 
+		# Minute 1440 does not exist.
+		if target_minute >= 1440:
+			target_minute = 0
+
 		i = 0
 		while i <= duration_minutes:
 			day_minutes_list[target_minute] += 1
 			target_minute += 1
+
+			if target_minute >= 1440:
+				target_minute = 0
+
 			i += 1
 
 	data = {
