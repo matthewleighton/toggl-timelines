@@ -44,7 +44,7 @@ class Entry(db.Model):
 	utc_offset = db.Column(db.Integer)
 
 	def __repr__(self):
-		return "<Entry (Description: " + self.description + ") (Start: " + str(self.start) + ") (End: " + str(self.end) + ") (Duration: " + str(self.dur) + ")"
+		return "<Entry (Description: " + self.description + ") (Start: " + str(self.start) + ") (End: " + str(self.end) + ") (Duration: " + str(self.dur) + ") (ID: " + str(self.id) + ")"
 
 	def get_tooltip(self):
 		start_time = self.start.strftime('%H:%M')
@@ -91,6 +91,12 @@ class Entry(db.Model):
 			return project.project_name
 		else:
 			return 'No Project'
+
+	def get_raw_start_time(self):
+		start = self.start
+		utc_offset = self.utc_offset
+
+		return start - timedelta(hours = utc_offset)
 
 
 class Project(db.Model):
@@ -231,6 +237,8 @@ def get_entries_from_database(start = False, end = False):
 	if end:
 		#if end.tzinfo is not None and end.tzinfo.utcoffset(end) is not None:
 		end = end.astimezone(pytz.utc)
+
+
 
 	if start and end:
 		entries = Entry.query.filter(Entry.start >= start).filter(Entry.start <= end).order_by(Entry.start).all()
@@ -614,8 +622,17 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 			project_name = entry.get_project_name()
 
 			if historic and live_mode and day == days[0] and entry == entries[-1]: # If this is the most recent historic entry...
-				now = helpers.get_current_datetime_in_user_timezone()
-				duration = (entry.start.replace(hour=now.hour, minute=now.minute) - entry.start).seconds #...Find duration based on how much of entry is complete.
+				#now = helpers.get_current_datetime_in_user_timezone()
+				now = datetime.utcnow()
+				
+				entry_mid = entry.get_raw_start_time().replace(hour=now.hour, minute=now.minute)
+				entry_start = entry.get_raw_start_time()
+				# Here we need to deal with the raw UTC time.
+				# The reason is that we don't know what time zone the user was in at the historic period. Can't assume it's the same as now.
+				# So we compare things in UTC.
+
+				time_difference = entry_mid - entry_start
+				duration = time_difference.seconds #...Find duration based on how much of entry is complete.
 			else:
 				duration = entry.dur/1000
 
@@ -901,12 +918,12 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 					minute = 59
 				)
 
-	"""
+	
 	print('Current start: ' + str(current_start))
 	print('Current end: ' + str(current_end))
 	print('Historic start: ' + str(historic_start))
 	print('Historic end: ' + str(historic_end))
-	"""
+	
 
 	return {
 		'current_start': current_start,
@@ -937,7 +954,7 @@ def frequency_data():
 
 	#start_datetime = end_datetime.replace(month=1, day=1, hour=0, minute=0, second=0)
 
-	start_datetime = end_datetime - timedelta(days=5)
+	start_datetime = end_datetime - timedelta(days=70)
 
 	entries = get_entries_from_database(start=start_datetime, end=end_datetime)
 	#print(entries)
@@ -962,7 +979,11 @@ def frequency_data():
 
 # Return a dictionary with minutes from 0 to 86399, each with a value of 0.
 def get_day_minutes_list():
+	return [0] * 1440
+
 	minutes_list = list(range(0, 1440))
+
+	return minutes_list
 
 	minutes_dictionary = dict.fromkeys(minutes_list, 0)
 

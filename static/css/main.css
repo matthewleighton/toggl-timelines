@@ -364,3 +364,11 @@ body {
 svg {
   overflow: visible;
 }
+
+/* Frequency Page */
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 2px;
+}
