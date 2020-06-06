@@ -155,6 +155,7 @@ def update_database(start_days_ago, end_days_ago=0):
 		
 		if existing_entry:
 			db.session.delete(existing_entry)
+			db.session.commit() # Not sure whether we need this.
 
 		start = helpers.remove_colon_from_timezone(entry['start'])
 		start = helpers.timestamp_to_datetime(start)
@@ -227,7 +228,7 @@ def delete_days_from_database(start_days_ago, end_days_ago=0):
 
 	db.session.commit()
 
-def get_entries_from_database(start = False, end = False):
+def get_entries_from_database(start = False, end = False, projects = False):
 	
 	# Times are stored in database as UTC. So we need to convert the request times to UTC.
 	if start:
@@ -239,16 +240,18 @@ def get_entries_from_database(start = False, end = False):
 		end = end.astimezone(pytz.utc)
 
 
+	query = Entry.query.join(Entry.project, aliased=True)
+	
+	if start:
+		query = query.filter(Entry.start >= start)
 
-	if start and end:
-		entries = Entry.query.filter(Entry.start >= start).filter(Entry.start <= end).order_by(Entry.start).all()
-	elif start:
-		entries = Entry.query.filter(Entry.start >= start).order_by(Entry.start).all()
-	elif end:
-		entries = Entry.query.filter(Entry.start <= end).order_by(Entry.start).all()
-	else:
-		entries = Entry.query.order_by(Entry.start).all()
+	if end:
+		query = query.filter(Entry.start <= end)
+	
+	if projects:
+		query = query.filter(Project.project_name.in_(projects))
 
+	entries = query.order_by(Entry.start).all()
 
 	apply_utc_offsets(entries)
 
@@ -919,11 +922,12 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 				)
 
 	
+	"""
 	print('Current start: ' + str(current_start))
 	print('Current end: ' + str(current_end))
 	print('Historic start: ' + str(historic_start))
 	print('Historic end: ' + str(historic_end))
-	
+	"""
 
 	return {
 		'current_start': current_start,
@@ -956,7 +960,11 @@ def frequency_data():
 
 	start_datetime = end_datetime - timedelta(days=365*3)
 
-	entries = get_entries_from_database(start=start_datetime, end=end_datetime)
+
+	#projects = ['Reading', 'Physics']
+	projects = []
+
+	entries = get_entries_from_database(start=start_datetime, end=end_datetime, projects=projects)
 	#print(entries)
 
 	day_minutes_list = get_day_minutes_list()
@@ -985,17 +993,9 @@ def frequency_data():
 
 	return jsonify(data)
 
-# Return a dictionary with minutes from 0 to 86399, each with a value of 0.
+# Return a dictionary with minutes from 0 to 1440, each with a value of 0.
 def get_day_minutes_list():
 	return [0] * 1440
-
-	minutes_list = list(range(0, 1440))
-
-	return minutes_list
-
-	minutes_dictionary = dict.fromkeys(minutes_list, 0)
-
-	return minutes_dictionary
 
 def get_minute_of_day(dt):
 	hour = dt.hour
