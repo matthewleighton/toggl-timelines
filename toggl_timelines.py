@@ -428,6 +428,17 @@ def get_project_data(comparison_mode = False):
 #------------- END OF COMMON PURPOSE FUNCTIONS -----------------------------
 
 
+# -------------------------------------------------------------------------------------
+# ------------------------------------Home Page----------------------------------
+# -------------------------------------------------------------------------------------
+
+@app.route('/')
+def home_page():
+	response = make_response(render_template('home.html'))
+
+	return response
+
+
 
 # -------------------------------------------------------------------------------------
 # ------------------------------------Timelines Page----------------------------------
@@ -435,8 +446,8 @@ def get_project_data(comparison_mode = False):
 
 initial_timelines_page_load_amount = 7
 
-@app.route('/')
-def home_page():
+@app.route('/timelines')
+def timelines_page():
 	update_database(3)
 
 	start = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=initial_timelines_page_load_amount)

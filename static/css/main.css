@@ -3,6 +3,26 @@ body {
 	overflow-x: hidden;
 }
 
+/* Home Page */
+
+.home_page_container {
+  margin-top: 150px;
+  text-align: center;
+}
+
+.home_page_container img {
+  margin-bottom: 10px;
+}
+
+#main_title {
+  margin-bottom: 20px;
+  font-family: 'Rajdhani', sans-serif;
+}
+
+
+
+/* End of Home Page */
+
 .login-form {
 	width: 340px;
 	margin: 50px auto;

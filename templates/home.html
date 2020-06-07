@@ -1,0 +1,27 @@
+{% include "head.html" %}
+	<body>
+		<script type="text/javascript">
+  			$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+		</script>
+
+		<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@700&display=swap" rel="stylesheet">
+
+	    <div class="container home_page_container">
+		  
+	    	<h1 id="main_title">Toggl Timelines</h1>
+
+			<div class="row">
+				<div class="col-sm">
+					<a href="/timelines"><img src="/static/img/timelines.png" class="rounded mx-auto d-block" alt="Timelines">Timelines</a>
+				</div>
+				<div class="col-sm">
+					<a href="/comparison"><img src="/static/img/comparison.png" class="rounded mx-auto d-block" alt="Comparison">Comparison</a>
+				</div>
+				<div class="col-sm">
+					<a href="/frequency"><img src="/static/img/frequency.png" class="rounded mx-auto d-block" alt="Frequency">Frequency</a>
+				</div>
+			</div>
+		</div>
+
+	</body>
+</html>
