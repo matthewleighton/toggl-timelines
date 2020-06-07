@@ -401,6 +401,8 @@ svg {
 }
 
 .frequency_control_button {
+  font-size: 25px;
+  letter-spacing: 5px;
   cursor: pointer;
   -webkit-user-select: none;  
   -moz-user-select: none;    

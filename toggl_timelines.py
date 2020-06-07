@@ -1045,6 +1045,9 @@ def frequency_data():
 def new_frequency_line():
 	projects = get_project_data()
 
+	projects = sorted(projects.keys(), key=lambda x:x.lower())
+
+
 	page_data = {
 		'projects': projects
 	}

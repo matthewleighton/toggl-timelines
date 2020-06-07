@@ -1,6 +1,5 @@
 $(document).ready(function() {
-	
-	$('.frequency_line_control').show()
+	$('.new_frequency_line_button').click()
 
 })
 
@@ -21,6 +20,24 @@ $('#graph_line_controllers').on('click', '.frequency_control_remove', function()
 	change_line_controls($(this), shift_value)
 
 	$(this).parent().remove();
+})
+
+$('#graph_line_controllers').on('change', '.frequency_project_selector', function() {
+	var selected_projects = $(this).val()
+
+	if (selected_projects.length != 1) {return}
+
+	var description_input = $(this).parent().find('.frequency_line_description')
+
+	projects = []
+
+	$(this).children().each(function() {
+		projects.push($(this).val())
+	})
+
+	if (description_input.val() == '' || projects.indexOf(description_input.val()) >= 0) {
+		description_input.val(selected_projects[0])
+	}
 })
 
 
