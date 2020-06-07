@@ -109,6 +109,10 @@ $('#frequency_graph_submit').on('click', function() {
 						
 		}
 
+		serialized_object['y_axis_type'] = $("input[name='y_axis_type']:checked").val()
+		console.log(serialized_object)
+
+
 		submission_data.push(serialized_object)
 	})
 

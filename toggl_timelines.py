@@ -987,6 +987,8 @@ def frequency_page():
 def frequency_data():
 	submission_data = request.json
 
+	print(submission_data)
+
 	data = []
 
 	for line in submission_data:
@@ -1025,6 +1027,11 @@ def frequency_data():
 
 		# Semi-temporary fix because we end up getting a lot of additional minutes tracked at minute 0.
 		day_minutes_list[0] = day_minutes_list[1439]
+
+		if submission_data[0]['y_axis_type'] == 'relative':
+			period_duration = end_datetime - start_datetime
+			day_minutes_list = [i / period_duration.days for i in day_minutes_list]
+
 
 		data.append({
 			'line_data': line,
