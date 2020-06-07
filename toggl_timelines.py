@@ -228,7 +228,7 @@ def delete_days_from_database(start_days_ago, end_days_ago=0):
 
 	db.session.commit()
 
-def get_entries_from_database(start = False, end = False, projects = False):
+def get_entries_from_database(start=False, end=False, projects=False, clients=False, tags=False):
 	
 	# Times are stored in database as UTC. So we need to convert the request times to UTC.
 	if start:
@@ -251,6 +251,13 @@ def get_entries_from_database(start = False, end = False, projects = False):
 	if projects:
 		query = query.filter(Project.project_name.in_(projects))
 
+	if clients:
+		query = query.filter(Entry.client.in_(clients))
+
+	
+	#if tags:
+		#query = query.filter(Entry.tags.in_(clients))
+		
 	entries = query.order_by(Entry.start).all()
 
 	apply_utc_offsets(entries)
@@ -955,41 +962,87 @@ def frequency_page():
 @app.route('/frequency_data', methods=['POST'])
 def frequency_data():
 	end_datetime = datetime.now()
-
 	#start_datetime = end_datetime.replace(month=1, day=1, hour=0, minute=0, second=0)
-
+	#start_datetime = end_datetime - timedelta(days=365*3)
 	start_datetime = end_datetime - timedelta(days=365*3)
 
+	line_one = {
+		'start': start_datetime,
+		'end':	end_datetime,
+		'projects': ['Film/TV'],
+		'clients': [],
+		'tags': [],
+		'color': 'red'
+	}
 
-	#projects = ['Reading', 'Physics']
-	projects = []
+	line_two = {
+		'start': start_datetime,
+		'end':	end_datetime,
+		'projects': ['Reading'],
+		'clients': [],
+		'tags': [],
+		'color': 'blue'
+	}
 
-	entries = get_entries_from_database(start=start_datetime, end=end_datetime, projects=projects)
-	#print(entries)
+	line_three = {
+		'start': start_datetime,
+		'end':	end_datetime,
+		'projects': ['Physics'],
+		'clients': [],
+		'tags': [],
+		'color': 'green'
+	}
 
-	day_minutes_list = get_day_minutes_list()
+	line_four = {
+		'start': start_datetime,
+		'end':	end_datetime,
+		'projects': ['Coding'],
+		'clients': [],
+		'tags': [],
+		'color': 'purple'
+	}
 
-	for entry in entries:
-		duration_minutes = math.ceil(entry.dur / 60000)
-		target_minute = get_minute_of_day(entry.start)
+	line_five = {
+		'start': start_datetime,
+		'end':	end_datetime,
+		'projects': ['Real Life Social'],
+		'clients': [],
+		'tags': [],
+		'color': 'black'
+	}
 
-		# Minute 1440 does not exist.
-		if target_minute >= 1440:
-			target_minute = 0
+	lines = [line_one, line_two, line_three, line_four, line_five]
 
-		i = 0
-		while i <= duration_minutes:
-			day_minutes_list[target_minute] += 1
-			target_minute += 1
+	data = []
 
+	for line in lines:
+
+		entries = get_entries_from_database(start=line['start'], end=line['end'], projects=line['projects'], clients=line['clients'], tags=line['tags'])
+	
+		day_minutes_list = get_day_minutes_list()
+
+		for entry in entries:
+			duration_minutes = math.ceil(entry.dur / 60000)
+			target_minute = get_minute_of_day(entry.start)
+
+			# Minute 1440 does not exist.
 			if target_minute >= 1440:
 				target_minute = 0
 
-			i += 1
+			i = 0
+			while i <= duration_minutes:
+				day_minutes_list[target_minute] += 1
+				target_minute += 1
 
-	data = {
-		'all': day_minutes_list
-	}
+				if target_minute >= 1440:
+					target_minute = 0
+
+				i += 1
+
+		data.append({
+			'line_data': line,
+			'minutes': day_minutes_list
+		})
 
 	return jsonify(data)
 

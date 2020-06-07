@@ -53,9 +53,11 @@ function create_frequency_graph(data) {
 	var max_time = 1439
 	var min_time = 0
 
-	//var max_frequency = d3.max(data, function(d) {console.log(d); return d})
-	var max_frequency = d3.max(data.all)
-	var min_frequency = 0
+	var max_frequency = d3.max(data, function(array) {
+		return d3.max(array['minutes']);
+	});
+
+	var min_frequency = 0;
 	
 	var y = d3.scaleLinear()
 		.domain([0, max_frequency])
@@ -78,10 +80,32 @@ function create_frequency_graph(data) {
 					.x(function(d, i){return x(i)})
 					.y(function(d){return y(d)});
 
+	/*
 	svg.append('path')
-		.data([data.all])
+		.data([data[0]['minutes']])
 		.attr('class', 'line')
 		.attr('d', line)
+		.attr('stroke', data[0]['line_data']['color'])
+
+	svg.append('path')
+		.data([data[1]['minutes']])
+		.attr('class', 'line')
+		.attr('d', line)
+		.attr('stroke', data[1]['line_data']['color'])
+
+	*/
+
+	for (var i = data.length - 1; i >= 0; i--) {
+		
+		console.log(data[i]['line_data'])
+
+		svg.append('path')
+			.data([data[i]['minutes']])
+			.attr('class', 'line')
+			.attr('d', line)
+			.attr('stroke', data[i]['line_data']['color'])		
+	}
+
 
 	svg.append('g')
 		.attr('transform', 'translate(0,' + height + ')')
