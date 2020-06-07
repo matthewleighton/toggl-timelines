@@ -27,7 +27,7 @@ $('#graph_line_controllers').on('change', '.frequency_project_selector', functio
 
 	if (selected_projects.length != 1) {return}
 
-	var description_input = $(this).parent().find('.frequency_line_description')
+	var label_input = $(this).parent().find('.frequency_line_label')
 
 	projects = []
 
@@ -35,8 +35,13 @@ $('#graph_line_controllers').on('change', '.frequency_project_selector', functio
 		projects.push($(this).val())
 	})
 
-	if (description_input.val() == '' || projects.indexOf(description_input.val()) >= 0) {
-		description_input.val(selected_projects[0])
+	if (label_input.val() == '' || projects.indexOf(label_input.val()) >= 0) {
+		label_input.val(selected_projects[0])
+
+		var hex_code = $(this).find(':selected').data('color')
+
+		$(this).parent().find('.frequency_line_color').val(hex_code)
+
 	}
 })
 

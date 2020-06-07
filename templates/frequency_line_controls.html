@@ -1,9 +1,11 @@
 <form class="frequency_line_control">
 	<select name="projects" multiple class="frequency_project_selector">
-		{% for project in data.projects %}
-			<option value="{{project}}">{{project}}</option>
+		{% for project_name in data.projects %}
+			<option value="{{project_name}}" data-color="{{data.projects[project_name]['color']}}">{{project_name}}</option>
 		{% endfor %}
 	</select>
+
+
 
 	<input type="text" name="description" placeholder="Description" class="frequency_line_description">
 	
@@ -11,8 +13,8 @@
 	<input type="date" name="start" value="2018-01-01"/>
 	<input type="date" name="end" value="2020-12-31"/>
 
-	<input type="text" name="color" placeholder="Color" value="blue">
-	<input type="text" name="label" placeholder="Label">
+	<input type="text" name="color" placeholder="Color" value="blue" class="frequency_line_color">
+	<input type="text" name="label" placeholder="Label" class="frequency_line_label">
 
 	<span class="frequency_control_button frequency_control_left">&#706;</span>
 	<span class="frequency_control_button frequency_control_right">&#707;</span>

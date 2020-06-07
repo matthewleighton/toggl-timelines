@@ -673,7 +673,6 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 							categories[tag.tag_name]['current_tracked'] += duration
 
 				if entry.client in categories:
-					print(entry.client)
 					categories[entry.client]['current_tracked'] += duration
 
 			categories[project_name][current_or_historic_tracked] += duration
@@ -997,19 +996,12 @@ def frequency_data():
 
 		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
 		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d')
-
-		print('-----------------------')
-		print(start_datetime)
-		print(end_datetime)
 	
 		entries = get_entries_from_database(
 			start=start_datetime,
 			end=end_datetime,
 			projects=line['projects'],
 		)
-
-		print(line)
-		print(len(entries))
 
 		day_minutes_list = get_day_minutes_list()
 
@@ -1043,13 +1035,17 @@ def frequency_data():
 
 @app.route('/new_frequency_line', methods=['POST'])
 def new_frequency_line():
-	projects = get_project_data()
+	unsorted_projects = get_project_data()
 
-	projects = sorted(projects.keys(), key=lambda x:x.lower())
+	project_names_sorted = sorted(unsorted_projects.keys(), key=lambda x:x.lower())
 
+	sorted_project_data = {}
+
+	for project_name in project_names_sorted:
+		sorted_project_data[project_name] = unsorted_projects[project_name]
 
 	page_data = {
-		'projects': projects
+		'projects': sorted_project_data
 	}
 
 	return jsonify(render_template('frequency_line_controls.html', data=page_data))
