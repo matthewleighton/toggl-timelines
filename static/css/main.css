@@ -395,3 +395,15 @@ svg {
 .frequency_line_controls {
   border: 1px solid black;
 }
+
+.frequency_line_control {
+  display: none;
+}
+
+.frequency_control_button {
+  cursor: pointer;
+  -webkit-user-select: none;  
+  -moz-user-select: none;    
+  -ms-user-select: none;      
+  user-select: none;
+}

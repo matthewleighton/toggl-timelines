@@ -1,24 +1,62 @@
 $(document).ready(function() {
-	//create_frequency_graph()
-
-	$.ajax({
-		"type": "POST",
-		"url": "/frequency_data",
-		"contentType": "application/json",
-		"dataType": "json",
-		"data": JSON.stringify({}),
-		success: function(response) {
-			//console.log(response)
-			create_frequency_graph(response)
-		}
-	})
-
 	
+	$('.frequency_line_control').show()
 
 })
 
+
+$('#graph_line_controllers').on('click', '.frequency_control_right', function() {
+	change_line_controls($(this), 1)
+})
+
+$('#graph_line_controllers').on('click', '.frequency_control_left', function() {
+	change_line_controls($(this), -1)
+})
+
+$('#graph_line_controllers').on('click', '.frequency_control_remove', function() {
+	var current_index = $(this).parent().index();
+
+	var shift_value = current_index == 0 ? 1 : -1;
+
+	change_line_controls($(this), shift_value)
+
+	$(this).parent().remove();
+})
+
+
+function change_line_controls(button_element, value) {
+	var current_index = button_element.parent().index();
+
+	var max_index = $('#graph_line_controllers').children().length - 1
+
+	if (current_index + value < 0 || current_index + value > max_index) {return}
+
+	var line_controls = button_element.parent()
+
+	line_controls.parent().children().eq(current_index + value).show()
+
+	line_controls.hide()
+}
+
+
 $('.new_frequency_line_button').on('click', function() {
-	console.log('New Line')
+	$.ajax({
+		"type": "POST",
+		"url": "/new_frequency_line",
+		"contentType": "application/json",
+		"dataType": "json",
+		success: function(response) {
+			$('#graph_line_controllers').append(response)
+
+			var new_index = $('#graph_line_controllers').children().length - 1
+			$('#graph_line_controllers').children().hide()
+
+			$('#graph_line_controllers').children().eq(new_index).show()
+
+
+
+		}
+	})
 })
 
 $('#frequency_graph_submit').on('click', function() {
@@ -49,21 +87,9 @@ $('#frequency_graph_submit').on('click', function() {
 						
 		}
 
-		console.log(serialized_object)
-
 		submission_data.push(serialized_object)
 	})
 
-	//serialized_data = $("#graph_controls").serializeArray();
-
-	//a = $("input[name=description]").val()
-
-	//console.log('--------------')
-	//console.log(submission_data)
-
-	//console.log(serialized_data)
-
-	console.log(submission_data)
 
 	$.ajax({
 		"type": "POST",
@@ -72,7 +98,6 @@ $('#frequency_graph_submit').on('click', function() {
 		"dataType": "json",
 		"data": JSON.stringify(submission_data),
 		success: function(response) {
-			//console.log(response)
 			create_frequency_graph(response)
 		}
 	})

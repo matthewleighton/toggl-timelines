@@ -986,65 +986,10 @@ def frequency_page():
 
 @app.route('/frequency_data', methods=['POST'])
 def frequency_data():
-	
-	#a = request.json.get('description')
 	submission_data = request.json
-
-	end_datetime = datetime.now()
-	#start_datetime = end_datetime.replace(month=1, day=1, hour=0, minute=0, second=0)
-	#start_datetime = end_datetime - timedelta(days=365*3)
-	start_datetime = end_datetime - timedelta(days=365*3)
-
-	line_one = {
-		'start': start_datetime,
-		'end':	end_datetime,
-		'projects': ['Film/TV'],
-		'clients': [],
-		'tags': [],
-		'color': 'red'
-	}
-
-	line_two = {
-		'start': start_datetime,
-		'end':	end_datetime,
-		'projects': ['Reading'],
-		'clients': [],
-		'tags': [],
-		'color': 'blue'
-	}
-
-	line_three = {
-		'start': start_datetime,
-		'end':	end_datetime,
-		'projects': ['Physics'],
-		'clients': [],
-		'tags': [],
-		'color': 'green'
-	}
-
-	line_four = {
-		'start': start_datetime,
-		'end':	end_datetime,
-		'projects': ['Coding'],
-		'clients': [],
-		'tags': [],
-		'color': 'purple'
-	}
-
-	line_five = {
-		'start': start_datetime,
-		'end':	end_datetime,
-		'projects': ['Real Life Social'],
-		'clients': [],
-		'tags': [],
-		'color': 'black'
-	}
-
-	lines = [line_one, line_two, line_three, line_four, line_five]
 
 	data = []
 
-	#for line in lines:
 	for line in submission_data:
 
 		if isinstance(line['projects'], str):
@@ -1061,20 +1006,11 @@ def frequency_data():
 			start=start_datetime,
 			end=end_datetime,
 			projects=line['projects'],
-			#clients=line['clients'],
-			#tags=line['tags']
 		)
 
 		print(line)
 		print(len(entries))
 
-		#print(entries)
-
-
-
-	
-		
-	
 		day_minutes_list = get_day_minutes_list()
 
 		for entry in entries:
@@ -1104,6 +1040,17 @@ def frequency_data():
 		})
 
 	return jsonify(data)
+
+@app.route('/new_frequency_line', methods=['POST'])
+def new_frequency_line():
+	projects = get_project_data()
+
+	page_data = {
+		'projects': projects
+	}
+
+	return jsonify(render_template('frequency_line_controls.html', data=page_data))
+
 
 # Return a dictionary with minutes from 0 to 1440, each with a value of 0.
 def get_day_minutes_list():
