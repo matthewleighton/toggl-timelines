@@ -76,8 +76,7 @@ function activate_stack_mode(value) {
 
 function activate_black_mode(value) {
 	client_mode = false
-	console.log('black mode')
-
+	
 	if (value) {
 		$('.tracked_time').each(function() {
 			$(this).css('background-color', 'black')

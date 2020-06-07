@@ -6,9 +6,73 @@ $(document).ready(function() {
 		"url": "/frequency_data",
 		"contentType": "application/json",
 		"dataType": "json",
-		//"data": JSON.stringify(serialized_data),
+		"data": JSON.stringify({}),
 		success: function(response) {
-			console.log(response)
+			//console.log(response)
+			create_frequency_graph(response)
+		}
+	})
+
+	
+
+})
+
+$('.new_frequency_line_button').on('click', function() {
+	console.log('New Line')
+})
+
+$('#frequency_graph_submit').on('click', function() {
+	
+	submission_data = []
+
+	$('.frequency_line_control').each(function() {
+		serialized_data = $(this).serializeArray();
+
+		serialized_object = {}
+
+		for (var i = serialized_data.length - 1; i >= 0; i--) {
+
+			name = serialized_data[i]['name']
+
+			if (serialized_object[name]) {
+				value = serialized_object[name]
+
+				if (typeof value == 'string') {
+					serialized_object[name] = [value]
+				}
+				
+				serialized_object[name].push(serialized_data[i]['value'])
+
+			} else {
+				serialized_object[name] = serialized_data[i]['value']	
+			}
+						
+		}
+
+		console.log(serialized_object)
+
+		submission_data.push(serialized_object)
+	})
+
+	//serialized_data = $("#graph_controls").serializeArray();
+
+	//a = $("input[name=description]").val()
+
+	//console.log('--------------')
+	//console.log(submission_data)
+
+	//console.log(serialized_data)
+
+	console.log(submission_data)
+
+	$.ajax({
+		"type": "POST",
+		"url": "/frequency_data",
+		"contentType": "application/json",
+		"dataType": "json",
+		"data": JSON.stringify(submission_data),
+		success: function(response) {
+			//console.log(response)
 			create_frequency_graph(response)
 		}
 	})
@@ -40,14 +104,12 @@ function make_x_gridlines(x) {
 
 function create_frequency_graph(data) {
     console.log('create_frequency_graph')
-    console.log(data)
+    //console.log(data)
     $('svg').remove()
 
     var margin = {top: 10, right: 30, bottom: 30, left: 60};
 
 	var width = $('#graph_container').width() - margin.left - margin.right;
-	//var width = 1600
-	//var height = 900
 	var height = $(window).height() - 100 - margin.top - margin.bottom;
 
 	var max_time = 1439
@@ -97,7 +159,7 @@ function create_frequency_graph(data) {
 
 	for (var i = data.length - 1; i >= 0; i--) {
 		
-		console.log(data[i]['line_data'])
+		//console.log(data[i]['line_data'])
 
 		svg.append('path')
 			.data([data[i]['minutes']])

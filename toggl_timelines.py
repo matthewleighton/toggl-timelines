@@ -301,6 +301,13 @@ def split_entries_over_midnight(entries):
 				user_id 		  = entry.user_id
 			)
 
+
+			# We're using this function after applying the UTC offsets.
+			#So we want to mark all these entries as having already had their offset fixed.
+			second_half.offset_fixed = True
+
+
+
 			halves = [entry, second_half]
 
 		for entry_half in halves:
@@ -376,11 +383,14 @@ def get_days_list(loading_additional_days = False, amount = 8, start = False, en
 # For each entry, adjust its start and end times such that they match the location where the entry was recorded.
 def apply_utc_offsets(entries):
 	for entry in entries:
-		new_start = entry.start + timedelta(hours=entry.utc_offset)
-		new_end = entry.end + timedelta(hours=entry.utc_offset)
+		
+		if not hasattr(entry, 'offset_fixed'): # Make sure we're not applying the offset for a second time.
+			new_start = entry.start + timedelta(hours=entry.utc_offset)
+			new_end = entry.end + timedelta(hours=entry.utc_offset)
 
-		entry.start = new_start
-		entry.end = new_end
+			entry.start = new_start
+			entry.end = new_end
+			entry.offset_fixed = True
 
 def sort_entries_by_day(entries):
 	sorted_by_day = {}
@@ -437,8 +447,6 @@ def home_page():
 	response = make_response(render_template('home.html'))
 
 	return response
-
-
 
 # -------------------------------------------------------------------------------------
 # ------------------------------------Timelines Page----------------------------------
@@ -966,12 +974,22 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 def frequency_page():
 	update_database(1)
 
-	response = make_response(render_template('frequency.html'))	
+	projects = get_project_data()
+
+	page_data = {
+		'projects': projects
+	}
+
+	response = make_response(render_template('frequency.html', data=page_data))
 
 	return response
 
 @app.route('/frequency_data', methods=['POST'])
 def frequency_data():
+	
+	#a = request.json.get('description')
+	submission_data = request.json
+
 	end_datetime = datetime.now()
 	#start_datetime = end_datetime.replace(month=1, day=1, hour=0, minute=0, second=0)
 	#start_datetime = end_datetime - timedelta(days=365*3)
@@ -1026,9 +1044,36 @@ def frequency_data():
 
 	data = []
 
-	for line in lines:
+	#for line in lines:
+	for line in submission_data:
 
-		entries = get_entries_from_database(start=line['start'], end=line['end'], projects=line['projects'], clients=line['clients'], tags=line['tags'])
+		if isinstance(line['projects'], str):
+			line['projects'] = [line['projects']]
+
+		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
+		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d')
+
+		print('-----------------------')
+		print(start_datetime)
+		print(end_datetime)
+	
+		entries = get_entries_from_database(
+			start=start_datetime,
+			end=end_datetime,
+			projects=line['projects'],
+			#clients=line['clients'],
+			#tags=line['tags']
+		)
+
+		print(line)
+		print(len(entries))
+
+		#print(entries)
+
+
+
+	
+		
 	
 		day_minutes_list = get_day_minutes_list()
 
@@ -1049,6 +1094,9 @@ def frequency_data():
 					target_minute = 0
 
 				i += 1
+
+		# Semi-temporary fix because we end up getting a lot of additional minutes tracked at minute 0.
+		day_minutes_list[0] = day_minutes_list[1439]
 
 		data.append({
 			'line_data': line,

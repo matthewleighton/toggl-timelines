@@ -1,0 +1,16 @@
+<form class="frequency_line_control">
+	<select name="projects" multiple>
+		{% for project in data.projects %}
+			<option value="{{project}}">{{project}}</option>
+		{% endfor %}
+	</select>
+
+	<input type="text" name="description" placeholder="Description">
+	
+
+	<input type="date" name="start" value="2018-01-01"/>
+	<input type="date" name="end" value="2020-12-31"/>
+
+	<input type="text" name="color" placeholder="Color" value="blue">
+	<input type="text" name="label" placeholder="Label">
+</form>

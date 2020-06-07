@@ -391,3 +391,7 @@ svg {
   fill: none;
   stroke-width: 2px;
 }
+
+.frequency_line_controls {
+  border: 1px solid black;
+}

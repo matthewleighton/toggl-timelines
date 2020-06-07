@@ -5,12 +5,15 @@
 		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 	</script>
 
-	<div id="graph_container"></div>
-
-	<form id="graph_controls">
+	<div id="graph_controls">
 		{% include "frequency_line_controls.html" %}
+		{% include "frequency_line_controls.html" %}
+
+		<button type="button" class="new_frequency_line_button">New Line</button>
+		<button type="button" id="frequency_graph_submit">Create Graph</button>
 	</form>
 
+	<div id="graph_container"></div>
 
 	<script src="https://d3js.org/d3.v5.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.min.js"></script>
