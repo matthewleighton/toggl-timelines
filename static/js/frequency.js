@@ -252,35 +252,23 @@ function create_frequency_graph(data) {
 		});
 
 
+	// TODO: Currently this only takes into account y distance. It needs to also consider x axis distance to lines.
 	function moved() {
-		console.log('------------------------------------------')
 		const mouse = d3.mouse(this)
-		const xm = Math.floor(x.invert(mouse[0])) - 54
+		const xm = Math.floor(x.invert(mouse[0])) - 52
 		const ym = y.invert(mouse[1])
 
-		//console.log(xm)
-		//console.log(ym)
-		//console.log(mouse[0])
-		//console.log(xm)
+		// Mouse must be within 10% of the graph to trigger.
+		lowest_difference = y.domain()[1] / 10
 
-		var differences = []
-
-		lowest_difference = 20
 		lowest_difference_index = false
 
 		for (var i = data.length - 1; i >= 0; i--) {
-			//console.log(xm)
-			//console.log(data[i]['minutes'])
-			
 
 			y_value = data[i]['minutes'][xm]
 
+
 			diff = Math.abs(ym - y_value)
-
-			console.log(data[i]['line_data']['label'] + ': ' + y_value)
-			console.log(data[i]['line_data']['label'] + ' Difference:' + diff)
-
-			differences[i] = diff
 
 			if (diff < lowest_difference) {
 				lowest_difference = diff
@@ -290,48 +278,14 @@ function create_frequency_graph(data) {
 		}
 
 
-
-		console.log('Mouse: ' + ym)
-
-		console.log(data)
-
 		svg.selectAll('.graph_line')
 			.attr('stroke', function(d, i) {
-
-				//return data[i]['line_data']['color']
-
 				if (lowest_difference_index === false || i == lowest_difference_index) {
 					return data[i]['line_data']['color']
 				} else {
 					return '#ddd'
 				}
-
 			})
-
-
-		/*
-		if (lowest_difference_index !== false) {
-			console.log('Closest: ' + data[lowest_difference_index]['line_data']['label'])
-
-			svg.selectAll('.graph_line')
-				.attr('stroke', function(d, i) {
-					if (lowest_difference_index !== false && i == lowest_difference_index) {
-						return data[i]['line_data']['color']
-					}
-				})
-
-			svg.selectAll('.graph_line')
-				.attr('stroke', '#ddd')
-		}
-		*/
-
-		
-		
-		//svg.selectAll('path').each(function(d, i) {
-			//console.log(d)
-		//})
-
-
 	}
 
 	svg.append('g')
