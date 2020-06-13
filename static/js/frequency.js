@@ -161,6 +161,20 @@ function make_x_gridlines(x) {
 		.ticks(60)
 }
 
+function get_minutes_since_midnight() {
+	var now = new Date(),
+    then = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,0,0),
+    diff = now.getTime() - then.getTime();
+
+    var minutes = diff / 60000
+
+    return minutes
+}
+
 function create_frequency_graph(data) {
     console.log('create_frequency_graph')
     //console.log(data)
@@ -250,6 +264,18 @@ function create_frequency_graph(data) {
 			return d['line_data']['label']
 			return 'test'
 		});
+
+	var current_time_in_minutes = get_minutes_since_midnight()
+
+	svg.append('line')
+		.attr('x1', x(current_time_in_minutes))
+		.attr('y1', 0)
+		.attr('x2', x(current_time_in_minutes))
+		.attr('y1', height)
+		.style("stroke-width", 2)
+		.style("stroke", "black")
+		.style("fill", "none");
+
 
 
 	// TODO: Currently this only takes into account y distance. It needs to also consider x axis distance to lines.
