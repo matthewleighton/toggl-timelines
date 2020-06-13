@@ -8,6 +8,7 @@ import toggl_timelines_config as config
 
 from flask import Flask, url_for, render_template, request, make_response, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import func
 from TogglPy import Toggl
 
 import toggl_timelines_helpers as helpers
@@ -228,7 +229,7 @@ def delete_days_from_database(start_days_ago, end_days_ago=0):
 
 	db.session.commit()
 
-def get_entries_from_database(start=False, end=False, projects=False, clients=False, tags=False):
+def get_entries_from_database(start=False, end=False, projects=False, clients=False, tags=False, description=False):
 	
 	# Times are stored in database as UTC. So we need to convert the request times to UTC.
 	if start:
@@ -253,6 +254,11 @@ def get_entries_from_database(start=False, end=False, projects=False, clients=Fa
 
 	if clients:
 		query = query.filter(Entry.client.in_(clients))
+
+	if description:
+		print('Filter description!')
+		#query = query.filter(func.lower(Entry.description) == description.lower())
+		query = query.filter(func.lower(Entry.description).contains(description.lower()))
 
 	
 	#if tags:
@@ -987,8 +993,6 @@ def frequency_page():
 def frequency_data():
 	submission_data = request.json
 
-	print(submission_data)
-
 	data = []
 
 	for line in submission_data:
@@ -998,11 +1002,13 @@ def frequency_data():
 
 		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
 		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d')
+		print(line['description'])
 	
 		entries = get_entries_from_database(
 			start=start_datetime,
 			end=end_datetime,
 			projects=line['projects'],
+			description=line['description']
 		)
 
 		day_minutes_list = get_day_minutes_list()
