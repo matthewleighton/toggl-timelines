@@ -387,9 +387,10 @@ svg {
 
 /* Frequency Page */
 
-.line {
+
+.graph_line {
   fill: none;
-  stroke-width: 2px;
+  stroke-width: 2px; 
 }
 
 .frequency_line_controls {

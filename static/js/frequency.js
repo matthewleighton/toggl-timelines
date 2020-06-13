@@ -200,16 +200,24 @@ function create_frequency_graph(data) {
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
 
 	var line = d3.line()
-					.x(function(d, i){return x(i)})
-					.y(function(d){return y(d)});
+					.x(function(d, i){
+						return x(i)
+					})
+					.y(function(d){
+						return y(d)
+					});
 
-	for (var i = data.length - 1; i >= 0; i--) {
+	for (var i = 0; i <= data.length - 1; i++) {
 		
 		//console.log(data[i]['line_data'])
 
+		console.log(data[i]['line_data']['label'])
+
 		svg.append('path')
 			.data([data[i]['minutes']])
+			//.data([data[i]])
 			.attr('class', 'line')
+			.attr('class', 'graph_line')
 			.attr('d', line)
 			.attr('stroke', data[i]['line_data']['color'])		
 	}
@@ -239,14 +247,92 @@ function create_frequency_graph(data) {
 			return (i*20) + 11;
 		})
 		.text(function(d, i) {
-			console.log(d)
-			console.log(i)
 			return d['line_data']['label']
 			return 'test'
 		});
 
 
+	function moved() {
+		console.log('------------------------------------------')
+		const mouse = d3.mouse(this)
+		const xm = Math.floor(x.invert(mouse[0])) - 54
+		const ym = y.invert(mouse[1])
 
+		//console.log(xm)
+		//console.log(ym)
+		//console.log(mouse[0])
+		//console.log(xm)
+
+		var differences = []
+
+		lowest_difference = 20
+		lowest_difference_index = false
+
+		for (var i = data.length - 1; i >= 0; i--) {
+			//console.log(xm)
+			//console.log(data[i]['minutes'])
+			
+
+			y_value = data[i]['minutes'][xm]
+
+			diff = Math.abs(ym - y_value)
+
+			console.log(data[i]['line_data']['label'] + ': ' + y_value)
+			console.log(data[i]['line_data']['label'] + ' Difference:' + diff)
+
+			differences[i] = diff
+
+			if (diff < lowest_difference) {
+				lowest_difference = diff
+				lowest_difference_index = i
+			}
+
+		}
+
+
+
+		console.log('Mouse: ' + ym)
+
+		console.log(data)
+
+		svg.selectAll('.graph_line')
+			.attr('stroke', function(d, i) {
+
+				//return data[i]['line_data']['color']
+
+				if (lowest_difference_index === false || i == lowest_difference_index) {
+					return data[i]['line_data']['color']
+				} else {
+					return '#ddd'
+				}
+
+			})
+
+
+		/*
+		if (lowest_difference_index !== false) {
+			console.log('Closest: ' + data[lowest_difference_index]['line_data']['label'])
+
+			svg.selectAll('.graph_line')
+				.attr('stroke', function(d, i) {
+					if (lowest_difference_index !== false && i == lowest_difference_index) {
+						return data[i]['line_data']['color']
+					}
+				})
+
+			svg.selectAll('.graph_line')
+				.attr('stroke', '#ddd')
+		}
+		*/
+
+		
+		
+		//svg.selectAll('path').each(function(d, i) {
+			//console.log(d)
+		//})
+
+
+	}
 
 	svg.append('g')
 		.attr('transform', 'translate(0,' + height + ')')
@@ -261,6 +347,9 @@ function create_frequency_graph(data) {
 			d3.axisLeft(y)
 			.tickFormat(d => get_y_tick_format(d, y_axis_type))
 		);
+
+	//svg.on('mousemove', moved)
+	d3.select('#graph_container').on('mousemove', moved)
 
 	/* GRID LINES-------
 	svg.append('g')
