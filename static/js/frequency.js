@@ -214,6 +214,39 @@ function create_frequency_graph(data) {
 			.attr('stroke', data[i]['line_data']['color'])		
 	}
 
+	console.log(data)
+
+	var legend = svg.selectAll('g')
+		.data(data)
+		.enter()
+		.append('g')
+		.attr('class', 'legend');
+
+	legend.append('rect')
+		.attr('x', width - 150)
+		.attr('y', function(d, i) {
+			return i * 20;
+		})
+		.attr('width', 12)
+		.attr('height', 12)
+		.style('fill', function(d) {
+			return d['line_data']['color']
+		});
+
+	legend.append('text')
+		.attr('x', width - 135)
+		.attr('y', function(d, i) {
+			return (i*20) + 11;
+		})
+		.text(function(d, i) {
+			console.log(d)
+			console.log(i)
+			return d['line_data']['label']
+			return 'test'
+		});
+
+
+
 
 	svg.append('g')
 		.attr('transform', 'translate(0,' + height + ')')
