@@ -143,6 +143,14 @@ function get_x_tick_format(d) {
 	return d/60
 }
 
+function get_y_tick_format(d, y_axis_type) {
+	if (y_axis_type == 'absolute') {
+		return d
+	}
+
+	return Math.round(d*1000)/10 + '%'
+}
+
 function make_y_gridlines(y) {
 	return d3.axisLeft(y)
 		.ticks(5)
@@ -157,6 +165,8 @@ function create_frequency_graph(data) {
     console.log('create_frequency_graph')
     //console.log(data)
     $('svg').remove()
+
+    var y_axis_type = $("input[name='y_axis_type']:checked").val()
 
     var margin = {top: 10, right: 30, bottom: 50, left: 60};
 
@@ -193,21 +203,6 @@ function create_frequency_graph(data) {
 					.x(function(d, i){return x(i)})
 					.y(function(d){return y(d)});
 
-	/*
-	svg.append('path')
-		.data([data[0]['minutes']])
-		.attr('class', 'line')
-		.attr('d', line)
-		.attr('stroke', data[0]['line_data']['color'])
-
-	svg.append('path')
-		.data([data[1]['minutes']])
-		.attr('class', 'line')
-		.attr('d', line)
-		.attr('stroke', data[1]['line_data']['color'])
-
-	*/
-
 	for (var i = data.length - 1; i >= 0; i--) {
 		
 		//console.log(data[i]['line_data'])
@@ -229,7 +224,10 @@ function create_frequency_graph(data) {
 		);
 	
 	svg.append('g')
-		.call(d3.axisLeft(y));
+		.call(
+			d3.axisLeft(y)
+			.tickFormat(d => get_y_tick_format(d, y_axis_type))
+		);
 
 	/* GRID LINES-------
 	svg.append('g')

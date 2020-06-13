@@ -256,8 +256,6 @@ def get_entries_from_database(start=False, end=False, projects=False, clients=Fa
 		query = query.filter(Entry.client.in_(clients))
 
 	if description:
-		print('Filter description!')
-		#query = query.filter(func.lower(Entry.description) == description.lower())
 		query = query.filter(func.lower(Entry.description).contains(description.lower()))
 
 	
