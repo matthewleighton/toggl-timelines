@@ -460,7 +460,7 @@ initial_timelines_page_load_amount = 7
 
 @app.route('/timelines')
 def timelines_page():
-	update_database(3)
+	update_database(15)
 
 	start = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=initial_timelines_page_load_amount)
 
@@ -911,7 +911,7 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 				historic_end = historic_start.replace(
 					year = historic_year,
 					month = equivalent_month_of_previous_half,
-					day = min(now.day, equivalent_month_of_previous_half),
+					day = min(now.day, last_day_of_equivalent_half),
 					hour = now.hour,
 					minute = now.minute
 				)
@@ -957,7 +957,7 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 	print('Historic start: ' + str(historic_start))
 	print('Historic end: ' + str(historic_end))
 	"""
-
+	
 	return {
 		'current_start': current_start,
 		'current_end': current_end,
