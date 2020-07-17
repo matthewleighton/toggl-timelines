@@ -874,7 +874,7 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 				historic_end = historic_start.replace(
 					year = historic_year,
 					month = equivalent_month_of_previous_quarter,
-					day = min(now.day, equivalent_month_of_previous_quarter),
+					day = min(now.day, last_day_of_equivalent_month),
 					hour = now.hour,
 					minute = now.minute
 				)
