@@ -1,3 +1,4 @@
+
 $(document).ready(function() {
 	$('.new_frequency_line_button').click()
 
@@ -14,6 +15,8 @@ $('#graph_line_controllers').on('click', '.frequency_control_left', function() {
 
 $('#graph_line_controllers').on('click', '.frequency_control_remove', function() {
 	var current_index = $(this).parent().index();
+
+	console.log('Deleting: ' + current_index)
 
 	var shift_value = current_index == 0 ? 1 : -1;
 
@@ -62,6 +65,21 @@ function change_line_controls(button_element, value) {
 
 
 $('.new_frequency_line_button').on('click', function() {
+
+	var current_index = 0
+	var current_line_start, current_line_end
+
+	//Getting date of current line.
+	$('.frequency_line_control').each(function(index) {
+		display_status = $(this).css('display')
+
+		if (display_status == 'block') {
+			current_line_start = $(this).children('.line_start_date')[0].value
+			current_line_end = $(this).children('.line_end_date')[0].value
+			return false
+		}
+	})
+
 	$.ajax({
 		"type": "POST",
 		"url": "/new_frequency_line",
@@ -73,10 +91,17 @@ $('.new_frequency_line_button').on('click', function() {
 			var new_index = $('#graph_line_controllers').children().length - 1
 			$('#graph_line_controllers').children().hide()
 
-			$('#graph_line_controllers').children().eq(new_index).show()
+			var new_controls = $('#graph_line_controllers').children().eq(new_index)
 
+			if (current_line_end) {
+				new_controls.children('.line_end_date')[0].value = current_line_end
+			}
 
+			if (current_line_start) {
+				new_controls.children('.line_start_date')[0].value = current_line_start
+			}
 
+			new_controls.show()
 		}
 	})
 })
