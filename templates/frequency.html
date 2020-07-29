@@ -5,21 +5,19 @@
 		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 	</script>
 
-	<div id="graph_controls">
+	<form id="graph_controls" class="form-horizontal">
 		
-		<div id="graph_line_controllers">
-			<!--{% include "frequency_line_controls.html" %}-->
-		</div>
+		<div id="graph_line_controllers"></div>
 
 		<button type="button" class="new_frequency_line_button">New Line</button>
 		<button type="button" id="frequency_graph_submit">Create Graph</button>
 
 		
-		<input type="radio" id="frequency_absolute_mode" name="y_axis_type" value="absolute" checked>
-		<label for="absolute"> Absolute</label>
-
-		<input type="radio" id="frequency_relative_mode" name="y_axis_type" value="relative">
+		<input type="radio" id="frequency_relative_mode" name="y_axis_type" value="relative" checked>
 		<label for="relative"> Relative</label>
+
+		<input type="radio" id="frequency_absolute_mode" name="y_axis_type" value="absolute">
+		<label for="absolute"> Absolute</label>
 	</form>
 
 	<div id="graph_container"></div>

@@ -5,20 +5,17 @@
 		{% endfor %}
 	</select>
 
-
-
 	<input type="text" name="description" placeholder="Description" class="frequency_line_description">
 	
 
 	<input type="date" name="start" value="2018-01-01"/>
-	<input type="date" name="end" value="2020-12-31"/>
+	<input type="date" name="end" value="{{data.today_date}}"/>
 
 	<input type="text" name="color" placeholder="Color" value="blue" class="frequency_line_color">
 	<input type="text" name="label" placeholder="Label" class="frequency_line_label">
 
 	<span class="frequency_control_button frequency_control_left">&#706;</span>
 	<span class="frequency_control_button frequency_control_right">&#707;</span>
-	<span class="frequency_control_button frequency_control_remove">&Cross;</span>
-	
+	<span class="frequency_control_button frequency_control_remove">&Cross;</span>	
 
 </form>

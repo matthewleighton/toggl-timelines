@@ -980,7 +980,7 @@ def frequency_page():
 	projects = get_project_data()
 
 	page_data = {
-		'projects': projects
+		'projects': projects,
 	}
 
 	response = make_response(render_template('frequency.html', data=page_data))
@@ -1056,7 +1056,8 @@ def new_frequency_line():
 		sorted_project_data[project_name] = unsorted_projects[project_name]
 
 	page_data = {
-		'projects': sorted_project_data
+		'projects': sorted_project_data,
+		'today_date': date.today()
 	}
 
 	return jsonify(render_template('frequency_line_controls.html', data=page_data))
