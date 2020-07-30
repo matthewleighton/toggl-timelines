@@ -4,7 +4,17 @@ $(document).ready(function() {
 
 })
 
+$('#settings_button').on('click', function() {
+	$('#frequency_graph_container').hide()
+	$('#frequency_settings_container').show()
+})
 
+$('#graph_line_controllers').on('change', '.frequency_line_color', function() {
+	color = $(this).val()
+	$(this).parent().css('background-color', color)
+})
+
+/*
 $('#graph_line_controllers').on('click', '.frequency_control_right', function() {
 	change_line_controls($(this), 1)
 })
@@ -12,6 +22,7 @@ $('#graph_line_controllers').on('click', '.frequency_control_right', function() 
 $('#graph_line_controllers').on('click', '.frequency_control_left', function() {
 	change_line_controls($(this), -1)
 })
+*/
 
 $('#graph_line_controllers').on('click', '.frequency_control_remove', function() {
 	var current_index = $(this).parent().index();
@@ -20,7 +31,7 @@ $('#graph_line_controllers').on('click', '.frequency_control_remove', function()
 
 	var shift_value = current_index == 0 ? 1 : -1;
 
-	change_line_controls($(this), shift_value)
+	//change_line_controls($(this), shift_value)
 
 	$(this).parent().remove();
 })
@@ -43,12 +54,12 @@ $('#graph_line_controllers').on('change', '.frequency_project_selector', functio
 
 		var hex_code = $(this).find(':selected').data('color')
 
-		$(this).parent().find('.frequency_line_color').val(hex_code)
+		$(this).parent().find('.frequency_line_color').val(hex_code).trigger('change')
 
 	}
 })
 
-
+/*
 function change_line_controls(button_element, value) {
 	var current_index = button_element.parent().index();
 
@@ -62,8 +73,21 @@ function change_line_controls(button_element, value) {
 
 	line_controls.hide()
 }
+*/
 
+$('.new_frequency_line_button').on('click', function() {
+	$.ajax({
+		"type": "POST",
+		"url": "/new_frequency_line",
+		"contentType": "application/json",
+		"dataType": "json",
+		success: function(response) {
+			$('#graph_line_controllers').append(response)
+		}
+	})
+})
 
+/*
 $('.new_frequency_line_button').on('click', function() {
 
 	var current_index = 0
@@ -105,6 +129,9 @@ $('.new_frequency_line_button').on('click', function() {
 		}
 	})
 })
+*/
+
+
 
 $('#frequency_graph_submit').on('click', function() {
 	
@@ -202,6 +229,10 @@ function get_minutes_since_midnight() {
 
 function create_frequency_graph(data) {
     console.log('create_frequency_graph')
+
+    $('#frequency_settings_container').hide()
+    $('#frequency_graph_container').show()
+
     //console.log(data)
     $('svg').remove()
 
@@ -209,7 +240,7 @@ function create_frequency_graph(data) {
 
     var margin = {top: 10, right: 30, bottom: 50, left: 60};
 
-	var width = $('#graph_container').width() - margin.left - margin.right;
+	var width = $('#frequency_graph_container').width() - margin.left - margin.right;
 	var height = $(window).height() - 100 - margin.top - margin.bottom;
 
 	var max_time = 1439
@@ -232,7 +263,7 @@ function create_frequency_graph(data) {
 		.nice();
 
 
-	var svg = d3.select('#graph_container').append('svg')
+	var svg = d3.select('#frequency_graph_container').append('svg')
 				.attr('width', width)
 				.attr('height', height)
 			.append('g')
@@ -354,7 +385,7 @@ function create_frequency_graph(data) {
 		);
 
 	//svg.on('mousemove', moved)
-	d3.select('#graph_container').on('mousemove', moved)
+	d3.select('#frequency_graph_container').on('mousemove', moved)
 
 	/* GRID LINES-------
 	svg.append('g')

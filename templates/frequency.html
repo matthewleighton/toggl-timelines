@@ -5,22 +5,26 @@
 		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 	</script>
 
-	<form id="graph_controls" class="form-horizontal">
-		
-		<div id="graph_line_controllers"></div>
+	<div id="frequency_settings_container">
+		<form id="graph_controls" class="form-horizontal">
+			
+			<div id="graph_line_controllers"></div>
 
-		<button type="button" class="new_frequency_line_button">New Line</button>
-		<button type="button" id="frequency_graph_submit">Create Graph</button>
+			<button type="button" class="new_frequency_line_button">New Line</button>
+			<button type="button" id="frequency_graph_submit">Create Graph</button>
 
-		
-		<input type="radio" id="frequency_relative_mode" name="y_axis_type" value="relative" checked>
-		<label for="relative"> Relative</label>
+			
+			<input type="radio" id="frequency_relative_mode" name="y_axis_type" value="relative" checked>
+			<label for="relative"> Relative</label>
 
-		<input type="radio" id="frequency_absolute_mode" name="y_axis_type" value="absolute">
-		<label for="absolute"> Absolute</label>
-	</form>
+			<input type="radio" id="frequency_absolute_mode" name="y_axis_type" value="absolute">
+			<label for="absolute"> Absolute</label>
+		</form>
+	</div>
 
-	<div id="graph_container"></div>
+	<div id="frequency_graph_container">
+		<button id="settings_button" type="button">Settings</button>
+	</div>
 
 	<script src="https://d3js.org/d3.v5.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.min.js"></script>

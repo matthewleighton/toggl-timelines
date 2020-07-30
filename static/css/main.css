@@ -387,6 +387,9 @@ svg {
 
 /* Frequency Page */
 
+#frequency_settings_container {
+	display: none;
+}
 
 .graph_line {
   fill: none;
@@ -398,7 +401,7 @@ svg {
 }
 
 .frequency_line_control {
-  display: none;
+  /*display: none;*/
 }
 
 .frequency_control_button {
