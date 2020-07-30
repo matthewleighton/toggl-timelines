@@ -400,8 +400,9 @@ svg {
   border: 1px solid black;
 }
 
-.frequency_line_control {
-  /*display: none;*/
+.selectize-control {
+	display: inline-block;
+	width: 250px;
 }
 
 .frequency_control_button {

@@ -14,67 +14,33 @@ $('#graph_line_controllers').on('change', '.frequency_line_color', function() {
 	$(this).parent().css('background-color', color)
 })
 
-/*
-$('#graph_line_controllers').on('click', '.frequency_control_right', function() {
-	change_line_controls($(this), 1)
-})
-
-$('#graph_line_controllers').on('click', '.frequency_control_left', function() {
-	change_line_controls($(this), -1)
-})
-*/
-
 $('#graph_line_controllers').on('click', '.frequency_control_remove', function() {
 	var current_index = $(this).parent().index();
 
-	console.log('Deleting: ' + current_index)
-
 	var shift_value = current_index == 0 ? 1 : -1;
-
-	//change_line_controls($(this), shift_value)
 
 	$(this).parent().remove();
 })
 
+
 $('#graph_line_controllers').on('change', '.frequency_project_selector', function() {
+	
 	var selected_projects = $(this).val()
 
 	if (selected_projects.length != 1) {return}
 
 	var label_input = $(this).parent().find('.frequency_line_label')
+	
+	if (label_input.val() == '' || label_input.val() in projects) {
 
-	projects = []
-
-	$(this).children().each(function() {
-		projects.push($(this).val())
-	})
-
-	if (label_input.val() == '' || projects.indexOf(label_input.val()) >= 0) {
 		label_input.val(selected_projects[0])
 
-		var hex_code = $(this).find(':selected').data('color')
+		var hex_code = projects[selected_projects[0]]['color']
 
 		$(this).parent().find('.frequency_line_color').val(hex_code).trigger('change')
-
 	}
 })
 
-/*
-function change_line_controls(button_element, value) {
-	var current_index = button_element.parent().index();
-
-	var max_index = $('#graph_line_controllers').children().length - 1
-
-	if (current_index + value < 0 || current_index + value > max_index) {return}
-
-	var line_controls = button_element.parent()
-
-	line_controls.parent().children().eq(current_index + value).show()
-
-	line_controls.hide()
-}
-*/
-
 $('.new_frequency_line_button').on('click', function() {
 	$.ajax({
 		"type": "POST",
@@ -83,55 +49,13 @@ $('.new_frequency_line_button').on('click', function() {
 		"dataType": "json",
 		success: function(response) {
 			$('#graph_line_controllers').append(response)
+
+			$('.frequency_project_selector').last().selectize()
 		}
 	})
+
+	
 })
-
-/*
-$('.new_frequency_line_button').on('click', function() {
-
-	var current_index = 0
-	var current_line_start, current_line_end
-
-	//Getting date of current line.
-	$('.frequency_line_control').each(function(index) {
-		display_status = $(this).css('display')
-
-		if (display_status == 'block') {
-			current_line_start = $(this).children('.line_start_date')[0].value
-			current_line_end = $(this).children('.line_end_date')[0].value
-			return false
-		}
-	})
-
-	$.ajax({
-		"type": "POST",
-		"url": "/new_frequency_line",
-		"contentType": "application/json",
-		"dataType": "json",
-		success: function(response) {
-			$('#graph_line_controllers').append(response)
-
-			var new_index = $('#graph_line_controllers').children().length - 1
-			$('#graph_line_controllers').children().hide()
-
-			var new_controls = $('#graph_line_controllers').children().eq(new_index)
-
-			if (current_line_end) {
-				new_controls.children('.line_end_date')[0].value = current_line_end
-			}
-
-			if (current_line_start) {
-				new_controls.children('.line_start_date')[0].value = current_line_start
-			}
-
-			new_controls.show()
-		}
-	})
-})
-*/
-
-
 
 $('#frequency_graph_submit').on('click', function() {
 	

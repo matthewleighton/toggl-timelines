@@ -1,9 +1,19 @@
 {% include "head.html" %}
 
 <body>
-	<script type="text/javascript">
+	<!--<script type="text/javascript">
 		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+	</script>-->
+
+	<script type="text/javascript">
+		projects = {{data.projects|tojson}}
 	</script>
+
+	
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.css"/>
+
 
 	<div id="frequency_settings_container">
 		<form id="graph_controls" class="form-horizontal">
