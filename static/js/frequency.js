@@ -11,7 +11,7 @@ $('#settings_button').on('click', function() {
 
 $('#graph_line_controllers').on('change', '.frequency_line_color', function() {
 	color = $(this).val()
-	$(this).parent().css('background-color', color)
+	$(this).parents('form').first().find('.frequency_color_sample').css('background-color', color)
 })
 
 $('#graph_line_controllers').on('click', '.frequency_control_remove', function() {
@@ -19,25 +19,32 @@ $('#graph_line_controllers').on('click', '.frequency_control_remove', function()
 
 	var shift_value = current_index == 0 ? 1 : -1;
 
-	$(this).parent().remove();
+	//$(this).parent().remove();
+	$(this).parents('form').first().remove();
 })
 
 
 $('#graph_line_controllers').on('change', '.frequency_project_selector', function() {
 	
 	var selected_projects = $(this).val()
+	console.log('Project changed.')
+	console.log(selected_projects)
 
 	if (selected_projects.length != 1) {return}
 
-	var label_input = $(this).parent().find('.frequency_line_label')
+	var line_controls = $(this).parents('form').first()
+
+	var label_input = line_controls.find('.frequency_line_label')
 	
 	if (label_input.val() == '' || label_input.val() in projects) {
 
 		label_input.val(selected_projects[0])
 
+		console.log('Updating line color')
+
 		var hex_code = projects[selected_projects[0]]['color']
 
-		$(this).parent().find('.frequency_line_color').val(hex_code).trigger('change')
+		line_controls.find('.frequency_line_color').val(hex_code).trigger('change')
 	}
 })
 

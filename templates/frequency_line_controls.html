@@ -1,19 +1,46 @@
 <form class="frequency_line_control">
-	<select name="projects" multiple class="frequency_project_selector">
-		{% for project_name in data.projects %}
-			<option value="{{project_name}}" data-color="{{data.projects[project_name]['color']}}">{{project_name}}</option>
-		{% endfor %}
-	</select>
-
-	<input type="text" name="description" placeholder="Description" class="frequency_line_description">
 	
-
-	<input class="line_start_date" type="date" name="start" value="2018-01-01"/>
-	<input class="line_end_date" type="date" name="end" value="{{data.today_date}}"/>
-
-	<input type="text" name="color" placeholder="Color" value="blue" class="frequency_line_color">
-	<input type="text" name="label" placeholder="Label" class="frequency_line_label">
-
-	<span class="frequency_control_button frequency_control_remove">&Cross;</span>	
+	<table>
+		<tr>
+			<th>Projects</th>
+			<th>Description</th>
+			<th>Start</th>
+			<th>End</th>
+			<th>Label</th>
+			<th>Color</th>
+			<th>&nbsp;</th>
+			<th>&nbsp;</th>
+		</tr>
+		<tr>
+			<th>
+				<select name="projects" multiple class="frequency_project_selector">
+					{% for project_name in data.projects %}
+						<option value="{{project_name}}" data-color="{{data.projects[project_name]['color']}}">{{project_name}}</option>
+					{% endfor %}
+				</select>
+			</th>
+			<th>
+				<input type="text" name="description" class="frequency_line_description form-control">
+			</th>
+			<th>
+				<input class="line_start_date form-control" type="date" name="start" value="2018-01-01"/>
+			</th>
+			<th>
+				<input class="line_end_date form-control" type="date" name="end" value="{{data.today_date}}"/>
+			</th>
+			<th>
+				<input type="text" name="label" class="frequency_line_label form-control">
+			</th>
+			<th>
+				<input type="text" name="color" value="#000000" class="frequency_line_color form-control">
+			</th>
+			<th>
+				<div class="frequency_color_sample">
+					
+				</div>
+			</th>
+			<th><span class="frequency_control_button frequency_control_remove">&Cross;</span></th>
+		</tr>
+	</table>
 
 </form>

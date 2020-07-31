@@ -396,13 +396,21 @@ svg {
   stroke-width: 2px; 
 }
 
-.frequency_line_controls {
-  border: 1px solid black;
+.frequency_line_control {
+  margin: 12px;
 }
 
 .selectize-control {
 	display: inline-block;
 	width: 250px;
+}
+
+.frequency_color_sample {
+	height: 35px;
+	width: 35px;
+	border-radius: 4px;
+	margin: 0px 0px 1px 7px;
+	background-color: #000000;
 }
 
 .frequency_control_button {
