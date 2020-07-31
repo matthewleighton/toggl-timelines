@@ -388,7 +388,23 @@ svg {
 /* Frequency Page */
 
 #frequency_settings_container {
+	/*display: none;*/
+}
+
+#frequency_graph_container {
 	display: none;
+}
+
+#frequency_settings_button {
+	cursor: pointer;
+	position: absolute;
+	left: 98%;
+	font-size: 25px;
+	font-weight: bold;
+}
+
+#graph_controls {
+	margin: 20px;
 }
 
 .graph_line {

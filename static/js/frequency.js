@@ -1,10 +1,9 @@
 
 $(document).ready(function() {
 	$('.new_frequency_line_button').click()
-
 })
 
-$('#settings_button').on('click', function() {
+$('#frequency_settings_button').on('click', function() {
 	$('#frequency_graph_container').hide()
 	$('#frequency_settings_container').show()
 })
@@ -263,6 +262,8 @@ function create_frequency_graph(data) {
 		.style("stroke", "black")
 		.style("fill", "none");
 
+	
+
 
 
 	// TODO: Currently this only takes into account y distance. It needs to also consider x axis distance to lines.
@@ -270,6 +271,9 @@ function create_frequency_graph(data) {
 		const mouse = d3.mouse(this)
 		const xm = Math.floor(x.invert(mouse[0])) - 52
 		const ym = y.invert(mouse[1])
+
+		console.log('X: ' + xm)
+		console.log('Y: ' + ym)
 
 		// Mouse must be within 10% of the graph to trigger.
 		lowest_difference = y.domain()[1] / 10
@@ -289,7 +293,6 @@ function create_frequency_graph(data) {
 			}
 
 		}
-
 
 		svg.selectAll('.graph_line')
 			.attr('stroke', function(d, i) {
