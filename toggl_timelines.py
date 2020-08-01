@@ -15,7 +15,7 @@ import toggl_timelines_helpers as helpers
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///toggl-timelines.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///toggl_timelines.db'
 
 # -------------------------------------------------------------------------------------
 # ------------------------------------Database-----------------------------------------
@@ -1000,7 +1000,7 @@ def frequency_data():
 
 		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
 		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d')
-		print(line['description'])
+		#print(line['description'])
 	
 		entries = get_entries_from_database(
 			start=start_datetime,

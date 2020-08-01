@@ -1,6 +1,6 @@
 /venv
 TogglPy.py
-toggl-timelines.db
+toggl_timelines.db
 utc_offsets.csv
 toggl_timelines_config.py
 log.txt
