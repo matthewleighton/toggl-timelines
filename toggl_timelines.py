@@ -460,7 +460,7 @@ initial_timelines_page_load_amount = 7
 
 @app.route('/timelines')
 def timelines_page():
-	update_database(15)
+	update_database(3)
 
 	start = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=initial_timelines_page_load_amount)
 
@@ -1004,6 +1004,8 @@ def frequency_data():
 
 	data = []
 
+	days= [0, 0, 0, 0, 0, 0, 0]
+
 	for line in submission_data:
 
 		if isinstance(line['projects'], str):
@@ -1023,8 +1025,11 @@ def frequency_data():
 		day_minutes_list = get_day_minutes_list()
 
 		for entry in entries:
+			#print(entry)
 			duration_minutes = math.ceil(entry.dur / 60000)
 			target_minute = get_minute_of_day(entry.start)
+
+			weekday = entry.start.weekday()
 
 			# Minute 1440 does not exist.
 			if target_minute >= 1440:
@@ -1035,8 +1040,15 @@ def frequency_data():
 				day_minutes_list[target_minute] += 1
 				target_minute += 1
 
+				days[weekday] += 1
+
 				if target_minute >= 1440:
 					target_minute = 0
+
+					weekday += 1
+
+					if weekday == 7:
+						weekday = 0
 
 				i += 1
 
@@ -1047,10 +1059,12 @@ def frequency_data():
 			period_duration = end_datetime - start_datetime
 			day_minutes_list = [i / period_duration.days for i in day_minutes_list]
 
+		print(days)
 
 		data.append({
 			'line_data': line,
-			'minutes': day_minutes_list
+			'minutes': day_minutes_list,
+			'days': days
 		})
 
 	return jsonify(data)

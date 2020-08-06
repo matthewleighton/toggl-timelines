@@ -106,10 +106,21 @@ $('#frequency_graph_submit').on('click', function() {
 		"dataType": "json",
 		"data": JSON.stringify(submission_data),
 		success: function(response) {
-			create_frequency_graph(response)
+			
+			scope_type = get_scope_type()
+
+			if (scope_type == 'minutes') {
+				create_frequency_graph(response)
+			} else {
+				create_days_graph(response)
+			}
 		}
 	})
 })
+
+function get_scope_type() {
+	return $("input[name='scope_type']:checked").val()
+}
 
 function get_x_tick_values() {
 	hours = []
@@ -157,14 +168,75 @@ function get_minutes_since_midnight() {
     return minutes
 }
 
+
+function create_days_graph(data) {
+	console.log(data)
+	reset_graph_view()
+
+	var y_axis_type = $("input[name='y_axis_type']:checked").val()
+
+    var margin = {top: 10, right: 30, bottom: 50, left: 60};
+
+	var width = $('#frequency_graph_container').width() - margin.left - margin.right;
+	var height = $(window).height() - 100 - margin.top - margin.bottom;
+
+
+	var max_frequency = d3.max(data, function(array) {
+		return d3.max(array['days']);
+	});
+
+	var yScale = d3.scaleLinear()
+		.domain([0, max_frequency])
+		.range([height, 0])
+		.nice();
+
+	var xScale = d3.scaleBand()
+		.domain([0, 1, 2, 3, 4, 5, 6])
+		.range([0, width])
+		.padding(0.2)
+
+	var svg = d3.select('#frequency_graph_container').append('svg')
+				.attr('width', width)
+				.attr('height', height)
+			.append('g')
+				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
+
+	for (var i = 0; i <= 6; i++) {
+		svg.append('rect')
+			.data(data[0]['days'])
+			.attr('x', xScale(i))
+			.attr('y', yScale(data[0]['days'][i]))
+			.attr('height', height - yScale(data[0]['days'][i]))
+			.attr('width', xScale.bandwidth())
+			.attr('fill', data[0]['line_data']['color'])
+	}
+
+	days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+	svg.append('g')
+		.attr('transform', 'translate(0,' + height + ')')
+		.call(
+			d3.axisBottom(xScale)
+			.tickValues([0, 1, 2, 3, 4, 5, 6])
+			.tickFormat(d => days[d])
+		);
+	
+	svg.append('g')
+		.call(
+			d3.axisLeft(yScale)
+		);
+}
+
+function reset_graph_view() {
+	$('#frequency_settings_container').hide()
+	$('#frequency_graph_container').show()
+	$('svg').remove()
+}
+
+
 function create_frequency_graph(data) {
     console.log('create_frequency_graph')
-
-    $('#frequency_settings_container').hide()
-    $('#frequency_graph_container').show()
-
-    //console.log(data)
-    $('svg').remove()
+    reset_graph_view()
 
     var y_axis_type = $("input[name='y_axis_type']:checked").val()
 
