@@ -950,7 +950,18 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 					minute = 59
 				)
 
-	
+		elif calendar_period == 'month-of-year':
+			historic_year = now.year - 1
+			last_day_of_month = calendar.monthrange(now.year, now.month)[1]	
+
+			current_start = today_start.replace(day=1)
+			historic_start = current_start.replace(year=historic_year)
+
+			if live_mode:
+				historic_end = historic_start.replace(day=now.day, hour=now.hour, minute=now.minute)
+			else:
+				historic_end = historic_start.replace(day=last_day_of_month, hour=23, minute=59, second=59)
+
 	"""
 	print('Current start: ' + str(current_start))
 	print('Current end: ' + str(current_end))

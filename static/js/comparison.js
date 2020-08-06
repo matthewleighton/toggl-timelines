@@ -1,5 +1,14 @@
+const monthNames = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
 $(document).ready(function() {
 	
+	// Update text for "This month vs. same month last year"
+	current_month_name = monthNames[new Date().getMonth()]
+	$('#calendar_period option[value="month-of-year').text('This month vs. ' + current_month_name + ' last year')
+
+
 	$( "#comparison_form" ).on( "submit", function( event ) {
 		event.preventDefault();
 		submit_comparison_form()
@@ -190,6 +199,7 @@ function get_current_period_string() {
 			case 'half-year':
 				return 'This year half: '
 			case 'year':
+			case 'month-of-year':
 				return 'This year: '
 		}
 	}
@@ -237,6 +247,7 @@ function get_average_label() {
 			case 'half-year':
 				return 'Last year half: '
 			case 'year':
+			case 'month-of-year':
 				return 'Last year: '
 		}
 	} else if (period_type == 'goals') {
