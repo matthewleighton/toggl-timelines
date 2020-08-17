@@ -22,6 +22,15 @@ $('#graph_line_controllers').on('click', '.frequency_control_remove', function()
 	$(this).parents('form').first().remove();
 })
 
+$('#graph_line_controllers').on('click', '.frequency_date_reuse_icon', function() {
+	var column_index = $(this).parent().index()
+	var date = $(this).closest('tr').next().children().eq(column_index).find('input').val()
+
+	$('#graph_line_controllers').children().each(function() {
+		$(this).find("tr:nth-child(2)").children().eq(column_index).find('input').val(date)
+	})
+})
+
 
 $('#graph_line_controllers').on('change', '.frequency_project_selector', function() {
 	
@@ -62,6 +71,8 @@ $('.new_frequency_line_button').on('click', function() {
 
 	
 })
+
+
 
 $('#frequency_graph_submit').on('click', function() {
 	
