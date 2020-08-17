@@ -1004,9 +1004,11 @@ def frequency_data():
 
 	data = []
 
-	days= [0, 0, 0, 0, 0, 0, 0]
+	
 
 	for line in submission_data:
+
+		days= [0, 0, 0, 0, 0, 0, 0]
 
 		if isinstance(line['projects'], str):
 			line['projects'] = [line['projects']]

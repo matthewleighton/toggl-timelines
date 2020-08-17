@@ -106,7 +106,7 @@ $('#frequency_graph_submit').on('click', function() {
 		"dataType": "json",
 		"data": JSON.stringify(submission_data),
 		success: function(response) {
-			
+			console.log(response)
 			scope_type = get_scope_type()
 
 			if (scope_type == 'minutes') {
@@ -170,7 +170,6 @@ function get_minutes_since_midnight() {
 
 
 function create_days_graph(data) {
-	console.log(data)
 	reset_graph_view()
 
 	var y_axis_type = $("input[name='y_axis_type']:checked").val()
@@ -190,10 +189,22 @@ function create_days_graph(data) {
 		.range([height, 0])
 		.nice();
 
+	xRange = []
+	for (i = 0; i < data.length; i++){
+		xRange.push(i)
+	}
+
 	var xScale = d3.scaleBand()
 		.domain([0, 1, 2, 3, 4, 5, 6])
 		.range([0, width])
 		.padding(0.2)
+
+	var xSubgroup = d3.scaleBand()
+		.domain(xRange)
+		.range([0, xScale.bandwidth()])
+		.padding([0.05])
+
+	console.log(xScale.bandwidth())
 
 	var svg = d3.select('#frequency_graph_container').append('svg')
 				.attr('width', width)
@@ -201,15 +212,46 @@ function create_days_graph(data) {
 			.append('g')
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
 
-	for (var i = 0; i <= 6; i++) {
-		svg.append('rect')
-			.data(data[0]['days'])
-			.attr('x', xScale(i))
-			.attr('y', yScale(data[0]['days'][i]))
-			.attr('height', height - yScale(data[0]['days'][i]))
-			.attr('width', xScale.bandwidth())
-			.attr('fill', data[0]['line_data']['color'])
-	}
+	svg.append('g')
+		.selectAll('g')
+		.data(data)
+		.enter()
+			.append('g')
+			.selectAll('rect')
+
+			.data(function(d, i) {
+				//console.log(d)
+				console.log('New Line: ' + d['line_data']['label'] + '-------------')
+				a = []
+				for (var j = d['days'].length - 1; j >= 0; j--) {
+					a.push({
+						days: d['days'],
+						details: d['line_data'],
+						line_number: i
+					})
+				}
+
+				console.log(a)
+
+				return a
+			})
+			.enter()
+				.append('rect')
+				.attr('x', function(d,i) {
+					return (xScale(i) + xSubgroup(d['line_number']))
+				})
+				.attr('y', function(d,i) {
+					return yScale(d['days'][i])
+				})
+				.attr('height', function(d,i) {
+					return (height - yScale(d['days'][i]))
+				})
+				.attr('width', function(d,i) {
+					return xSubgroup.bandwidth()
+				})
+				.attr('fill', function(d,i) {
+					return d['details']['color']
+				})	
 
 	days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
