@@ -101,9 +101,7 @@ $('#frequency_graph_submit').on('click', function() {
 						
 		}
 
-		serialized_object['y_axis_type'] = $("input[name='y_axis_type']:checked").val()
-		console.log(serialized_object)
-
+		serialized_object['y_axis_type'] = $("select[name='y_axis_type']").val()
 
 		submission_data.push(serialized_object)
 	})
@@ -182,7 +180,10 @@ function get_minutes_since_midnight() {
 function create_days_graph(data) {
 	reset_graph_view()
 
-	var y_axis_type = $("input[name='y_axis_type']:checked").val()
+	var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+	var y_axis_type = data[0]['line_data']['y_axis_type']
+
+	//var y_axis_type = $("input[name='y_axis_type']:checked").val()
 
     var margin = {top: 10, right: 30, bottom: 50, left: 60};
 
@@ -213,8 +214,6 @@ function create_days_graph(data) {
 		.domain(xRange)
 		.range([0, xScale.bandwidth()])
 		.padding([0.05])
-
-	console.log(xScale.bandwidth())
 
 	var svg = d3.select('#frequency_graph_container').append('svg')
 				.attr('width', width)
@@ -263,8 +262,6 @@ function create_days_graph(data) {
 					return d['details']['color']
 				})	
 
-	days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
 	svg.append('g')
 		.attr('transform', 'translate(0,' + height + ')')
 		.call(
@@ -276,20 +273,17 @@ function create_days_graph(data) {
 	svg.append('g')
 		.call(
 			d3.axisLeft(yScale)
-				.tickFormat(d => days_graph_y_tick_format(d))
+				.tickFormat(d => days_graph_y_tick_format(d, y_axis_type))
 		);
 
 }
 
-function days_graph_y_tick_format(d) {
-	var y_axis_type = d['y_axis_type']
-
-	if (y_axis_type == 'absolute') {
+function days_graph_y_tick_format(d, y_axis_type) {
+	if (y_axis_type == 'absolute' || y_axis_type == 'average-hours-per-day') {
 		return Math.round((d/60)*10) / 10
 	} else {
 		return Math.round(d*1000)/10 + '%'
 	}
-
 }
 
 function reset_graph_view() {

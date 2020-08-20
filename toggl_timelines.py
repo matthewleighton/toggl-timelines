@@ -1058,13 +1058,24 @@ def frequency_data():
 		# Semi-temporary fix because we end up getting a lot of additional minutes tracked at minute 0.
 		day_minutes_list[0] = day_minutes_list[1439]
 
-		if submission_data[0]['y_axis_type'] == 'relative':
+		if submission_data[0]['y_axis_type'] in ['relative', 'percentage-tracked-time']:
 			period_duration = end_datetime - start_datetime
 			day_minutes_list = [i / period_duration.days for i in day_minutes_list]
 
 			total_minutes = sum(days)
 
 			days = list(map(lambda n: n/total_minutes, days))
+		elif submission_data[0]['y_axis_type'] == 'average-hours-per-day':
+			weekday_occurances = get_weekday_occurances(start_datetime, end_datetime)
+
+			for i in range(0, 7):
+				print('-----------------')
+				print(i)
+				print(days[i])
+				print(weekday_occurances[i])
+				days[i] = days[i] / weekday_occurances[i]
+				print(days[i])
+
 
 		print(days)
 
@@ -1093,6 +1104,26 @@ def new_frequency_line():
 	}
 
 	return jsonify(render_template('frequency_line_controls.html', data=page_data))
+
+# Return a list of the number of times each weekdays occured between two dates.
+def get_weekday_occurances(start, end):
+	period = end - start
+	number_of_days = period.days
+
+	weekday_occurances = [0, 0, 0, 0, 0, 0, 0]
+
+	full_weeks = number_of_days // 7
+	remainder = number_of_days % 7
+	first_day = start.weekday()
+
+	for i in range(0, 7):
+		weekday_occurances[i] = full_weeks
+	
+	for i in range(0, remainder):
+		weekday_occurances[(first_day + i) % 7] += 1
+
+	return weekday_occurances
+
 
 
 # Return a dictionary with minutes from 0 to 1440, each with a value of 0.

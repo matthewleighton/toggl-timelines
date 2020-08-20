@@ -23,7 +23,14 @@
 			<button type="button" class="new_frequency_line_button">New Line</button>
 			<button type="button" id="frequency_graph_submit">Create Graph</button>
 
-			
+			<select name="y_axis_type">
+				<option value="relative">Relative</option>
+				<option value="absolute">Absolute</option>
+				<option value="percentage-tracked-time">Percentage of tracked time</option>
+				<option value="average-hours-per-day">Average hours per day</option>
+			</select>
+
+			<!--
 			<input type="radio" id="frequency_relative_mode" name="y_axis_type" value="relative" checked>
 			<label for="relative"> Relative</label>
 
@@ -32,7 +39,7 @@
 
 			<input type="radio" id="frequency_average_mode" name="y_axis_type" value="average">
 			<label for="absolute"> Average</label>
-
+			-->
 			|
 
 			<input type="radio" name="scope_type" value="minutes">
