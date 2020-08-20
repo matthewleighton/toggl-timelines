@@ -18,7 +18,6 @@ $('#graph_line_controllers').on('click', '.frequency_control_remove', function()
 
 	var shift_value = current_index == 0 ? 1 : -1;
 
-	//$(this).parent().remove();
 	$(this).parents('form').first().remove();
 })
 
@@ -277,7 +276,20 @@ function create_days_graph(data) {
 	svg.append('g')
 		.call(
 			d3.axisLeft(yScale)
+				.tickFormat(d => days_graph_y_tick_format(d))
 		);
+
+}
+
+function days_graph_y_tick_format(d) {
+	var y_axis_type = d['y_axis_type']
+
+	if (y_axis_type == 'absolute') {
+		return Math.round((d/60)*10) / 10
+	} else {
+		return Math.round(d*1000)/10 + '%'
+	}
+
 }
 
 function reset_graph_view() {

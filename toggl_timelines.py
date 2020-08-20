@@ -1004,6 +1004,7 @@ def frequency_data():
 
 	data = []
 
+	print(submission_data)
 	
 
 	for line in submission_data:
@@ -1060,6 +1061,10 @@ def frequency_data():
 		if submission_data[0]['y_axis_type'] == 'relative':
 			period_duration = end_datetime - start_datetime
 			day_minutes_list = [i / period_duration.days for i in day_minutes_list]
+
+			total_minutes = sum(days)
+
+			days = list(map(lambda n: n/total_minutes, days))
 
 		print(days)
 
