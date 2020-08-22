@@ -1,5 +1,6 @@
 
 $(document).ready(function() {
+	update_y_axis_select_options()
 	$('.new_frequency_line_button').click()
 })
 
@@ -55,6 +56,8 @@ $('#graph_line_controllers').on('change', '.frequency_project_selector', functio
 	}
 })
 
+$('input[type=radio][name=scope_type]').change(update_y_axis_select_options)
+
 $('.new_frequency_line_button').on('click', function() {
 	$.ajax({
 		"type": "POST",
@@ -70,8 +73,6 @@ $('.new_frequency_line_button').on('click', function() {
 
 	
 })
-
-
 
 $('#frequency_graph_submit').on('click', function() {
 	
@@ -125,6 +126,36 @@ $('#frequency_graph_submit').on('click', function() {
 		}
 	})
 })
+
+function update_y_axis_select_options() {
+	var options
+	var dropdown = $("select[name='y_axis_type']")
+
+	var selected_scope = $("input[type=radio][name=scope_type]:checked").val()
+
+	var absolute = $('<option></option>').attr('value', 'absolute').text('Absolute')
+	var relative = $('<option></option>').attr('value', 'relative').text('Relative')
+
+	var average_hours_per_day = $('<option></option>').attr('value', 'average-hours-per-day').text('Average Hours per Day')
+
+	var minutes_scope = [absolute, relative]
+	var days_scope = [absolute, average_hours_per_day]
+
+	switch(selected_scope) {
+		case 'minutes':
+			options = [absolute, relative]
+			break;
+		case 'days':
+			options = [absolute, average_hours_per_day]
+			break;
+	}
+
+	dropdown.empty()
+
+	for (var i = options.length - 1; i >= 0; i--) {
+		dropdown.append(options[i])
+	}
+}
 
 function get_scope_type() {
 	return $("input[name='scope_type']:checked").val()
