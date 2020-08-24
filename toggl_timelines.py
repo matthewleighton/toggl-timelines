@@ -641,6 +641,8 @@ def comparison_data():
 def sum_category_durations(days, categories, view_type, historic=False, live_mode=False, weekdays=[]):
 	current_or_historic_tracked = 'historic_tracked' if historic else 'current_tracked'
 
+
+
 	for day in days:
 		entries = day['entries']
 		for entry in entries:
@@ -680,6 +682,8 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 					categories[entry.client]['current_tracked'] += duration
 
 			categories[project_name][current_or_historic_tracked] += duration
+
+
 
 # Get a ratio (0 to 1) describing how much a certain period of time (e.g. today/this week/month/year) is complete/over.
 def get_period_completion_ratio(period, working_time_start=False, working_time_end=False):
@@ -770,9 +774,11 @@ def calculate_historic_averages(category_data, view_type, historic_days, current
 # Calculate how the ratio of time tracked in a current vs historic period. Return as a list.
 def calculate_ratios(category_data, view_type, goals=[]):
 	response = []
+
 	for project_name in category_data:
 		
 		current_tracked = category_data[project_name]['current_tracked']
+		historic_tracked = category_data[project_name]['historic_tracked']
 
 		average = category_data[project_name]['average']
 
@@ -785,7 +791,7 @@ def calculate_ratios(category_data, view_type, goals=[]):
 
 		category_data[project_name]['ratio'] = ratio
 
-		if current_tracked > 0 or view_type == 'goals': # Don't include projects with no recently tracked time.
+		if current_tracked > 0 or historic_tracked > 0 or view_type == 'goals': # Don't include projects with no recent/historic tracked time.
 			
 			if view_type == 'goals' and project_name not in goals.keys():
 				continue # Don't include projects which don't have goals.

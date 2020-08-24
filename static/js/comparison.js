@@ -61,10 +61,26 @@ function submit_comparison_form(reload=false) {
 		"dataType": "json",
 		"data": JSON.stringify(serialized_data),
 		success: function(response) {
-			console.log(response)
+	
+			if (serialized_data['period_type'] == 'calendar' && !serialized_data['include_empty_projects']) {
+				response = remove_projects_with_no_current_time(response)
+			}
+
 			create_graph(response, sort_type)
 		}
 	})
+}
+
+function remove_projects_with_no_current_time(data) {
+	data = $.grep(data, function(project, i) {
+		if (project['current_tracked'] > 0) {
+			return true;
+		}
+
+		return false;
+	})
+
+	return data
 }
 
 function format_serialized_data(data) {
