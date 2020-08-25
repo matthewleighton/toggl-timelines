@@ -156,6 +156,15 @@ body {
     cursor: pointer;
 }
 
+.timeline_search_container {
+  position: fixed;
+  padding: 20px 50px;
+  z-index: 9999;
+  left: 42%;
+  top: 42%;
+  display: none;
+}
+
 /* -----------------Loading Spinners--------------- */
 #loading_div {
 	display: none;

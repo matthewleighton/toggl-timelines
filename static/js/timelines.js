@@ -254,30 +254,76 @@ $(document).ready(function(){
 	})
 
 	client_mode = false
-	stack_mode = false
 	black_mode = false
+	search_visible = false
 	$('body').keypress(function(e) {
-		console.log(e.which)
+		//console.log(e.which)
 
-		if(e.which==99) {
+		/*
+		if(e.which==99) { //c key
 			client_mode = (client_mode) ? false : true
 
 			activate_client_mode(client_mode)
 		}
+		*/
 
-		if (e.which==115) {
-			stack_mode = (stack_mode) ? false : true
+		if (e.which==115 && !$('input[name=timeline_search]').is(':focus')) { //s key
+
+			e.preventDefault()
+
+			search_visible = (search_visible) ? false : true
 			
-			activate_stack_mode(stack_mode)
+			if (search_visible) {
+				$('.timeline_search_container').show()
+				$('input[name=timeline_search]').prop('disabled', false)
+				$('input[name=timeline_search]').focus()
+			} else {
+				$('.timeline_search_container').hide()
+				$('input[name=timeline_search]').prop('disabled', true)
+			}
 		}
 
-		if (e.which==119) {
+		/*
+		if (e.which==119) { // w key
 			black_mode = (black_mode) ? false : true
 			
 			activate_black_mode(black_mode)
 		}
+		*/
 
-		
 	})
+
+	// Hide the search box when input field is unselected.
+	$('input[name=timeline_search]').focusout(function() {
+		$('body').trigger(jQuery.Event('keypress', {which: 115}))
+	})
+
+	var serach_timeout = false
+	$('input[name=timeline_search]').on('change input', function() {	
+		var search_input = this.value.toLowerCase()
+
+		if (serach_timeout) {
+			clearTimeout(serach_timeout)
+		}
+
+		serach_timeout = setTimeout(function() {
+
+			$('.tracked_time').each(function() {
+
+				var description = String($(this).data('description')).toLowerCase()
+
+				if (description.includes(search_input)) {
+					$(this).css('opacity', 1)
+				} else {
+					$(this).css('opacity', 0.15)
+				}
+
+			})
+
+		},
+		600)
+	})
+
+
 
 });

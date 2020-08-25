@@ -388,7 +388,6 @@ def apply_utc_offsets(entries):
 	for entry in entries:
 		
 		if not hasattr(entry, 'offset_fixed'): # Make sure we're not applying the offset for a second time.
-			print('UTC OFFSET')
 			new_start = entry.start + timedelta(hours=entry.utc_offset)
 			new_end = entry.end + timedelta(hours=entry.utc_offset)
 
