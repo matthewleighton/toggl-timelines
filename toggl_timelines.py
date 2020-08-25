@@ -125,7 +125,7 @@ class Tag(db.Model):
 
 # Update the local database from Toggl's API
 def update_database(start_days_ago, end_days_ago=0):
-	start = datetime.today() - timedelta(days=start_days_ago)
+	start = datetime.today().replace(hour=0, minute=0, second=0) - timedelta(days=start_days_ago)
 	end   = datetime.today() - timedelta(days=end_days_ago)
 
 	request_data = {
@@ -143,7 +143,7 @@ def update_database(start_days_ago, end_days_ago=0):
 	if currently_tracking:
 		entries.append(currently_tracking)
 	
-	delete_days_from_database(start_days_ago, end_days_ago)
+	delete_days_from_database(start, end)
 
 	for entry in entries:
 
@@ -155,6 +155,8 @@ def update_database(start_days_ago, end_days_ago=0):
 		existing_entry = Entry.query.filter_by(id=entry_id).first()
 		
 		if existing_entry:
+			print('Existing Entry!')
+			print(existing_entry)
 			db.session.delete(existing_entry)
 			db.session.commit() # Not sure whether we need this.
 
@@ -218,10 +220,7 @@ def update_database(start_days_ago, end_days_ago=0):
 
 	return entries
 
-def delete_days_from_database(start_days_ago, end_days_ago=0):
-	start = datetime.today() - timedelta(days=start_days_ago)
-	end   = datetime.today() - timedelta(days=end_days_ago)
-
+def delete_days_from_database(start, end):
 	db_entries = Entry.query.filter(Entry.start <= end).filter(Entry.start >= start)
 
 	for entry in db_entries:
@@ -389,6 +388,7 @@ def apply_utc_offsets(entries):
 	for entry in entries:
 		
 		if not hasattr(entry, 'offset_fixed'): # Make sure we're not applying the offset for a second time.
+			print('UTC OFFSET')
 			new_start = entry.start + timedelta(hours=entry.utc_offset)
 			new_end = entry.end + timedelta(hours=entry.utc_offset)
 
