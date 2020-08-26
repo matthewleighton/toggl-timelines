@@ -1,6 +1,12 @@
 var start_days_ago = 14
 var end_days_ago = 7
 
+var filter_settings = {
+	'active': false,
+	'type': false,
+	'value': false
+}
+
 function get_day_percentage() {
 	var now  = new Date()
 		then = new Date(
@@ -15,29 +21,6 @@ function get_day_percentage() {
 	day_percentage = (minutes_since_midnight/(60*24))*100
 
 	return day_percentage
-}
-
-var active = {
-	'project': [],
-	'description': [],
-	'client' : []
-}
-
-function highlight_category(category, target) {
-	if(active[category].length == 1 && active[category][0] == target || !target) {
-		active[category] = []
-	} else {
-		active[category] = [target]
-	}
-
-	$('.tracked_time').each(function() {
-		if (active[category].includes($(this).data(category)) || active[category].length == 0){
-			$(this).css('opacity', 1)
-		} else {
-			$(this).css('opacity', 0.15)
-		}
-	})
-
 }
 
 function activate_client_mode(value) {
@@ -104,6 +87,7 @@ function assign_listeners() {
 	// Selecting Projects
 	$('.tracked_time').on('click', function(e){
 		entry_clicks++
+
 		clicked_project = $(this).data('project')
 		clicked_client = $(this).data('client')
 
@@ -113,9 +97,19 @@ function assign_listeners() {
 				entry_clicks = 0
 			
 				if (e.ctrlKey) {
-					highlight_category('client', clicked_client)
+
+					if (filter_settings['type'] == 'client') {
+						clicked_client = false
+					}
+
+					apply_filter('client', clicked_client)
 				} else {
-					highlight_category('project', clicked_project)
+
+					if (filter_settings['type'] == 'project') {
+						clicked_project = false
+					}
+
+					apply_filter('project', clicked_project)
 				}
 				
 			}, DELAY)
@@ -123,14 +117,8 @@ function assign_listeners() {
 			clearTimeout(timer)
 			entry_clicks = 0
 
-			if(active['project'].length > 0){
-				active['project'] = []
-				highlight_category('project', false)
-			}
-
 			clicked_description = $(this).data('description')
-			highlight_category('description', clicked_description)
-
+			apply_filter('description', clicked_description)
 		}
 	})
 	.on('dblclick', function(e) {
@@ -189,6 +177,46 @@ function assign_listeners() {
 function remove_listeners() {
 	$('.day_date').off()
 	$('.tracked_time').off('click')
+}
+
+function apply_filter(type, search_value) {
+	// If we're trying to apply a search which is already active, remove the filter.
+	if (type == false || search_value == false ) {
+		$('.tracked_time').css('opacity', 1)
+		update_filter_settings(false, false)
+		return false
+	}
+
+	search_value = String(search_value).toLowerCase()
+
+	$('.tracked_time').each(function() {
+
+		var entry_value = String($(this).data(type)).toLowerCase()
+
+		if (entry_value.includes(search_value)) {
+			$(this).css('opacity', 1)
+		} else {
+			$(this).css('opacity', 0.15)
+		}
+	})
+
+	update_filter_settings(type, search_value)
+}
+
+function update_filter_settings(type, value) {
+	if (type == false || value == false) {
+		filter_settings = {
+			'active': false,
+			'type': false,
+			'value': false
+		}
+	} else {
+		filter_settings = {
+			'active': true,
+			'type': type,
+			'value': value
+		}
+	}
 }
 
 $(document).ready(function(){
@@ -250,6 +278,8 @@ $(document).ready(function(){
 
 			remove_listeners()
 			assign_listeners()
+
+			apply_filter(filter_settings['type'], filter_settings['value'])
 		})
 	})
 
@@ -283,14 +313,6 @@ $(document).ready(function(){
 			}
 		}
 
-		/*
-		if (e.which==119) { // w key
-			black_mode = (black_mode) ? false : true
-			
-			activate_black_mode(black_mode)
-		}
-		*/
-
 	})
 
 	// Hide the search box when input field is unselected.
@@ -298,32 +320,17 @@ $(document).ready(function(){
 		$('body').trigger(jQuery.Event('keypress', {which: 115}))
 	})
 
-	var serach_timeout = false
-	$('input[name=timeline_search]').on('change input', function() {	
+	var search_timeout = false
+	$('input[name=timeline_search]').on('input', function() {	
 		var search_input = this.value.toLowerCase()
 
-		if (serach_timeout) {
-			clearTimeout(serach_timeout)
+		if (search_timeout) {
+			clearTimeout(search_timeout)
 		}
 
-		serach_timeout = setTimeout(function() {
-
-			$('.tracked_time').each(function() {
-
-				var description = String($(this).data('description')).toLowerCase()
-
-				if (description.includes(search_input)) {
-					$(this).css('opacity', 1)
-				} else {
-					$(this).css('opacity', 0.15)
-				}
-
-			})
-
+		search_timeout = setTimeout(function() {
+			apply_filter('description', search_input)
 		},
 		600)
 	})
-
-
-
 });
