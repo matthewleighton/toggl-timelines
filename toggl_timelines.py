@@ -3,6 +3,9 @@ import calendar
 import csv
 import pytz
 import math
+import pprint
+import pdb
+pp = pprint.PrettyPrinter(indent=4)
 
 import toggl_timelines_config as config
 
@@ -98,6 +101,12 @@ class Entry(db.Model):
 		utc_offset = self.utc_offset
 
 		return start - timedelta(hours = utc_offset)
+
+	def get_raw_end_time(self):
+		end = self.end
+		utc_offset = self.utc_offset
+
+		return end - timedelta(hours = utc_offset)
 
 
 class Project(db.Model):
@@ -564,9 +573,6 @@ def comparison_data():
 			if goal['color']:
 				project_data[goal_name]['color'] = goal['color']
 
-			goal_period = goal['time_period']
-			goal_value_in_seconds = int(goal['goal_value']) * 60
-
 			seconds_in_day = 86400
 			now = datetime.now()
 
@@ -576,6 +582,9 @@ def comparison_data():
 				'month': seconds_in_day * calendar.monthrange(now.year, now.month)[1],
 				'year': seconds_in_day * (366 if (calendar.isleap(now.year)) else 365)
 			}
+
+			goal_period = goal['time_period']
+			goal_value_in_seconds = int(goal['goal_value']) * 60
 
 			period_ratio 				= seconds[calendar_period] / seconds[goal_period]
 			goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
@@ -640,33 +649,32 @@ def comparison_data():
 def sum_category_durations(days, categories, view_type, historic=False, live_mode=False, weekdays=[]):
 	current_or_historic_tracked = 'historic_tracked' if historic else 'current_tracked'
 
-
-
 	for day in days:
 		entries = day['entries']
 		for entry in entries:
 	
-			if entry.project in (None, 'No Project'):
+			if entry.project in (None, 'No Project'): # Skip entries without projects.
 				continue
 
 			weekday = str(entry.start.weekday())
-			if weekday not in weekdays:
+			if weekday not in weekdays: # Skip weekdays which are not selected.
 				continue
 
 			project_name = entry.get_project_name()
 
 			if historic and live_mode and day == days[0] and entry == entries[-1]: # If this is the most recent historic entry...
-				#now = helpers.get_current_datetime_in_user_timezone()
-				now = datetime.utcnow()
 				
-				entry_mid = entry.get_raw_start_time().replace(hour=now.hour, minute=now.minute)
-				entry_start = entry.get_raw_start_time()
 				# Here we need to deal with the raw UTC time.
 				# The reason is that we don't know what time zone the user was in at the historic period. Can't assume it's the same as now.
 				# So we compare things in UTC.
 
+				now = datetime.utcnow()
+				entry_mid = entry.get_raw_start_time().replace(hour=now.hour, minute=now.minute)
+				entry_start = entry.get_raw_start_time()
+
 				time_difference = entry_mid - entry_start
-				duration = time_difference.seconds #...Find duration based on how much of entry is complete.
+
+				duration = min(time_difference.seconds, entry.dur/1000)
 			else:
 				duration = entry.dur/1000
 
