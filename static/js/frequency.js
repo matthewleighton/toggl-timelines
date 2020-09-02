@@ -328,7 +328,7 @@ function create_frequency_graph(data) {
     console.log('create_frequency_graph')
     reset_graph_view()
 
-    var y_axis_type = $("input[name='y_axis_type']:checked").val()
+    var y_axis_type = $("select[name='y_axis_type']").val()
 
     var margin = {top: 10, right: 30, bottom: 50, left: 60};
 
@@ -434,8 +434,8 @@ function create_frequency_graph(data) {
 		const xm = Math.floor(x.invert(mouse[0])) - 52
 		const ym = y.invert(mouse[1])
 
-		console.log('X: ' + xm)
-		console.log('Y: ' + ym)
+		//console.log('X: ' + xm)
+		//console.log('Y: ' + ym)
 
 		// Mouse must be within 10% of the graph to trigger.
 		lowest_difference = y.domain()[1] / 10
