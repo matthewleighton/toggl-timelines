@@ -121,7 +121,7 @@ $('#frequency_graph_submit').on('click', function() {
 			if (scope_type == 'minutes') {
 				create_frequency_graph(response)
 			} else {
-				create_days_graph(response)
+				create_bar_graph(response, scope_type)
 			}
 		}
 	})
@@ -147,6 +147,9 @@ function update_y_axis_select_options() {
 			break;
 		case 'days':
 			options = [absolute, average_hours_per_day]
+			break;
+		case 'months':
+			options = [absolute, relative]
 			break;
 	}
 
@@ -208,11 +211,26 @@ function get_minutes_since_midnight() {
 }
 
 
-function create_days_graph(data) {
+function create_bar_graph(data, user_scope) {
 	reset_graph_view()
 
+	console.log('--------------------')
+	console.log(data)
+
+
+	var scope_types = {
+		'days': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+		'months': ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+	}
+
+	console.log(scope_types[user_scope])
+
+
 	var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+	var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 	var y_axis_type = data[0]['line_data']['y_axis_type']
+
+	var x_domain = Object.keys(scope_types[user_scope])
 
 	//var y_axis_type = $("input[name='y_axis_type']:checked").val()
 
@@ -222,9 +240,15 @@ function create_days_graph(data) {
 	var height = $(window).height() - 100 - margin.top - margin.bottom;
 
 
+	/*
 	var max_frequency = d3.max(data, function(array) {
 		return d3.max(array['days']);
 	});
+	*/
+
+	var max_frequency = d3.max(data, function(array) {
+		return d3.max(array[user_scope])
+	})
 
 	var yScale = d3.scaleLinear()
 		.domain([0, max_frequency])
@@ -237,7 +261,9 @@ function create_days_graph(data) {
 	}
 
 	var xScale = d3.scaleBand()
-		.domain([0, 1, 2, 3, 4, 5, 6])
+		//.domain([0, 1, 2, 3, 4, 5, 6])
+		//.domain([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+		.domain(x_domain)
 		.range([0, width])
 		.padding(0.2)
 
@@ -263,9 +289,10 @@ function create_days_graph(data) {
 				//console.log(d)
 				console.log('New Line: ' + d['line_data']['label'] + '-------------')
 				a = []
-				for (var j = d['days'].length - 1; j >= 0; j--) {
+				for (var j = d[user_scope].length - 1; j >= 0; j--) {
 					a.push({
-						days: d['days'],
+						days: d[user_scope],
+						months: d[user_scope],
 						details: d['line_data'],
 						line_number: i
 					})
@@ -281,24 +308,29 @@ function create_days_graph(data) {
 					return (xScale(i) + xSubgroup(d['line_number']))
 				})
 				.attr('y', function(d,i) {
-					return yScale(d['days'][i])
+					return yScale(d[user_scope][i])
 				})
 				.attr('height', function(d,i) {
-					return (height - yScale(d['days'][i]))
+					return (height - yScale(d[user_scope][i]))
 				})
 				.attr('width', function(d,i) {
 					return xSubgroup.bandwidth()
 				})
 				.attr('fill', function(d,i) {
 					return d['details']['color']
-				})	
+				})
+
+	console.log('~~~~~~~~~~~~~~~~~~~~~~~~')
+	console.log(Object.keys(scope_types[user_scope]))
 
 	svg.append('g')
 		.attr('transform', 'translate(0,' + height + ')')
 		.call(
 			d3.axisBottom(xScale)
-			.tickValues([0, 1, 2, 3, 4, 5, 6])
-			.tickFormat(d => days[d])
+			//.tickValues([0, 1, 2, 3, 4, 5, 6])
+			//.tickValues([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+			.tickValues(x_domain)
+			.tickFormat(d => scope_types[user_scope][d])
 		);
 	
 	svg.append('g')

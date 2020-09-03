@@ -1022,7 +1022,9 @@ def frequency_data():
 
 	for line in submission_data:
 
-		days= [0, 0, 0, 0, 0, 0, 0]
+		days = [0, 0, 0, 0, 0, 0, 0]
+
+		months = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 		if isinstance(line['projects'], str):
 			line['projects'] = [line['projects']]
@@ -1045,7 +1047,10 @@ def frequency_data():
 			duration_minutes = math.ceil(entry.dur / 60000)
 			target_minute = get_minute_of_day(entry.start)
 
-			weekday = entry.start.weekday()
+			weekday 	 = entry.start.weekday()
+			month 		 = entry.start.month
+			day_of_month = entry.start.day
+			year 		 = entry.start.year
 
 			# Minute 1440 does not exist.
 			if target_minute >= 1440:
@@ -1057,14 +1062,24 @@ def frequency_data():
 				target_minute += 1
 
 				days[weekday] += 1
+				months[month] += 1
 
-				if target_minute >= 1440:
+				if target_minute >= 1440: # If the entry overflows to the next day...
 					target_minute = 0
 
 					weekday += 1
+					day_of_month += 1
 
 					if weekday == 7:
-						weekday = 0
+						weekday = 0#
+
+					last_day_of_month = calendar.monthrange(year, month)[1]
+
+					if day_of_month > last_day_of_month:
+						month += 1
+
+						if month > 12:
+							month = 1
 
 				i += 1
 
@@ -1078,25 +1093,27 @@ def frequency_data():
 			total_minutes = sum(days)
 
 			days = list(map(lambda n: n/total_minutes, days))
+
+			months = list(map(lambda n: n/total_minutes, months))
+
 		elif submission_data[0]['y_axis_type'] == 'average-hours-per-day':
 			weekday_occurances = get_weekday_occurances(start_datetime, end_datetime)
 
 			for i in range(0, 7):
-				print('-----------------')
-				print(i)
-				print(days[i])
-				print(weekday_occurances[i])
 				days[i] = days[i] / weekday_occurances[i]
-				print(days[i])
 
+		months.pop(0)
 
-		print(days)
+		print(months)
 
 		data.append({
 			'line_data': line,
 			'minutes': day_minutes_list,
-			'days': days
+			'days': days,
+			'months': months
 		})
+
+	#pp.pprint(data)
 
 	return jsonify(data)
 
