@@ -1096,13 +1096,13 @@ def frequency_data():
 
 			months = list(map(lambda n: n/total_minutes, months))
 
-		elif submission_data[0]['y_axis_type'] == 'average-hours-per-day':
+		elif submission_data[0]['y_axis_type'] == 'average':
 			weekday_occurances = get_weekday_occurances(start_datetime, end_datetime)
 
 			for i in range(0, 7):
 				days[i] = days[i] / weekday_occurances[i]
 
-		months.pop(0)
+		months.pop(0) # Remove the first month, since we want them to be zero indexed.
 
 		print(months)
 

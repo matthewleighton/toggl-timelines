@@ -35,8 +35,6 @@ $('#graph_line_controllers').on('click', '.frequency_date_reuse_icon', function(
 $('#graph_line_controllers').on('change', '.frequency_project_selector', function() {
 	
 	var selected_projects = $(this).val()
-	console.log('Project changed.')
-	console.log(selected_projects)
 
 	if (selected_projects.length != 1) {return}
 
@@ -47,8 +45,6 @@ $('#graph_line_controllers').on('change', '.frequency_project_selector', functio
 	if (label_input.val() == '' || label_input.val() in projects) {
 
 		label_input.val(selected_projects[0])
-
-		console.log('Updating line color')
 
 		var hex_code = projects[selected_projects[0]]['color']
 
@@ -119,7 +115,7 @@ $('#frequency_graph_submit').on('click', function() {
 			scope_type = get_scope_type()
 
 			if (scope_type == 'minutes') {
-				create_frequency_graph(response)
+				create_line_graph(response)
 			} else {
 				create_bar_graph(response, scope_type)
 			}
@@ -133,23 +129,26 @@ function update_y_axis_select_options() {
 
 	var selected_scope = $("input[type=radio][name=scope_type]:checked").val()
 
-	var absolute = $('<option></option>').attr('value', 'absolute').text('Absolute')
-	var relative = $('<option></option>').attr('value', 'relative').text('Relative')
+	
+	var minutes_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
+	var minutes_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total minutes tracked at time)')	
 
-	var average_hours_per_day = $('<option></option>').attr('value', 'average-hours-per-day').text('Average Hours per Day')
+	var days_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
+	var days_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total hours tracked on day)')
+	var days_average = $('<option></option>').attr('value', 'average').text('Average hours tracked on each day')
 
-	var minutes_scope = [absolute, relative]
-	var days_scope = [absolute, average_hours_per_day]
+	var months_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
+	var months_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total hours tracked in month)')
 
 	switch(selected_scope) {
 		case 'minutes':
-			options = [absolute, relative]
+			options = [minutes_absolute, minutes_relative]
 			break;
 		case 'days':
-			options = [absolute, average_hours_per_day]
+			options = [days_average, days_absolute, days_relative]
 			break;
 		case 'months':
-			options = [absolute, relative]
+			options = [months_absolute, months_relative]
 			break;
 	}
 
@@ -223,28 +222,16 @@ function create_bar_graph(data, user_scope) {
 		'months': ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 	}
 
-	console.log(scope_types[user_scope])
-
-
 	var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 	var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 	var y_axis_type = data[0]['line_data']['y_axis_type']
 
 	var x_domain = Object.keys(scope_types[user_scope])
 
-	//var y_axis_type = $("input[name='y_axis_type']:checked").val()
-
     var margin = {top: 10, right: 30, bottom: 50, left: 60};
 
 	var width = $('#frequency_graph_container').width() - margin.left - margin.right;
 	var height = $(window).height() - 100 - margin.top - margin.bottom;
-
-
-	/*
-	var max_frequency = d3.max(data, function(array) {
-		return d3.max(array['days']);
-	});
-	*/
 
 	var max_frequency = d3.max(data, function(array) {
 		return d3.max(array[user_scope])
@@ -261,8 +248,6 @@ function create_bar_graph(data, user_scope) {
 	}
 
 	var xScale = d3.scaleBand()
-		//.domain([0, 1, 2, 3, 4, 5, 6])
-		//.domain([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
 		.domain(x_domain)
 		.range([0, width])
 		.padding(0.2)
@@ -286,8 +271,6 @@ function create_bar_graph(data, user_scope) {
 			.selectAll('rect')
 
 			.data(function(d, i) {
-				//console.log(d)
-				console.log('New Line: ' + d['line_data']['label'] + '-------------')
 				a = []
 				for (var j = d[user_scope].length - 1; j >= 0; j--) {
 					a.push({
@@ -297,8 +280,6 @@ function create_bar_graph(data, user_scope) {
 						line_number: i
 					})
 				}
-
-				console.log(a)
 
 				return a
 			})
@@ -320,15 +301,10 @@ function create_bar_graph(data, user_scope) {
 					return d['details']['color']
 				})
 
-	console.log('~~~~~~~~~~~~~~~~~~~~~~~~')
-	console.log(Object.keys(scope_types[user_scope]))
-
 	svg.append('g')
 		.attr('transform', 'translate(0,' + height + ')')
 		.call(
 			d3.axisBottom(xScale)
-			//.tickValues([0, 1, 2, 3, 4, 5, 6])
-			//.tickValues([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
 			.tickValues(x_domain)
 			.tickFormat(d => scope_types[user_scope][d])
 		);
@@ -336,13 +312,12 @@ function create_bar_graph(data, user_scope) {
 	svg.append('g')
 		.call(
 			d3.axisLeft(yScale)
-				.tickFormat(d => days_graph_y_tick_format(d, y_axis_type))
+				.tickFormat(d => bar_graph_y_tick_format(d, y_axis_type))
 		);
-
 }
 
-function days_graph_y_tick_format(d, y_axis_type) {
-	if (y_axis_type == 'absolute' || y_axis_type == 'average-hours-per-day') {
+function bar_graph_y_tick_format(d, y_axis_type) {
+	if (y_axis_type == 'absolute' || y_axis_type == 'average') {
 		return Math.round((d/60)*10) / 10
 	} else {
 		return Math.round(d*1000)/10 + '%'
@@ -356,8 +331,7 @@ function reset_graph_view() {
 }
 
 
-function create_frequency_graph(data) {
-    console.log('create_frequency_graph')
+function create_line_graph(data) {
     reset_graph_view()
 
     var y_axis_type = $("select[name='y_axis_type']").val()
@@ -402,11 +376,6 @@ function create_frequency_graph(data) {
 					});
 
 	for (var i = 0; i <= data.length - 1; i++) {
-		
-		//console.log(data[i]['line_data'])
-
-		console.log(data[i]['line_data']['label'])
-
 		svg.append('path')
 			.data([data[i]['minutes']])
 			//.data([data[i]])
@@ -415,8 +384,6 @@ function create_frequency_graph(data) {
 			.attr('d', line)
 			.attr('stroke', data[i]['line_data']['color'])		
 	}
-
-	console.log(data)
 
 	var legend = svg.selectAll('g')
 		.data(data)
