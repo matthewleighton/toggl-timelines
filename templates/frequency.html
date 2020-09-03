@@ -20,16 +20,22 @@
 			
 			<div id="graph_line_controllers"></div>
 
-			<button type="button" class="new_frequency_line_button">New Line</button>
-			<button type="button" id="frequency_graph_submit">Create Graph</button>
+			<div class="form-inline">
+				<button type="button" class="btn btn-sm btn-primary new_frequency_line_button">New Line</button>
+				<button type="button" class="btn btn-sm btn-success" id="frequency_graph_submit">Create Graph</button>
 
-			<select name="y_axis_type"></select>
+				<select name="y_axis_type" id="frequecy_y_axis_type" class="form-control"></select>
 
-			<input type="radio" name="scope_type" value="minutes">
-			<label for="minutes">Minutes</label>
 
-			<input type="radio" name="scope_type" value="days" checked>
-			<label for="days">Days</label>
+				<div class="btn-group btn-group-toggle sort_type_radio" data-toggle="buttons">
+					<label class="btn btn-secondary active">
+						<input type="radio" name="scope_type" id="frequency_minutes" autocomplete="off" value="minutes" checked> Minutes
+					</label>
+					<label class="btn btn-secondary">
+						<input type="radio" name="scope_type" id="frequency_days" autocomplete="off" value="days"> Days
+					</label>
+				</div>
+			</div>
 		</form>
 	</div>
 

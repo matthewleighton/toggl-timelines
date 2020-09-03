@@ -451,3 +451,7 @@ svg {
   -ms-user-select: none;      
   user-select: none;
 }
+
+#graph_controls > .form-inline > * {
+  margin: 5px 3px;
+}
