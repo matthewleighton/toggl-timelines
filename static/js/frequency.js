@@ -257,11 +257,38 @@ function create_bar_graph(data, user_scope) {
 		.range([0, xScale.bandwidth()])
 		.padding([0.05])
 
+
 	var svg = d3.select('#frequency_graph_container').append('svg')
 				.attr('width', width)
 				.attr('height', height)
 			.append('g')
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
+
+	var legend = svg.selectAll('g')
+		.data(data)
+		.enter()
+		.append('g')
+		.attr('class', 'legend');
+
+	legend.append('rect')
+		.attr('x', width - 150)
+		.attr('y', function(d, i) {
+			return i * 20;
+		})
+		.attr('width', 12)
+		.attr('height', 12)
+		.style('fill', function(d) {
+			return d['line_data']['color']
+		});
+
+	legend.append('text')
+		.attr('x', width - 135)
+		.attr('y', function(d, i) {
+			return (i*20) + 11;
+		})
+		.text(function(d, i) {
+			return d['line_data']['label']
+		});
 
 	svg.append('g')
 		.selectAll('g')
@@ -409,7 +436,6 @@ function create_line_graph(data) {
 		})
 		.text(function(d, i) {
 			return d['line_data']['label']
-			return 'test'
 		});
 
 	var current_time_in_minutes = get_minutes_since_midnight()
