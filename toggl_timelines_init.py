@@ -5,6 +5,7 @@ import toggl_timelines as toggl_timelines
 from toggl_timelines import db, Entry
 
 
+
 def populate_database():
 	print('Starting to populate database...')
 	import_complete = False
@@ -32,6 +33,6 @@ def populate_database():
 		if len(entries_added) == 0:
 			import_complete = True
 
-db.create_all()
+#db.create_all()
 
-populate_database()
+#populate_database()
