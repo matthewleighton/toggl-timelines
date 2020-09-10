@@ -33,8 +33,20 @@ def toggl_sync(start_date, end_date=False):
 		project_id = entry['pid']
 		db_project = get_database_project_by_id(project_id, local_projects)
 
-		if not db_project:
-			
+
+		if not db_project: # Create the database project if it doesn't exist.
+
+			if not 'project' in entry.keys(): # If the project name isn't given in the entry details, we ask Toggl for details about all projects
+											  # (This is the case for currently running projects).
+				toggl_projects = get_user_toggl_data()['projects']
+
+				for toggl_project in toggl_projects:
+					toggl_project_id = toggl_project['id']
+
+					if toggl_project_id == project_id:
+						entry['project'] = toggl_project['name']
+						entry['project_hex_color'] = toggl_project['hex_color']
+
 
 			db_project = create_project({
 				'project_id': 		 project_id,
@@ -54,8 +66,6 @@ def toggl_sync(start_date, end_date=False):
 
 
 		location = get_entry_location(start_datetime)
-
-		print(location)
 
 		db_entry = create_entry({
 			'id': 		   entry['id'],
@@ -77,9 +87,7 @@ def get_entry_location(entry_datetime):
 
 		timestamp_format = '%Y-%m-%dT%H:%M'
 
-		location = current_app.config['DEFAULT_TIMEZONE']
-
-		print(location)
+		location = current_app.config['DEFAULT_LOCATION']
 
 		for row in reader:
 			location_start_datetime = datetime.strptime(row['start'], timestamp_format).astimezone(tz=pytz.utc)
@@ -206,6 +214,8 @@ def get_user_toggl_data():
 
 	projects = user_data['projects']
 	clients = user_data['clients']
+
+	return user_data
 
 def get_all_projects_from_database():
 	#print('get_projects_from_database')
