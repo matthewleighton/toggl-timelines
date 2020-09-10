@@ -3,7 +3,7 @@ config.py
 /venv
 TogglPy.py
 toggl_timelines.db
-utc_offsets.csv
+location_history.csv
 toggl_timelines_config.py
 log.txt
 old.db

@@ -2,6 +2,7 @@ from flask import current_app
 
 from datetime import datetime, timedelta
 import pytz
+import csv
 
 from toggltimelines.timelines.models import Entry
 from toggltimelines.timelines.models import Project
@@ -51,6 +52,11 @@ def toggl_sync(start_date, end_date=False):
 		if not 'client' in entry.keys():
 			entry['client'] = None #TODO: This is temporary. Need to check how clients are actually working.
 
+
+		location = get_entry_location(start_datetime)
+
+		print(location)
+
 		db_entry = create_entry({
 			'id': 		   entry['id'],
 			'description': entry['description'],
@@ -58,12 +64,29 @@ def toggl_sync(start_date, end_date=False):
 			'end': 		   end_datetime,
 			'dur': 		   entry['dur'],
 			'client': 	   entry['client'],
-			'utc_offset':  2, #TODO
+			'location':	   location,
 			'user_id': 	   entry['uid'],
 			'db_project':  db_project #TODO: Need case for if there is no project
 		})
 
 	db.session.commit()
+
+def get_entry_location(entry_datetime):
+	with open('location_history.csv', 'r') as file:
+		reader = csv.DictReader(file)
+
+		timestamp_format = '%Y-%m-%dT%H:%M'
+
+		location = 'UTC'
+
+		for row in reader:
+			location_start_datetime = datetime.strptime(row['start'], timestamp_format).astimezone(tz=pytz.utc)
+			location_end_datetime = datetime.strptime(row['end'], timestamp_format).astimezone(tz=pytz.utc)
+
+			if location_start_datetime <= entry_datetime <= location_end_datetime:
+				location = row['location']
+
+	return location
 
 def get_db_entries(start_datetime=False, end_datetime=False, projects=False, clients=False, description=False):
 	query = Entry.query.join(Entry.project, aliased=True)
@@ -102,7 +125,7 @@ def create_entry(entry_data):
 		end 			  = entry_data['end'],
 		dur 			  = entry_data['dur'],
 		client 			  = entry_data['client'],
-		utc_offset 		  = entry_data['utc_offset'],
+		location 		  = entry_data['location'],
 		user_id 		  = entry_data['user_id']
 	)
 
@@ -129,7 +152,7 @@ def create_project(project_data):
 # Can provide a project list, to avoid unneeded database queries.
 def get_database_project_by_id(project_id, project_list = None):
 	if not project_list:
-		project_list = get_projects_from_database()
+		project_list = get_all_projects_from_database()
 		#TODO: Instead of getting the whole list here, this should just be a query for the particular project.
 
 	db_project = False

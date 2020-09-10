@@ -17,7 +17,7 @@ class Entry(db.Model):
 	project_hex_color = db.Column(db.String(7))
 	#tags = db.relationship('Tag', secondary=tags, backref=db.backref('entries', lazy=True), lazy='select')
 	user_id = db.Column(db.Integer)
-	utc_offset = db.Column(db.Integer)
+	location = db.Column(db.String(50))
 
 	def __repr__(self):
 		return "<Entry (Description: " + self.description + ") (Start: " + str(self.start) + ") (End: " + str(self.end) + ") (Duration: " + str(self.dur) + ") (ID: " + str(self.id) + ")"
@@ -58,14 +58,14 @@ class Entry(db.Model):
 		return (seconds_since_midnight / 86400) * 100
 
 	def get_local_start_time(self):
-		timezone = self.get_entry_timezone()
+		timezone = pytz.timezone(self.location)
 
 		new_dt = self.start.astimezone(tz=timezone)
 
 		return new_dt
 
 	def get_local_end_time(self):
-		timezone = self.get_entry_timezone()
+		timezone = pytz.timezone(self.location)
 
 		new_dt = self.start.astimezone(tz=timezone)
 
@@ -105,35 +105,6 @@ class Entry(db.Model):
 		minutes_string = ("%d minutes" % (minutes))
 
 		return hours_string + minutes_string
-
-	# Return the timezone in which the user tracked an entry.
-	# Based on the contents of the utc_offsets.csv file.
-	# TODO: This could perhaps be done when an entry is synced from Toggl, so it's only done once.
-	def get_entry_timezone(self):
-		if hasattr(self, 'timezone'):
-			return self.timezone
-
-
-		with open('utc_offsets.csv', 'r') as file:
-			reader = csv.DictReader(file)
-
-			timestamp_format = '%Y-%m-%dT%H:%M'
-
-			location = None
-
-			for row in reader:
-				location_start_datetime = datetime.strptime(row['start'], timestamp_format).astimezone(tz=pytz.utc)
-				location_end_datetime = datetime.strptime(row['end'], timestamp_format).astimezone(tz=pytz.utc)
-
-				if location_start_datetime <= self.start <= location_end_datetime:
-					location = row['location']	
-
-		if location:
-			self.timezone = pytz.timezone(location)
-		else:
-			self.timezone = pytz.utc
-
-		return self.timezone
 
 class Project(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
