@@ -77,7 +77,9 @@ def get_entry_location(entry_datetime):
 
 		timestamp_format = '%Y-%m-%dT%H:%M'
 
-		location = 'UTC'
+		location = current_app.config['DEFAULT_TIMEZONE']
+
+		print(location)
 
 		for row in reader:
 			location_start_datetime = datetime.strptime(row['start'], timestamp_format).astimezone(tz=pytz.utc)
