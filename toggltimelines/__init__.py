@@ -6,6 +6,10 @@ from flask import current_app
 from flask.cli import with_appcontext
 from flask_sqlalchemy import SQLAlchemy
 
+from datetime import datetime, timedelta
+import pytz
+import csv
+
 #from toggl.TogglPy import Toggl
 
 
@@ -87,16 +91,19 @@ def init_db_command():
 def toggl_sync_all():
 	click.echo("This is toggl_sync_all")
 
-	from datetime import datetime, timedelta
-
+	"""
 	end_date = datetime.today()
 	start_date = end_date - timedelta(days=0)
+	print(start_date)
+	print(end_date)
+	"""
 
-	helpers.toggl_sync(start_date, end_date)
+	end_datetime = datetime.utcnow().replace(tzinfo=pytz.utc)
+	start_datetime = end_datetime - timedelta(days=1)
+
+	helpers.toggl_sync(start_datetime, end_datetime)
 
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	current = helpers.get_current_toggl_entry()
-
-	print(current)
+	pass

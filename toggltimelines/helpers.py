@@ -1,32 +1,40 @@
 from flask import current_app
 
 from datetime import datetime, timedelta
+import pytz
 
 from toggltimelines.timelines.models import Entry
 from toggltimelines.timelines.models import Project
 from toggltimelines import db
 
 
-def toggl_sync(start_date, end_date):
+def toggl_sync(start_date, end_date=False):
+
+	if not end_date:
+		end_date = datetime.utcnow()
+
+
 	entries = get_entries_from_toggl(start_date, end_date)
 
 	current_entry = get_current_toggl_entry()
-	entries.append(current_entry)
+	if current_entry:
+		entries.append(current_entry)
 
 	local_projects = get_all_projects_from_database()
 
-	#print(local_projects[0].project_name)
+	# Remove database entries which already exist in the sync window.
+	existing_db_entries = get_db_entries(start_date, end_date)
+	for db_entry in existing_db_entries:
+		db.session.delete(db_entry)
 
-	#TODO-NEXT: Overwrite entries when they already exist.
 
 	for entry in entries:
-		print(entry)
-		print('')
-
 		project_id = entry['pid']
 		db_project = get_database_project_by_id(project_id, local_projects)
 
 		if not db_project:
+			
+
 			db_project = create_project({
 				'project_id': 		 project_id,
 				'project_name': 	 entry['project'],
@@ -56,6 +64,34 @@ def toggl_sync(start_date, end_date):
 		})
 
 	db.session.commit()
+
+def get_db_entries(start_datetime=False, end_datetime=False, projects=False, clients=False, description=False):
+	query = Entry.query.join(Entry.project, aliased=True)
+
+	if start_datetime:
+		query.filter(Entry.start >= start_datetime)
+
+	if end_datetime:
+		query.filter(Entry.end <= end_datetime)
+
+	if projects:
+		query.filter(Project.project_name.in_(projects))
+
+	if clients:
+		query = query.filter(Entry.client.in_(clients))
+
+	if description:
+		query = query.filter(func.lower(Entry.description).contains(description.lower()))
+
+
+	entries = query.order_by(Entry.start).all()
+
+	# Entries are timezone naive when we retreive them.
+	# Need to make them aware that they are in UTC.
+	for entry in entries:
+		entry.tzinfo_to_utc()
+
+	return entries
 
 # Save a new entry to the database
 def create_entry(entry_data):
@@ -105,6 +141,8 @@ def get_database_project_by_id(project_id, project_list = None):
 
 	return db_project
 
+# Get entries between two dates from the Toggl API.
+# Will NOT include an entry which is currently being tracked.
 def get_entries_from_toggl(start_date, end_date):
 	request_data = {
 		'workspace_id': current_app.config['WORKSPACE_ID'],
@@ -116,14 +154,20 @@ def get_entries_from_toggl(start_date, end_date):
 
 	return entries
 
+# Note: current entries are returned from Toggl in UTC,
+# while past entries are returned in the user's assigned timezone.
 def get_current_toggl_entry():
 	current_entry = current_app.toggl.currentRunningTimeEntry()
 
+	if not current_entry:
+		return False
+
 
 	start_datetime = timestamp_to_datetime(current_entry['start'])
-	utc_now = datetime.utcnow()
 
-	time_since_entry_start = utc_now - start_datetime.replace(tzinfo=None)
+	utc_now = datetime.utcnow().replace(tzinfo=pytz.utc)
+
+	time_since_entry_start = utc_now - start_datetime
 
 	end_datetime = start_datetime + timedelta(seconds = time_since_entry_start.seconds)
 
@@ -138,17 +182,8 @@ def get_user_toggl_data():
 	projects = user_data['projects']
 	clients = user_data['clients']
 
-	print(projects)
-
-def save_toggl_entries_to_database(entries):
-	for entry in entries:
-		print(entry)
-		print('')
-
-
-
 def get_all_projects_from_database():
-	print('get_projects_from_database')
+	#print('get_projects_from_database')
 	projects = Project.query.all()
 
 	return projects
@@ -156,7 +191,10 @@ def get_all_projects_from_database():
 # Convert a timestamp string to a datetime object.
 def timestamp_to_datetime(timestamp, string_format='%Y-%m-%dT%H:%M:%S%z'):
 	timestamp = remove_colon_from_timezone(timestamp)
-	return datetime.strptime(timestamp, string_format)
+	utc = pytz.timezone('UTC')
+	dt = datetime.strptime(timestamp, string_format).astimezone(tz=utc)
+
+	return dt
 
 def datetime_to_timestamp(dt, string_format='%Y-%m-%dT%H:%M:%S%z'):
 	return remove_colon_from_timezone(datetime.strftime(dt, string_format))
