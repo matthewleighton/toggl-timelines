@@ -67,7 +67,7 @@ class Entry(db.Model):
 	def get_local_end_time(self):
 		timezone = pytz.timezone(self.location)
 
-		new_dt = self.start.astimezone(tz=timezone)
+		new_dt = self.end.astimezone(tz=timezone)
 
 		return new_dt
 

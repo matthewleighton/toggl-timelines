@@ -21,20 +21,28 @@ def toggl_sync(start_date, end_date=False):
 	if current_entry:
 		entries.append(current_entry)
 
+	print(f"New entries: {len(entries)}")
+
 	local_projects = get_all_projects_from_database()
 
 	# Remove database entries which already exist in the sync window.
 	existing_db_entries = get_db_entries(start_date, end_date)
+
+	print(f"Existing entries: {len(existing_db_entries)}")
+
 	for db_entry in existing_db_entries:
 		db.session.delete(db_entry)
 
+	db.session.commit() # This is here because of issues when an entry was deleted and re-added during resync. 
+						# Project wasn't correctly updating if changed to NULL.
+
 
 	for entry in entries:
-		project_id = entry['pid']
+		project_id = entry['pid'] if 'pid' in entry.keys() else None
+
 		db_project = get_database_project_by_id(project_id, local_projects)
 
-
-		if not db_project: # Create the database project if it doesn't exist.
+		if project_id and not db_project : # Create the database project if it doesn't exist.
 
 			if not 'project' in entry.keys(): # If the project name isn't given in the entry details, we ask Toggl for details about all projects
 											  # (This is the case for currently running projects).
@@ -46,6 +54,7 @@ def toggl_sync(start_date, end_date=False):
 					if toggl_project_id == project_id:
 						entry['project'] = toggl_project['name']
 						entry['project_hex_color'] = toggl_project['hex_color']
+						break
 
 
 			db_project = create_project({
@@ -63,6 +72,7 @@ def toggl_sync(start_date, end_date=False):
 
 		if not 'client' in entry.keys():
 			entry['client'] = None #TODO: This is temporary. Need to check how clients are actually working.
+								   # Clients should probably be their own table. I'll leave this as is for now until I do that rework.
 
 
 		location = get_entry_location(start_datetime)
@@ -99,15 +109,16 @@ def get_entry_location(entry_datetime):
 	return location
 
 def get_db_entries(start_datetime=False, end_datetime=False, projects=False, clients=False, description=False):
-	query = Entry.query.join(Entry.project, aliased=True)
+	query = Entry.query
 
 	if start_datetime:
 		query.filter(Entry.start >= start_datetime)
 
 	if end_datetime:
-		query.filter(Entry.end <= end_datetime)
+		query.filter(Entry.start <= end_datetime)
 
 	if projects:
+		query.join(Entry.project, aliased=True)
 		query.filter(Project.project_name.in_(projects))
 
 	if clients:
