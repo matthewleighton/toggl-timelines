@@ -95,9 +95,11 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 
 		location = get_entry_location(start_datetime)
 
+		description = entry['description'] if 'description' in entry.keys() else ''
+
 		db_entry = create_entry({
 			'id': 		   entry['id'],
-			'description': entry['description'],
+			'description': description,
 			'start': 	   start_datetime,
 			'end': 		   end_datetime,
 			'dur': 		   entry['dur'],
