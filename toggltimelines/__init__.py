@@ -89,14 +89,33 @@ def init_db_command():
 @click.command("toggl-sync-all")
 @with_appcontext
 def toggl_sync_all():
-	click.echo("This is toggl_sync_all")
+	import_complete = False
+	days_per_request = 50
 
-	end_datetime = datetime.utcnow()#.replace(tzinfo=pytz.utc)
-	start_datetime = end_datetime - timedelta(days=23)
+	i = 0
 
-	helpers.toggl_sync(start_datetime, end_datetime)
+	end = datetime.now()
+
+	start = end - timedelta(days=days_per_request)
+
+	while not import_complete:
+		print(f"Start: {start}")
+		print(f"End: {end}")
+
+		entries = helpers.toggl_sync(start, end)
+		print(len(entries))
+
+		if len(entries) == 0:
+			import_complete = True
+
+		i+=1
+
+		end = start - timedelta(days=1)
+		start = end - timedelta(days=days_per_request)
 
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	pass
+	print('mytest')
+
+		

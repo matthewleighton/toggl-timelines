@@ -3,6 +3,7 @@ from flask import current_app
 from datetime import datetime, timedelta
 import pytz
 import csv
+import sys
 
 from toggltimelines.timelines.models import Entry
 from toggltimelines.timelines.models import Project
@@ -16,16 +17,29 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 	if not end_date:
 		end_date = datetime.utcnow()
 
+	# The Toggl API seems to return all entries on any day that is queried.
+	# So for our database requests to match with this, we set the times to the start/end of the start/end days.
+	# TODO: Maybe this can be improved by using Date instead of DateTime?
+	start_date = start_date.replace(hour=0, minute=0, second=0)
+	end_date = end_date.replace(hour=23, minute=59, second=59)
+
 	entries = get_entries_from_toggl(start_date, end_date)
 
-	current_entry = get_current_toggl_entry()
-	if current_entry:
-		entries.append(current_entry)
+	#print(f"Toggl entries: {len(entries)}")
+
+	#Only get the current entry if we're getting today's entries.
+	if start_date <= datetime.now() <= end_date:
+		current_entry = get_current_toggl_entry()
+		if current_entry:
+			entries.append(current_entry)
 
 	local_projects = get_all_projects_from_database()
 
 	# Remove database entries which already exist in the sync window.
 	existing_db_entries = get_db_entries(start_date, end_date)
+
+	#print(f"Database entries: {len(existing_db_entries)}")
+
 
 	for db_entry in existing_db_entries:
 		db.session.delete(db_entry)
@@ -85,6 +99,8 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 
 	db.session.commit()
 
+	return entries
+
 def get_entry_location(entry_datetime):
 	with open('location_history.csv', 'r') as file:
 		reader = csv.DictReader(file)
@@ -135,6 +151,10 @@ def get_db_entries(start_datetime=False, end_datetime=False, projects=False, cli
 
 # Save a new entry to the database
 def create_entry(entry_data):
+	
+	print(entry_data)
+	print('')
+
 	db_entry = Entry(
 		id 				  = entry_data['id'],
 		description 	  = entry_data['description'],
