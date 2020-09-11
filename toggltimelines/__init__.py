@@ -90,7 +90,7 @@ def init_db_command():
 @with_appcontext
 def toggl_sync_all():
 	import_complete = False
-	days_per_request = 50
+	days_per_request = 20
 
 	i = 0
 
@@ -105,10 +105,10 @@ def toggl_sync_all():
 		entries = helpers.toggl_sync(start, end)
 		print(len(entries))
 
+		i+=1
+		
 		if len(entries) == 0:
 			import_complete = True
-
-		i+=1
 
 		end = start - timedelta(days=1)
 		start = end - timedelta(days=days_per_request)
@@ -116,6 +116,16 @@ def toggl_sync_all():
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	print('mytest')
+	first_date = datetime(2020, 8, 22, 0, 0, 0)
+	entries_set1 = helpers.get_entries_from_toggl(first_date, first_date)
 
-		
+	for entry in entries_set1:
+		print(entry)
+		print('')
+
+	print(f"{len(entries_set1)} entries")
+
+# Toggl API requests are done in my local timezone.
+# i.e. if I specify a time, it will return entries which fit that in Germany.
+
+# So, 

@@ -88,7 +88,9 @@ def get_db_entries_by_day(start=False, end=False):
 	sorted_by_day = {}
 
 	for entry in db_entries:
-		entry_date_label = entry.start.strftime('%Y-%m-%d')
+		# Below we use get_local_start_time() because we need to make sure we're sorting
+		# with reference to what day it was in the user's location. Not simply UTC.
+		entry_date_label = entry.get_local_start_time().strftime('%Y-%m-%d')
 
 		if entry_date_label not in sorted_by_day:
 			sorted_by_day[entry_date_label] = {

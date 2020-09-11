@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import pytz
 import csv
 import sys
+import copy
 
 from toggltimelines.timelines.models import Entry
 from toggltimelines.timelines.models import Project
@@ -13,33 +14,42 @@ from toggltimelines import db
 def toggl_sync(start_date=False, end_date=False, days=False):
 	if days is not False:
 		start_date = datetime.utcnow().replace(hour=0, minute=0, second=0) - timedelta(days=days)
+		start_date = start_date.replace(tzinfo=pytz.utc)
 
 	if not end_date:
-		end_date = datetime.utcnow()
+		end_date = datetime.utcnow().replace(tzinfo=pytz.utc)
 
 	# The Toggl API seems to return all entries on any day that is queried.
 	# So for our database requests to match with this, we set the times to the start/end of the start/end days.
-	# TODO: Maybe this can be improved by using Date instead of DateTime?
-	start_date = start_date.replace(hour=0, minute=0, second=0)
-	end_date = end_date.replace(hour=23, minute=59, second=59)
+	# Also, Toggl understands all our requests as being in the user's timezone.
+	timezone = get_current_timezone()
+	start_date = start_date.replace(hour=0, minute=0, second=0).astimezone(tz=timezone)
+	end_date = end_date.replace(hour=23, minute=59, second=59).astimezone(tz=timezone)
+
+
+	print(f"toggl_sync... Start: {start_date}")
+	print(f"toggl_sync... End: {end_date}")
 
 	entries = get_entries_from_toggl(start_date, end_date)
 
 	#print(f"Toggl entries: {len(entries)}")
 
 	#Only get the current entry if we're getting today's entries.
-	if start_date <= datetime.now() <= end_date:
+	if start_date <= datetime.now().replace(tzinfo=timezone) <= end_date:
 		current_entry = get_current_toggl_entry()
 		if current_entry:
 			entries.append(current_entry)
 
+	entries = split_entries_over_midnight(entries)
+
 	local_projects = get_all_projects_from_database()
+
+	# Toggl needed the user timezone, but our database is all in UTC. So we convert.
+	start_date = start_date.astimezone(tz=pytz.utc)
+	end_date = end_date.astimezone(tz=pytz.utc)
 
 	# Remove database entries which already exist in the sync window.
 	existing_db_entries = get_db_entries(start_date, end_date)
-
-	#print(f"Database entries: {len(existing_db_entries)}")
-
 
 	for db_entry in existing_db_entries:
 		db.session.delete(db_entry)
@@ -101,6 +111,60 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 
 	return entries
 
+# If an entry received from Toggl spans midnight, we split it into two.
+def split_entries_over_midnight(entries):
+	#return entries
+
+	for entry in entries:
+		start = entry['start']
+		end = entry['end']
+
+		start = timestamp_to_datetime(start, utc=False)
+		end = timestamp_to_datetime(end, utc=False)
+
+		if start.day != end.day:
+			#print(entry)
+
+			end_of_first_day = start.replace(hour=23, minute=59, second=59)
+			start_of_next_day = end_of_first_day + timedelta(seconds=1)
+
+			start1 = entry['start']
+			end1 = end_of_first_day.isoformat()
+
+			start2 = start_of_next_day.isoformat()
+			end2 = entry['end']
+
+			dur1 = (end_of_first_day - start).total_seconds() * 1000
+			dur2 = (end - start_of_next_day).total_seconds() * 1000
+
+
+			
+			entry_before_midnight = entry
+			entry_after_midnight = copy.deepcopy(entry)
+
+			entry_before_midnight['start'] = start1
+			entry_before_midnight['end'] = end1
+			entry_before_midnight['dur'] = dur1
+
+			entry_after_midnight['start'] = start2
+			entry_after_midnight['end'] = end2
+			entry_after_midnight['dur'] = dur2
+
+
+
+			# TODO: Is this a goodway of handling the ID?
+			# Just adding a 0 onto the end of the new entry.
+			entry_after_midnight['id'] = str(entry['id']) + '0'
+
+			entries.append(entry_after_midnight)
+
+			print(entry_before_midnight)
+			print(entry_after_midnight)
+			print('')
+
+
+	return entries
+
 def get_entry_location(entry_datetime):
 	with open('location_history.csv', 'r') as file:
 		reader = csv.DictReader(file)
@@ -152,8 +216,8 @@ def get_db_entries(start_datetime=False, end_datetime=False, projects=False, cli
 # Save a new entry to the database
 def create_entry(entry_data):
 	
-	print(entry_data)
-	print('')
+	#print(entry_data)
+	#print('')
 
 	db_entry = Entry(
 		id 				  = entry_data['id'],
@@ -170,6 +234,8 @@ def create_entry(entry_data):
 		db_entry.project = entry_data['db_project']
 
 	db.session.add(db_entry)
+
+	#db.session.commit()
 
 	return db_entry
 
@@ -251,10 +317,14 @@ def get_all_projects_from_database():
 	return projects
 
 # Convert a timestamp string to a datetime object.
-def timestamp_to_datetime(timestamp, string_format='%Y-%m-%dT%H:%M:%S%z'):
+def timestamp_to_datetime(timestamp, string_format='%Y-%m-%dT%H:%M:%S%z', utc=True):
 	timestamp = remove_colon_from_timezone(timestamp)
-	utc = pytz.timezone('UTC')
-	dt = datetime.strptime(timestamp, string_format).astimezone(tz=utc)
+	
+	dt = datetime.strptime(timestamp, string_format)
+
+	if utc:
+		test = pytz.timezone('UTC')
+		dt=dt.astimezone(tz=test)
 
 	return dt
 
@@ -267,3 +337,6 @@ def remove_colon_from_timezone(timestamp):
 		return timestamp[:-3] + timestamp[-2:]
 	else:
 		return timestamp
+
+def get_current_timezone():
+	return pytz.timezone('Europe/Berlin')
