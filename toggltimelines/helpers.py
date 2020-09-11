@@ -112,21 +112,20 @@ def get_db_entries(start_datetime=False, end_datetime=False, projects=False, cli
 	query = Entry.query
 
 	if start_datetime:
-		query.filter(Entry.start >= start_datetime)
+		query = query.filter(Entry.start >= start_datetime)
 
 	if end_datetime:
-		query.filter(Entry.start <= end_datetime)
+		query = query.filter(Entry.start <= end_datetime)
 
 	if projects:
-		query.join(Entry.project, aliased=True)
-		query.filter(Project.project_name.in_(projects))
+		query = query.join(Entry.project, aliased=True)
+		query = query.filter(Project.project_name.in_(projects))
 
 	if clients:
 		query = query.filter(Entry.client.in_(clients))
 
 	if description:
 		query = query.filter(func.lower(Entry.description).contains(description.lower()))
-
 
 	entries = query.order_by(Entry.start).all()
 

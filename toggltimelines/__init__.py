@@ -91,15 +91,8 @@ def init_db_command():
 def toggl_sync_all():
 	click.echo("This is toggl_sync_all")
 
-	"""
-	end_date = datetime.today()
-	start_date = end_date - timedelta(days=0)
-	print(start_date)
-	print(end_date)
-	"""
-
-	end_datetime = datetime.utcnow().replace(tzinfo=pytz.utc)
-	start_datetime = end_datetime - timedelta(days=1)
+	end_datetime = datetime.utcnow()#.replace(tzinfo=pytz.utc)
+	start_datetime = end_datetime - timedelta(days=23)
 
 	helpers.toggl_sync(start_datetime, end_datetime)
 

@@ -225,7 +225,7 @@ $(document).ready(function(){
 	$('.timelines_reload').click(function() {
 		$.ajax({
 			"type": "POST",
-			"url": $SCRIPT_ROOT + "/load_more",
+			"url": $SCRIPT_ROOT + "/timelines/load_more",
 			"contentType": "application/json",
 			"dataType": "json",
 			"data": JSON.stringify({reload: true}),
@@ -250,7 +250,7 @@ $(document).ready(function(){
 			end_days_ago: end_days_ago
 		}
 
-		$.ajax($SCRIPT_ROOT + '/load_more',{
+		$.ajax($SCRIPT_ROOT + '/timelines/load_more',{
 			'type': 'POST',
 			"contentType": "application/json",
 			'data': JSON.stringify(data),
