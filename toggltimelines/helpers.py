@@ -9,11 +9,12 @@ from toggltimelines.timelines.models import Project
 from toggltimelines import db
 
 
-def toggl_sync(start_date, end_date=False):
+def toggl_sync(start_date=False, end_date=False, days=False):
+	if days is not False:
+		start_date = datetime.utcnow().replace(hour=0, minute=0, second=0) - timedelta(days=days)
 
 	if not end_date:
 		end_date = datetime.utcnow()
-
 
 	entries = get_entries_from_toggl(start_date, end_date)
 
@@ -21,21 +22,16 @@ def toggl_sync(start_date, end_date=False):
 	if current_entry:
 		entries.append(current_entry)
 
-	print(f"New entries: {len(entries)}")
-
 	local_projects = get_all_projects_from_database()
 
 	# Remove database entries which already exist in the sync window.
 	existing_db_entries = get_db_entries(start_date, end_date)
-
-	print(f"Existing entries: {len(existing_db_entries)}")
 
 	for db_entry in existing_db_entries:
 		db.session.delete(db_entry)
 
 	db.session.commit() # This is here because of issues when an entry was deleted and re-added during resync. 
 						# Project wasn't correctly updating if changed to NULL.
-
 
 	for entry in entries:
 		project_id = entry['pid'] if 'pid' in entry.keys() else None
@@ -56,7 +52,6 @@ def toggl_sync(start_date, end_date=False):
 						entry['project_hex_color'] = toggl_project['hex_color']
 						break
 
-
 			db_project = create_project({
 				'project_id': 		 project_id,
 				'project_name': 	 entry['project'],
@@ -74,7 +69,6 @@ def toggl_sync(start_date, end_date=False):
 			entry['client'] = None #TODO: This is temporary. Need to check how clients are actually working.
 								   # Clients should probably be their own table. I'll leave this as is for now until I do that rework.
 
-
 		location = get_entry_location(start_datetime)
 
 		db_entry = create_entry({
@@ -86,7 +80,7 @@ def toggl_sync(start_date, end_date=False):
 			'client': 	   entry['client'],
 			'location':	   location,
 			'user_id': 	   entry['uid'],
-			'db_project':  db_project #TODO: Need case for if there is no project
+			'db_project':  db_project
 		})
 
 	db.session.commit()
@@ -126,6 +120,9 @@ def get_db_entries(start_datetime=False, end_datetime=False, projects=False, cli
 
 	if description:
 		query = query.filter(func.lower(Entry.description).contains(description.lower()))
+
+
+	#print(f"\n{query}\n")
 
 	entries = query.order_by(Entry.start).all()
 

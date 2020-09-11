@@ -34,7 +34,7 @@ def timelines_page():
 	dispaly_start_datetime = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=7)
 
 	dispalyed_days = get_db_entries_by_day(start=dispaly_start_datetime)
-	
+
 	page_data = {
 		'days': dispalyed_days,
 		'times': range(0, 24),
@@ -57,7 +57,7 @@ def load_more():
 	print(f"End: {end_days_ago}")
 
 	if reloading:
-		helpers.update_database(1)
+		helpers.toggl_sync(days=0)
 
 		start = datetime.now().replace(hour=0, minute=0, second=0)
 		end = False
