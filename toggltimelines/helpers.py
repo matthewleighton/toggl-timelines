@@ -48,9 +48,11 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 	start_date = start_date.astimezone(tz=pytz.utc)
 	end_date = end_date.astimezone(tz=pytz.utc)
 
+	print(f"Deleting start: {start_date}")
+	print(f"Deleting end: {end_date}")
+
 	# Remove database entries which already exist in the sync window.
 	existing_db_entries = get_db_entries(start_date, end_date)
-
 	for db_entry in existing_db_entries:
 		db.session.delete(db_entry)
 
@@ -115,14 +117,20 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 
 # If an entry received from Toggl spans midnight, we split it into two.
 def split_entries_over_midnight(entries):
-	#return entries
-
+	current_timezone = get_current_timezone()
+	
 	for entry in entries:
 		start = entry['start']
 		end = entry['end']
 
 		start = timestamp_to_datetime(start, utc=False)
 		end = timestamp_to_datetime(end, utc=False)
+
+		entry_location = get_entry_location(start)
+		entry_timezone = pytz.timezone(entry_location)
+
+		start = start.astimezone(tz=entry_timezone)
+		end = end.astimezone(tz=entry_timezone)
 
 		if start.day != end.day:
 			#print(entry)
@@ -242,9 +250,13 @@ def sort_db_entries_by_day(db_entries):
 
 # Save a new entry to the database
 def create_entry(entry_data):
-	
-	#print(entry_data)
-	#print('')
+	# This is here to catch an edge case of when an old version of an entry still exists.
+	# (The old one is usually already deleted, by can remain if the edge of the sync window has an entry overflowing midnight)#
+	# Could maybe find a better way of doing this? How much extra time does it take to check each entry like this?
+	old_entry = Entry.query.get(entry_data['id'])
+	if old_entry:
+		db.session.delete(old_entry)
+		db.session.commit()
 
 	db_entry = Entry(
 		id 				  = entry_data['id'],
@@ -261,7 +273,6 @@ def create_entry(entry_data):
 		db_entry.project = entry_data['db_project']
 
 	db.session.add(db_entry)
-
 	#db.session.commit()
 
 	return db_entry
@@ -367,4 +378,9 @@ def remove_colon_from_timezone(timestamp):
 
 def get_current_timezone():
 	now = datetime.utcnow().replace(tzinfo=pytz.utc)
-	return get_entry_location(now)
+
+	location = get_entry_location(now)
+
+	timezone = pytz.timezone(location)
+
+	return timezone

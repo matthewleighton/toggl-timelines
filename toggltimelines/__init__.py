@@ -66,12 +66,11 @@ def create_app(test_config=None):
 	app.cli.add_command(mytest)
 
 	from toggltimelines import timelines
-
 	app.register_blueprint(timelines.bp)
-
 	app.add_url_rule("/", endpoint="index")
-
 	app.add_url_rule("/timelines", endpoint="timelines")
+
+	
 
 	return app
 
@@ -90,7 +89,7 @@ def init_db_command():
 @with_appcontext
 def toggl_sync_all():
 	import_complete = False
-	days_per_request = 20
+	days_per_request = 250
 
 	i = 0
 
@@ -116,5 +115,11 @@ def toggl_sync_all():
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	timezone = helpers.get_current_timezone()
-	print(timezone)
+	start = datetime(2020, 6, 21, 0, 0, 0)
+	end = datetime(2020, 6, 21, 0, 0, 0)
+
+	toggl_entries = helpers.get_entries_from_toggl(start, end)
+	print(f"Original: {len(toggl_entries)}")
+
+	split_entries = helpers.split_entries_over_midnight(toggl_entries)	
+	print(f"After: {len(split_entries)}")
