@@ -40,7 +40,7 @@ def comparison_data():
 	sort_type 				= request.json.get('sort_type')
 	period_type 			= request.json.get('period_type')
 
-	project_data = get_project_data(comparison_mode=True)
+	project_data = helpers.get_project_data(comparison_mode=True)
 
 	goals_projects = []
 	goals = {}
@@ -115,10 +115,7 @@ def comparison_data():
 
 
 	if period_type != "goals": # Don't need to do historic days work if we're in goals mode.
-
-		print(f"Historic start: {start_end_values['historic_start']}")
-		print(f"Historic end: {start_end_values['historic_end']}")
-
+	
 		db_entries = helpers.get_db_entries(start_end_values['historic_start'], start_end_values['historic_end'])
 
 		historic_days = helpers.sort_db_entries_by_day(db_entries)
@@ -157,9 +154,6 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 
 	for day in days:
 		entries = day['entries']
-
-		if historic:
-				print(f"Historic Entries: {len(entries)}")
 
 		for entry in entries:
 
@@ -511,25 +505,3 @@ def calculate_historic_averages(category_data, view_type, historic_days, current
 			average = goals[project_name]
 		
 		category_data[project_name]['average'] = average
-
-
-
-def get_project_data(comparison_mode = False):
-	projects = Project.query.all()
-
-	project_data = {}
-
-	for project in projects:
-		project_name = project.project_name
-
-		project_data[project_name] = {
-			'name': project_name,
-			'color': project.project_hex_color
-		}
-
-		if comparison_mode:
-			project_data[project_name]['historic_tracked'] = 0
-			project_data[project_name]['current_tracked'] = 0
-			project_data[project_name]['average'] = 0
-
-	return project_data

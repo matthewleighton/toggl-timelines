@@ -421,3 +421,24 @@ def get_user_today_start_end_in_utc():
 		'start': today_start_utc,
 		'end': today_end_user
 	}
+
+# Used in Comparison and Frequency pages
+def get_project_data(comparison_mode = False):
+	projects = Project.query.all()
+
+	project_data = {}
+
+	for project in projects:
+		project_name = project.project_name
+
+		project_data[project_name] = {
+			'name': project_name,
+			'color': project.project_hex_color
+		}
+
+		if comparison_mode:
+			project_data[project_name]['historic_tracked'] = 0
+			project_data[project_name]['current_tracked'] = 0
+			project_data[project_name]['average'] = 0
+
+	return project_data

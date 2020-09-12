@@ -74,6 +74,10 @@ def create_app(test_config=None):
 	app.register_blueprint(comparison.bp)
 	app.add_url_rule("/comparison", endpoint="comparison")
 
+	from toggltimelines import frequency
+	app.register_blueprint(frequency.bp)
+	app.add_url_rule("/frequency", endpoint="frequency")
+
 	return app
 
 def init_db():
