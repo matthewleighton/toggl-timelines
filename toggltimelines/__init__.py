@@ -117,11 +117,8 @@ def toggl_sync_all():
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	start = datetime(2020, 6, 21, 0, 0, 0)
-	end = datetime(2020, 6, 21, 0, 0, 0)
+	
+	return 'mytest'
 
-	toggl_entries = helpers.get_entries_from_toggl(start, end)
-	print(f"Original: {len(toggl_entries)}")
 
-	split_entries = helpers.split_entries_over_midnight(toggl_entries)	
-	print(f"After: {len(split_entries)}")
+	

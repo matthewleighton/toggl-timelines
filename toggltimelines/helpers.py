@@ -196,9 +196,11 @@ def get_db_entries(start_datetime=False, end_datetime=False, projects=False, cli
 	query = Entry.query
 
 	if start_datetime:
+		start_datetime = start_datetime.astimezone(pytz.utc)
 		query = query.filter(Entry.start >= start_datetime)
 
 	if end_datetime:
+		end_datetime = end_datetime.astimezone(pytz.utc)
 		query = query.filter(Entry.start <= end_datetime)
 
 	if projects:
@@ -400,3 +402,22 @@ def get_current_datetime_in_user_timezone():
 	user_time = datetime.now(timezone)
 
 	return user_time
+
+# Return UTC datetimes for when the user's current day starts/ends.  
+def get_user_today_start_end_in_utc():
+	user_timezone = get_current_timezone()
+
+	now_utc = datetime.utcnow().replace(tzinfo=pytz.utc)
+
+	now_user = now_utc.astimezone(tz=user_timezone)
+
+	today_start_user = now_user.replace(hour=0, minute=0, second=0)
+	today_end_user = now_user.replace(hour=23, minute=59, second=59)
+
+	today_start_utc = today_start_user.astimezone(pytz.utc)
+	today_end_utc = today_end_user.astimezone(pytz.utc)
+
+	return {
+		'start': today_start_utc,
+		'end': today_end_user
+	}
