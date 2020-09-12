@@ -27,8 +27,8 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 	end_date = end_date.replace(hour=23, minute=59, second=59).astimezone(tz=timezone)
 
 
-	print(f"toggl_sync... Start: {start_date}")
-	print(f"toggl_sync... End: {end_date}")
+	# print(f"toggl_sync... Start: {start_date}")
+	# print(f"toggl_sync... End: {end_date}")
 
 	entries = get_entries_from_toggl(start_date, end_date)
 
@@ -48,8 +48,8 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 	start_date = start_date.astimezone(tz=pytz.utc)
 	end_date = end_date.astimezone(tz=pytz.utc)
 
-	print(f"Deleting start: {start_date}")
-	print(f"Deleting end: {end_date}")
+	# print(f"Deleting start: {start_date}")
+	# print(f"Deleting end: {end_date}")
 
 	# Remove database entries which already exist in the sync window.
 	existing_db_entries = get_db_entries(start_date, end_date)
@@ -384,3 +384,19 @@ def get_current_timezone():
 	timezone = pytz.timezone(location)
 
 	return timezone
+
+
+
+
+
+# Return a datetime for the current time in the user's current timezone.
+def get_current_datetime_in_user_timezone():
+	with open ('location_history.csv', 'r') as file:
+		reader = csv.DictReader(file)
+		location = next(reader)['location']
+
+	timezone = pytz.timezone(location)
+
+	user_time = datetime.now(timezone)
+
+	return user_time
