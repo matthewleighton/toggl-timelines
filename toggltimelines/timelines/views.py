@@ -33,7 +33,9 @@ def timelines_page():
 
 	dispaly_start_datetime = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=7)
 
-	dispalyed_days = get_db_entries_by_day(start=dispaly_start_datetime)
+	db_entries = helpers.get_db_entries(dispaly_start_datetime)
+
+	dispalyed_days = helpers.sort_db_entries_by_day(db_entries)
 
 	page_data = {
 		'days': dispalyed_days,
@@ -74,7 +76,9 @@ def load_more():
 	print(f"Start datetime: {start}")
 	print(f"End datetime: {end}")
 
-	displayed_days = get_db_entries_by_day(start=start, end=end)
+	db_entries = helpers.get_db_entries(start, end)
+
+	displayed_days = helpers.sort_db_entries_by_day(db_entries)
 
 	page_data = {
 		'days': displayed_days
@@ -82,28 +86,3 @@ def load_more():
 
 	return jsonify(render_template('timelines/day.html', data=page_data))
 
-def get_db_entries_by_day(start=False, end=False):
-	db_entries = helpers.get_db_entries(start, end)
-
-	sorted_by_day = {}
-
-	for entry in db_entries:
-		# Below we use get_local_start_time() because we need to make sure we're sorting
-		# with reference to what day it was in the user's location. Not simply UTC.
-		entry_date_label = entry.get_local_start_time().strftime('%Y-%m-%d')
-
-		if entry_date_label not in sorted_by_day:
-			sorted_by_day[entry_date_label] = {
-				'entries': [],
-				'date': entry.start.strftime('%a %d %b, %Y')
-			}
-
-		sorted_by_day[entry_date_label]['entries'].append(entry)
-
-	days_list = []
-	for day in sorted_by_day.values():
-		days_list.append(day)
-
-	days_list.reverse()
-
-	return days_list

@@ -215,6 +215,31 @@ def get_db_entries(start_datetime=False, end_datetime=False, projects=False, cli
 
 	return entries
 
+# Return the entries in a new list, grouped by day,
+def sort_db_entries_by_day(db_entries):
+	sorted_by_day = {}
+
+	for entry in db_entries:
+		# Below we use get_local_start_time() because we need to make sure we're sorting
+		# with reference to what day it was in the user's location. Not simply UTC.
+		entry_date_label = entry.get_local_start_time().strftime('%Y-%m-%d')
+
+		if entry_date_label not in sorted_by_day:
+			sorted_by_day[entry_date_label] = {
+				'entries': [],
+				'date': entry.get_local_start_time().strftime('%a %d %b, %Y')
+			}
+
+		sorted_by_day[entry_date_label]['entries'].append(entry)
+
+	days_list = []
+	for day in sorted_by_day.values():
+		days_list.append(day)
+
+	days_list.reverse()
+
+	return days_list
+
 # Save a new entry to the database
 def create_entry(entry_data):
 	
@@ -341,4 +366,5 @@ def remove_colon_from_timezone(timestamp):
 		return timestamp
 
 def get_current_timezone():
-	return pytz.timezone('Europe/Berlin')
+	now = datetime.utcnow().replace(tzinfo=pytz.utc)
+	return get_entry_location(now)

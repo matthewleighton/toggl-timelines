@@ -116,16 +116,5 @@ def toggl_sync_all():
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	first_date = datetime(2020, 8, 22, 0, 0, 0)
-	entries_set1 = helpers.get_entries_from_toggl(first_date, first_date)
-
-	for entry in entries_set1:
-		print(entry)
-		print('')
-
-	print(f"{len(entries_set1)} entries")
-
-# Toggl API requests are done in my local timezone.
-# i.e. if I specify a time, it will return entries which fit that in Germany.
-
-# So, 
+	timezone = helpers.get_current_timezone()
+	print(timezone)

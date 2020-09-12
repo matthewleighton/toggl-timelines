@@ -2,7 +2,7 @@
 	    	
 	<div class='row day_row'>
 
-		<span class='day_date noselect' data-day="{{day.entries[0].start.weekday()}}" data-date="{{day.entries[0].start.strftime('%d-%m')}}">{{day.date}}</span>
+		<span class='day_date noselect' data-day="{{day.entries[0].start.weekday()}}" data-date="{{day.entries[0].get_local_start_time().strftime('%d-%m')}}">{{day.date}}</span>
 
 		<span class='untracked_time_background'></span>
 
