@@ -90,6 +90,21 @@ def new_readthrough():
 
 	return jsonify(data)
 
+@bp.route("/reading/update_position", methods=['POST'])
+def update_position():
+	new_position = request.json['position']
+	readthrough_id = request.json['readthrough_id']
+
+	print(readthrough_id)
+
+	readthrough = Readthrough.query.get(readthrough_id)
+	readthrough.current_position = new_position
+
+	db.session.commit()
+
+	data = {}
+
+	return jsonify(data)
 
 
 def get_all_books():

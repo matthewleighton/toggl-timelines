@@ -22,3 +22,44 @@ $('.create-readthrough-btn').on('click', function() {
 		}
 	})
 })
+
+$('body').on('click', '.hidden-input', function() {
+	
+	var $el = $(this);
+
+	var readthrough_id = $el.closest('.readthrough-control').attr('data-id')
+
+	console.log(readthrough_id)
+
+	var $input = $('<input type="number" class="current-readthrough-position-input"/>').val( $el.text() );
+	$el.replaceWith( $input );
+
+	var save = function(){
+	    
+	    new_position = $input.val()
+
+	    var $p = $('<span class="hidden-input" />').text( new_position );
+	    $input.replaceWith( $p );
+
+	    // var readthrough_id = $el.attr('data-readthrough-id')
+
+
+	    var data = {
+	    	readthrough_id: readthrough_id,
+	    	position: new_position
+	    }
+
+	    $.ajax({
+			"type": "POST",
+			"url": "/reading/update_position",
+			"contentType": "application/json",
+			"dataType": "json",
+			"data": JSON.stringify(data),
+			success: function(response) {
+				console.log(response)
+			}
+		})
+	};
+
+	$input.one('blur', save).focus();
+});

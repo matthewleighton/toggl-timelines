@@ -476,8 +476,8 @@ svg {
 
 .readthrough-control {
   border-bottom: 1px solid black;
-  margin: 30px;
-  padding: 10px;
+  /*margin: 30px;*/
+  padding: 30px;
   min-height: 300px;
 }
 
@@ -486,12 +486,22 @@ svg {
   display: inline-block;
   margin-right: 20px;
   margin-top: 8px;
+  text-align: center;
 }
 
 .readthrough-image img {
-  height: 290px;
+  max-height: 290px;
+  margin-bottom: 4px;
 }
 
 .readthough-details {
   display: inline-block;
+}
+
+.current-readthrough-position-input {
+  max-width: 65px;
+}
+
+.hidden-input {
+  cursor: pointer;
 }
