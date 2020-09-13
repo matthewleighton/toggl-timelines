@@ -473,3 +473,25 @@ svg {
 .new-readthrough-control {
   display: none;
 }
+
+.readthrough-control {
+  border-bottom: 1px solid black;
+  margin: 30px;
+  padding: 10px;
+  min-height: 300px;
+}
+
+.readthrough-image {
+  float: left;
+  display: inline-block;
+  margin-right: 20px;
+  margin-top: 8px;
+}
+
+.readthrough-image img {
+  height: 290px;
+}
+
+.readthough-details {
+  display: inline-block;
+}

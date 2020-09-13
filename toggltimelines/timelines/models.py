@@ -1,6 +1,7 @@
 from flask import current_app
 
 from toggltimelines import db
+
 import pdb
 import csv
 import pytz
@@ -77,7 +78,7 @@ class Entry(db.Model):
 
 		project = self.get_project_name()
 		description = self.description
-		duration = self.format_duration(self.dur)
+		duration = helpers.format_duration(self.dur, days=True)
 		client = self.client
 
 		return '<b>{0}</b>: {1}<br/>Client: {2}<br/>{3}-{4}<br/>{5}'.format(project, description, client, start_time, end_time, duration)

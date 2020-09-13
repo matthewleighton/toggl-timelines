@@ -123,7 +123,14 @@ def toggl_sync_all():
 		start = end - timedelta(days=days_per_request)
 
 
+from toggltimelines.reading.models import Book, Readthrough
+from toggltimelines.timelines.models import Entry, Project
+
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	populate_books()
+	readthrough = Readthrough.query.get(1)
+
+	test = readthrough.get_readthrough_time_today(raw=False)
+
+	print(test)
