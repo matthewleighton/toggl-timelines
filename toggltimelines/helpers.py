@@ -1,5 +1,6 @@
 from flask import current_app
 
+from sqlalchemy import func
 from datetime import datetime, timedelta
 import pytz
 import csv
@@ -194,6 +195,8 @@ def get_entry_location(entry_datetime):
 
 def get_db_entries(start_datetime=False, end_datetime=False, projects=False, clients=False, description=False):
 	query = Entry.query
+
+
 
 	if start_datetime:
 		start_datetime = start_datetime.astimezone(pytz.utc)

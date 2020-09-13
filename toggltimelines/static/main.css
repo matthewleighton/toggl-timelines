@@ -455,3 +455,21 @@ svg {
 #graph_controls > .form-inline > * {
   margin: 5px 3px;
 }
+
+
+
+/* Reading Page */
+
+.book-control {
+  margin-bottom: 30px;
+  padding: 5px;
+  border: 1px solid black;
+}
+
+.book-title {
+  font-size: 22px;
+}
+
+.new-readthrough-control {
+  display: none;
+}

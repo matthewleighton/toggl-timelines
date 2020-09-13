@@ -78,10 +78,14 @@ def create_app(test_config=None):
 	app.register_blueprint(frequency.bp)
 	app.add_url_rule("/frequency", endpoint="frequency")
 
+	from toggltimelines import reading
+	app.register_blueprint(reading.bp)
+	app.add_url_rule("/reading", endpoint="reading")
+
 	return app
 
 def init_db():
-	db.drop_all()
+	#db.drop_all()
 	db.create_all()
 
 @click.command("init-db")
@@ -118,11 +122,8 @@ def toggl_sync_all():
 		end = start - timedelta(days=1)
 		start = end - timedelta(days=days_per_request)
 
+
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	
-	return 'mytest'
-
-
-	
+	populate_books()
