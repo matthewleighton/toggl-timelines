@@ -37,6 +37,8 @@ $('body').on('click', '.hidden-input', function() {
 	var $input = $('<input type="number" class="current-readthrough-position-input"/>').val( $el.text() );
 	$el.replaceWith( $input );
 
+	$input.select();
+
 	var save = function(){
 	    
 	    var new_position = $input.val()
