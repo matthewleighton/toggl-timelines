@@ -35,8 +35,14 @@ $('body').on('click', '.hidden-input', function() {
 			var input_class = 'hidden-number-input';
 			var input_value = original_value
 			break;
+		case 'update_daily_reading_goal':
+			var input_type = 'number';
+			var input_class = 'hidden-number-input';
+			var input_value = $el.attr('data-minutes')
+			break;
 		case 'update_start_date':
 		case 'update_end_date':
+		case 'update_target_end_date':
 			var input_type = 'date';
 			var input_class = 'hidden-date-input';
 			var input_value = $el.attr('data-date')

@@ -35,8 +35,15 @@ class Readthrough(db.Model):
 		return dt.strftime(date_format)
 
 	# i.e. The unit for physical books is a page, while for digital it is a percentage.
-	def get_position_unit(self):
-		return 'page' if self.book_format == 'physical' else 'percentage'
+	def get_position_unit(self, plural=False):
+
+		if self.book_format == 'physical':
+			return 'pages' if plural else 'page'
+
+		if self.book_format == 'digital':
+			return 'percent' if plural else 'percentage'
+
+		#return 'page' if self.book_format == 'physical' else 'percentage'
 
 	def current_position_label(self):
 		if self.book_format == 'digital':
@@ -241,8 +248,18 @@ class Readthrough(db.Model):
 		else:
 			return helpers.format_milliseconds(average_time_in_milliseconds, include_seconds=True)
 
-	def get_target_end_date(self):
-		return 'Some date'
+	def get_target_end_date(self, raw=False):
+		target_end_date = self.target_end_date
+
+		if raw:
+			return target_end_date
+
+		if not target_end_date:
+			return 'None'
+
+		date_format = '%a %-d %b %Y'
+
+		return target_end_date.strftime(date_format)
 
 	# Return True/False whether a readthrough has been completed or not.
 	def is_readthrough_complete(self):
@@ -277,19 +294,114 @@ class Readthrough(db.Model):
 		return new_position
 
 	def update_date(self, new_date, date_type):
-		dt = datetime.strptime(new_date, '%Y-%m-%d')
-		
+		if new_date == '':
+			dt = None
+		else:
+			dt = datetime.strptime(new_date, '%Y-%m-%d')
+
 		if date_type == 'start':
 			self.start_date = dt
 
-			if self.start_date > self.end_date:
+			if dt and self.start_date > self.end_date:
 				self.end_date = dt
 
 			return self.start_date
+		
 		elif date_type == 'end':
 			self.end_date = dt
 
-			if self.end_date < self.start_date:
+			if dt and self.end_date < self.start_date:
 				self.start_date = dt
 
 			return self.end_date
+
+		elif date_type == 'target_end':
+			if dt and dt < self.start_date:
+				dt = self.start_date
+
+			self.target_end_date = dt
+
+			return self.target_end_date
+
+	def get_days_until_target_end(self, raw=False):
+		today = helpers.get_current_datetime_in_user_timezone().replace(tzinfo=None)
+
+		days = (self.target_end_date - today).days + 2 # Plus two since we can also read on the first/last days.
+
+		if raw:
+			return days
+
+		return f"{days} days"
+
+	def get_required_daily_units_for_target_end(self, raw=False):
+		remaining_days = self.get_days_until_target_end(raw=True)
+		remaining_units = self.get_remaining_units()
+
+		units_per_day = remaining_units / remaining_days
+
+		if raw:
+			return units_per_day
+
+		if self.book_format == 'digital':
+			unit_name = '%'
+			decimal_digits = 1
+		elif self.book_format == 'physical':
+			unit_name = ' page' if units_per_day == 1 else ' pages'
+			decimal_digits = 0
+
+		units_per_day = round(units_per_day, decimal_digits)
+
+		return f"{units_per_day}{unit_name}"
+
+	def get_required_daily_time_for_target_date(self, raw=False):
+		required_daily_units = self.get_required_daily_units_for_target_end(raw=True)
+
+		time_per_unit = self.get_time_per_position_unit(raw=True)
+
+		daily_time_in_milliseconds = required_daily_units * time_per_unit
+
+		return helpers.format_milliseconds(daily_time_in_milliseconds)
+
+	def get_daily_reading_goal(self, raw=False):
+		goal_in_minutes = self.daily_reading_goal
+
+		if raw:
+			return goal_in_minutes * 60 * 1000
+
+		if not goal_in_minutes:
+			minutes_string = ''
+			minutes_display = 'None'
+			data_minutes = 0
+		else:
+			minutes_string = 'minutes'
+			minutes_display = goal_in_minutes
+			data_minutes = goal_in_minutes
+
+		return f"<span class='hidden-input' data-endpoint='update_daily_reading_goal' data-minutes='{data_minutes}'>{minutes_display}</span> {minutes_string}"
+
+	def update_daily_reading_goal(self, goal_in_minutes):
+		if not goal_in_minutes or int(goal_in_minutes) < 0:
+			goal_in_minutes = None
+
+		self.daily_reading_goal = goal_in_minutes
+
+		return self.daily_reading_goal
+
+	def get_daily_reading_goal_end_estimate(self, raw=False):
+		daily_goal = self.get_daily_reading_goal(raw=True)
+		time_per_unit = self.get_time_per_position_unit(raw=True)
+
+		units_per_day = daily_goal / time_per_unit
+
+		remaining_units = self.get_remaining_units()
+
+		remaining_days = remaining_units / units_per_day
+
+		today = helpers.get_current_datetime_in_user_timezone().replace(tzinfo=None)
+
+		estimate_end_date = today + timedelta(days=remaining_days)
+
+		if raw:
+			return estimate_end_date
+
+		return self.format_date(estimate_end_date)

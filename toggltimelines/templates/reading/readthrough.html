@@ -29,12 +29,26 @@
 
 	{% if not readthrough.is_readthrough_complete() %}
 		<div class="readthrough-target-end-date">
-			<p><strong>Target end date: </strong>{{readthrough.get_target_end_date()}}</p>
-			<p><strong>Required pages/percentage per day: </strong></p>
-			<p><strong>Required time per day: </strong></p>
+			<p><strong>Target end date: </strong><span class="hidden-input" data-endpoint="update_target_end_date" data-date={{readthrough.target_end_date}}>{{readthrough.get_target_end_date()}}</span></p>
+			
+			{% if readthrough.target_end_date %}
+				<p><strong>Remaining days: </strong>{{readthrough.get_days_until_target_end()}}</p>
+
+				{% if readthrough.get_days_until_target_end(raw=True) >= 0 %}
+					<p><strong>Required pages/percentage per day: </strong>{{readthrough.get_required_daily_units_for_target_end()}}</p>
+					<p><strong>Required time per day: </strong>{{readthrough.get_required_daily_time_for_target_date()}}</p>
+				{% endif %}
+
+			{% endif %}
+
 			<hr/>
-			<p><strong>Target daily reading time: </strong></p>
-			<p><strong>Resulting end date: </strong></p>
+
+			<p><strong>Daily reading goal: </strong>{{readthrough.get_daily_reading_goal()|safe}}</p>
+			
+			{% if readthrough.get_daily_reading_goal(raw=True) %}
+				<p><strong>Resulting end date: </strong>{{readthrough.get_daily_reading_goal_end_estimate()}}</p>
+			{% endif %}
+
 		</div>
 	{% endif %}
 

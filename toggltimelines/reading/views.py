@@ -105,6 +105,7 @@ def update_position():
 
 @bp.route("/reading/update_end_date", methods=['POST'])
 @bp.route("/reading/update_start_date", methods=['POST'])
+@bp.route("/reading/update_target_end_date", methods=['POST'])
 def update_date():
 	new_date = request.json['value']
 	readthrough_id = request.json['readthrough_id']
@@ -112,7 +113,12 @@ def update_date():
 
 	readthrough = Readthrough.query.get(readthrough_id)
 
-	date_type = 'start' if endpoint == 'update_start_date' else 'end'
+	if endpoint == 'update_start_date':
+		date_type = 'start'
+	elif endpoint == 'update_end_date':
+		date_type = 'end'
+	elif endpoint == 'update_target_end_date':
+		date_type = 'target_end'
 
 	readthrough.update_date(new_date, date_type)
 
@@ -120,6 +126,17 @@ def update_date():
 
 	return jsonify(render_template('reading/readthrough.html', readthrough=readthrough))
 
+@bp.route("/reading/update_daily_reading_goal", methods=['POST'])
+def update_daily_reading_goal():
+	new_goal = request.json['value']
+	readthrough_id = request.json['readthrough_id']
+	readthrough = Readthrough.query.get(readthrough_id)
+
+	readthrough.update_daily_reading_goal(new_goal)
+
+	db.session.commit()
+
+	return jsonify(render_template('reading/readthrough.html', readthrough=readthrough))
 
 def get_all_books():
 	query = Book.query
