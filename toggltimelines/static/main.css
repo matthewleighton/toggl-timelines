@@ -498,10 +498,16 @@ svg {
   display: inline-block;
 }
 
-.current-readthrough-position-input {
+.hidden-number-input {
   max-width: 65px;
 }
 
 .hidden-input {
   cursor: pointer;
+}
+
+.readthrough-target-end-date {
+  display: inline-block;
+  margin-left: 100px;
+  vertical-align: top;
 }

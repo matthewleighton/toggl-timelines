@@ -9,8 +9,6 @@ $('.create-readthrough-btn').on('click', function() {
 	    return obj;
 	}, {});
 
-
-
 	$.ajax({
 		"type": "POST",
 		"url": "/reading/new_readthrough",
@@ -24,33 +22,51 @@ $('.create-readthrough-btn').on('click', function() {
 })
 
 $('body').on('click', '.hidden-input', function() {
-	
 	var $el = $(this);
-	var original_position = $el.text()
+	var original_value = $el.text()
 
 	var $container = $el.closest('.readthrough-control');
 	var readthrough_id = $container.attr('data-id');
+	var endpoint = $el.attr('data-endpoint')
 
-	var $input = $('<input type="number" class="current-readthrough-position-input"/>').val( original_position );
+	switch(endpoint) {
+		case 'update_position':
+			var input_type = 'number';
+			var input_class = 'hidden-number-input';
+			var input_value = original_value
+			break;
+		case 'update_start_date':
+		case 'update_end_date':
+			var input_type = 'date';
+			var input_class = 'hidden-date-input';
+			var input_value = $el.attr('data-date')
+			break;
+	}
+
+	var $input = $(`<input type="${input_type}" class="${input_class}"/>`).val( input_value );
 	$el.replaceWith( $input );
 	$input.select();
 
 	var save = function(){
-	    var new_position = $input.val()
+	    var new_value = $input.val()
 
-	    var $p = $('<span class="hidden-input" />').text( new_position );
-	    $input.replaceWith( $p );
+	    if (new_value == original_value || new_value == input_value) {
+	    	
+	    	$input.replaceWith( $el );
+	    	$el.text(original_value)	
 
-	    if (new_position == original_position) return;
+	    	return;	
+	    }
 
 	    var data = {
 	    	readthrough_id: readthrough_id,
-	    	position: new_position
+	    	value: new_value,
+	    	endpoint: endpoint
 	    }
 
 	    $.ajax({
 			"type": "POST",
-			"url": "/reading/update_position",
+			"url": "/reading/" + endpoint,
 			"contentType": "application/json",
 			"dataType": "json",
 			"data": JSON.stringify(data),

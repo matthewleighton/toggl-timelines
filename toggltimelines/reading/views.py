@@ -92,11 +92,29 @@ def new_readthrough():
 
 @bp.route("/reading/update_position", methods=['POST'])
 def update_position():
-	new_position = request.json['position']
+	new_position = request.json['value']
 	readthrough_id = request.json['readthrough_id']
 
 	readthrough = Readthrough.query.get(readthrough_id)
-	readthrough.current_position = new_position
+
+	readthrough.update_position(new_position)
+
+	db.session.commit()
+
+	return jsonify(render_template('reading/readthrough.html', readthrough=readthrough))
+
+@bp.route("/reading/update_end_date", methods=['POST'])
+@bp.route("/reading/update_start_date", methods=['POST'])
+def update_date():
+	new_date = request.json['value']
+	readthrough_id = request.json['readthrough_id']
+	endpoint = request.json['endpoint']
+
+	readthrough = Readthrough.query.get(readthrough_id)
+
+	date_type = 'start' if endpoint == 'update_start_date' else 'end'
+
+	readthrough.update_date(new_date, date_type)
 
 	db.session.commit()
 

@@ -10,12 +10,32 @@
 	<div class="readthough-details">
 		<h3 class="book-title">{{readthrough.book.title}}</h3>
 		<p><strong>Format: </strong>{{sentence_case(readthrough.book_format)}}</p>
-		<p><strong>Start date: </strong>{{readthrough.format_start()}}</p>
+		<p><strong>Start date: </strong><span class="hidden-input" data-endpoint="update_start_date" data-date={{readthrough.start_date}}>{{readthrough.format_date(readthrough.start_date)}}</span></p>
+
+		{% if readthrough.is_readthrough_complete() %}
+			<p><strong>End date: </strong><span class="hidden-input" data-endpoint="update_end_date" data-date={{readthrough.end_date}}>{{readthrough.format_date(readthrough.end_date)}}</span></p>
+		{% endif %}
+
 		<p><strong>Total reading time: </strong>{{readthrough.get_current_reading_time()}}</p>
 		<p><strong>Average daily progress: </strong>{{readthrough.get_average_daily_progress()}}</p>
 		<p><strong>Average daily time: </strong>{{readthrough.get_average_daily_reading_time()}}</p>
 		<p><strong>Average time per {{readthrough.get_position_unit()}}: </strong>{{readthrough.get_time_per_position_unit()}}</p>
-		<p><strong>Estimated completion time: </strong>{{readthrough.get_estimated_completion_time()}}</p>
-		<p><strong>Estimated completion date: </strong>{{readthrough.get_estimated_completion_date()}}</p>
+		
+		{% if not readthrough.is_readthrough_complete() %}
+			<p><strong>Estimated completion time: </strong>{{readthrough.get_estimated_completion_time()}}</p>
+			<p><strong>Estimated completion date: </strong>{{readthrough.get_estimated_completion_date()}}</p>
+		{% endif %}		
 	</div>
+
+	{% if not readthrough.is_readthrough_complete() %}
+		<div class="readthrough-target-end-date">
+			<p><strong>Target end date: </strong>{{readthrough.get_target_end_date()}}</p>
+			<p><strong>Required pages/percentage per day: </strong></p>
+			<p><strong>Required time per day: </strong></p>
+			<hr/>
+			<p><strong>Target daily reading time: </strong></p>
+			<p><strong>Resulting end date: </strong></p>
+		</div>
+	{% endif %}
+
 </div>

@@ -30,9 +30,9 @@ class Readthrough(db.Model):
 	target_end_date = db.Column(db.DateTime(timezone=True))
 	daily_reading_goal = db.Column(db.Integer)
 
-	def format_start(self):
+	def format_date(self, dt):
 		date_format = '%a %-d %b %Y'
-		return self.start_date.strftime(date_format)
+		return dt.strftime(date_format)
 
 	# i.e. The unit for physical books is a page, while for digital it is a percentage.
 	def get_position_unit(self):
@@ -44,23 +44,15 @@ class Readthrough(db.Model):
 		elif self.book_format == 'physical':
 			return 'Current page'
 
-	# def format_current_position(self, raw=False):
-
-	# 	if self.book_format == 'digital':
-	# 		return str(self.current_position) + '%'
-	# 	elif self.book_format == 'physical':
-			
-	# 		equivalent_percentage = str(self.get_completion_percentage()) + '%' 
-
-	# 		return f"Page {str(self.current_position)} ({equivalent_percentage})"
-
 	def format_current_position(self, html=False):
 		position = str(self.current_position)
+
+		html_output = f"<span class='hidden-input' data-endpoint='update_position'>{position}</span>"
 
 		if self.book_format == 'digital':
 			
 			if html:
-				return f"<span data-readthrough-id='{self.id}' class='hidden-input'>{position}</span>%"
+				return f"{html_output}%"
 			else:
 				return f"{position}%"
 				
@@ -69,9 +61,9 @@ class Readthrough(db.Model):
 			equivalent_percentage = str(self.get_completion_percentage()) + '%' 
 
 			if html:
-				return f"Page <span data-readthrough-id='{self.id}'' class='hidden-input'>{position}</span> ({equivalent_percentage})"
+				return f"Page {html_output} ({equivalent_percentage})"
 			else:
-				return f"Page {str(self.current_position)} ({equivalent_percentage})"
+				return f"Page {position} ({equivalent_percentage})"
 
 	def get_average_daily_progress(self, raw = False):
 		book_format = self.book_format
@@ -86,9 +78,6 @@ class Readthrough(db.Model):
 
 		average_daily_progress = round(completed_units / days_reading, 1)
 		
-		print(f"completed_units {completed_units}")
-		print(f"days_reading {days_reading}")
-
 		if raw:
 			return average_daily_progress
 
@@ -97,12 +86,27 @@ class Readthrough(db.Model):
 		elif book_format == 'digital':
 			return str(average_daily_progress) + '%'
 
-	def get_total_days_reading(self):
-		today = helpers.get_current_datetime_in_user_timezone().replace(tzinfo=None)
+	def get_end_date(self):
+		if self.end_date:
+			return self.end_date
+		else:
+			today = helpers.get_current_datetime_in_user_timezone().replace(tzinfo=None)
+			return today
 
-		return (today - self.start_date).days + 1 
-		# Plus 1, because we include the current day.
-		# i.e. If I start reading today, I've been reading for one day. Tomorrow is two days.
+	def get_total_days_reading(self):
+		readthrough_complete = self.is_readthrough_complete()
+
+		if readthrough_complete:
+			end_date = self.get_end_date()
+		else:
+			end_date = helpers.get_current_datetime_in_user_timezone().replace(tzinfo=None)
+
+		days_reading = (end_date - self.start_date).days
+
+		if days_reading <= 0:
+			days_reading = 1
+
+		return days_reading
 
 	def get_remaining_units(self):
 		if self.book_format == 'digital':
@@ -118,8 +122,6 @@ class Readthrough(db.Model):
 			estimated_completion_date = datetime(3000, 1, 1)
 		else:
 			remaining_units = self.get_remaining_units()
-
-			print(f"Average Daily Progress: {average_daily_progress}")
 
 			remaining_days = math.ceil(remaining_units / average_daily_progress)
 
@@ -203,7 +205,7 @@ class Readthrough(db.Model):
 		if self.book_format == 'digital':
 			return self.current_position
 
-		pages_to_read = self.last_page - self.first_page
+		pages_to_read = self.last_page - self.first_page + 1 # Adding one, since we do also read the first page.
 
 		percentage = round((self.current_position / pages_to_read) * 100, 1)
 
@@ -229,9 +231,65 @@ class Readthrough(db.Model):
 		total_reading_time = self.get_current_reading_time(raw=True)
 		current_position = self.current_position
 
+		if current_position == 0:
+			return 'N/A'
+
 		average_time_in_milliseconds = total_reading_time / current_position
 
 		if raw:
 			return average_time_in_milliseconds
 		else:
-			return helpers.format_milliseconds(average_time_in_milliseconds, days=False)
+			return helpers.format_milliseconds(average_time_in_milliseconds, include_seconds=True)
+
+	def get_target_end_date(self):
+		return 'Some date'
+
+	# Return True/False whether a readthrough has been completed or not.
+	def is_readthrough_complete(self):
+		book_format = self.book_format
+		current_position = self.current_position
+
+		if book_format == 'digital' and current_position == 100:
+			return True
+		elif book_format == 'physical' and current_position == self.last_page:
+			return True
+
+		return False
+
+	def update_position(self, new_position):
+		new_position = int(new_position)
+
+		if new_position < 0:
+			new_position = 0
+
+		if self.book_format == 'digital':
+			new_position = min(100, new_position)
+		elif self.book_format == 'physical':
+			new_position = min(self.last_page, new_position)
+
+		self.current_position = new_position
+
+		if self.is_readthrough_complete():
+			self.end_date = helpers.get_current_datetime_in_user_timezone()
+		else:
+			self.end_date = None
+
+		return new_position
+
+	def update_date(self, new_date, date_type):
+		dt = datetime.strptime(new_date, '%Y-%m-%d')
+		
+		if date_type == 'start':
+			self.start_date = dt
+
+			if self.start_date > self.end_date:
+				self.end_date = dt
+
+			return self.start_date
+		elif date_type == 'end':
+			self.end_date = dt
+
+			if self.end_date < self.start_date:
+				self.start_date = dt
+
+			return self.end_date

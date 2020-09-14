@@ -446,7 +446,7 @@ def get_project_data(comparison_mode = False):
 
 	return project_data
 
-def format_milliseconds(milliseconds, days=True):
+def format_milliseconds(milliseconds, days=True, include_seconds=False):
 	seconds=(milliseconds/1000)%60
 	seconds = int(seconds)
 	minutes=(milliseconds/(1000*60))%60
@@ -456,17 +456,25 @@ def format_milliseconds(milliseconds, days=True):
 	if days:
 		hours = hours%24
 
-	print("~~~~~~~~~~~~~~")
-
-	print(f"Milliseconds: {milliseconds}")
-	print(f"Seconds: {seconds}")
-	print(f"Minutes: {minutes}")
-	print(f"Hours: {hours}")
-
 	hours_string = ("%d hour, " % (hours)) if hours >=1 else ''
 	if hours_string and hours >= 2:
 		hours_string = hours_string.replace('hour', 'hours')
 
-	minutes_string = ("%d minutes" % (minutes))
+	minutes_string = ("%d minutes" % (minutes)) if minutes >= 1 else ''
+	if minutes == 1:
+		minutes_string = minutes_string.replace('minutes', 'minute')
 
-	return hours_string + minutes_string
+	if minutes_string and include_seconds:
+		minutes_string += ", "
+
+	seconds_string = ("%d seconds" % (seconds))
+	if seconds == 1:
+		seconds_string = seconds_string.replace('seconds', 'second')		
+
+
+	formatted_string = hours_string + minutes_string
+
+	if include_seconds:
+		formatted_string += seconds_string
+
+	return formatted_string 
