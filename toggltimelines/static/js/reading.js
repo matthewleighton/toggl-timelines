@@ -27,7 +27,10 @@ $('body').on('click', '.hidden-input', function() {
 	
 	var $el = $(this);
 
-	var readthrough_id = $el.closest('.readthrough-control').attr('data-id')
+	var $container = $el.closest('.readthrough-control')
+
+
+	var readthrough_id = $container.attr('data-id')
 
 	console.log(readthrough_id)
 
@@ -36,13 +39,10 @@ $('body').on('click', '.hidden-input', function() {
 
 	var save = function(){
 	    
-	    new_position = $input.val()
+	    var new_position = $input.val()
 
 	    var $p = $('<span class="hidden-input" />').text( new_position );
 	    $input.replaceWith( $p );
-
-	    // var readthrough_id = $el.attr('data-readthrough-id')
-
 
 	    var data = {
 	    	readthrough_id: readthrough_id,
@@ -56,7 +56,8 @@ $('body').on('click', '.hidden-input', function() {
 			"dataType": "json",
 			"data": JSON.stringify(data),
 			success: function(response) {
-				console.log(response)
+				// TODO: Some kind of validation. Only replace if True.
+				$container.replaceWith(response)
 			}
 		})
 	};

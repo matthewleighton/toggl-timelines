@@ -213,9 +213,12 @@ class Readthrough(db.Model):
 		current_reading_time = self.get_current_reading_time(raw=True)
 		current_percentage = self.get_completion_percentage()
 
-		time_per_percentage = current_reading_time / current_percentage
+		if current_percentage == 0:
+			return 'N/A'
+		else:
+			time_per_percentage = current_reading_time / current_percentage
 
-		estimated_completion_time = time_per_percentage * 100
+			estimated_completion_time = time_per_percentage * 100
 
 		if raw:
 			return estimated_completion_time
