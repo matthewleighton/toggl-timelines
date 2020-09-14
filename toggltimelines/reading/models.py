@@ -224,3 +224,14 @@ class Readthrough(db.Model):
 			return estimated_completion_time
 		else:
 			return helpers.format_milliseconds(estimated_completion_time, days=False)
+
+	def get_time_per_position_unit(self, raw=False):
+		total_reading_time = self.get_current_reading_time(raw=True)
+		current_position = self.current_position
+
+		average_time_in_milliseconds = total_reading_time / current_position
+
+		if raw:
+			return average_time_in_milliseconds
+		else:
+			return helpers.format_milliseconds(average_time_in_milliseconds, days=False)

@@ -11,9 +11,10 @@
 		<h3 class="book-title">{{readthrough.book.title}}</h3>
 		<p><strong>Format: </strong>{{sentence_case(readthrough.book_format)}}</p>
 		<p><strong>Start date: </strong>{{readthrough.format_start()}}</p>
+		<p><strong>Total reading time: </strong>{{readthrough.get_current_reading_time()}}</p>
 		<p><strong>Average daily progress: </strong>{{readthrough.get_average_daily_progress()}}</p>
 		<p><strong>Average daily time: </strong>{{readthrough.get_average_daily_reading_time()}}</p>
-		<p><strong>Total reading time: </strong>{{readthrough.get_current_reading_time()}}</p>
+		<p><strong>Average time per {{readthrough.get_position_unit()}}: </strong>{{readthrough.get_time_per_position_unit()}}</p>
 		<p><strong>Estimated completion time: </strong>{{readthrough.get_estimated_completion_time()}}</p>
 		<p><strong>Estimated completion date: </strong>{{readthrough.get_estimated_completion_date()}}</p>
 	</div>

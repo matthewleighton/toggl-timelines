@@ -26,25 +26,22 @@ $('.create-readthrough-btn').on('click', function() {
 $('body').on('click', '.hidden-input', function() {
 	
 	var $el = $(this);
+	var original_position = $el.text()
 
-	var $container = $el.closest('.readthrough-control')
+	var $container = $el.closest('.readthrough-control');
+	var readthrough_id = $container.attr('data-id');
 
-
-	var readthrough_id = $container.attr('data-id')
-
-	console.log(readthrough_id)
-
-	var $input = $('<input type="number" class="current-readthrough-position-input"/>').val( $el.text() );
+	var $input = $('<input type="number" class="current-readthrough-position-input"/>').val( original_position );
 	$el.replaceWith( $input );
-
 	$input.select();
 
 	var save = function(){
-	    
 	    var new_position = $input.val()
 
 	    var $p = $('<span class="hidden-input" />').text( new_position );
 	    $input.replaceWith( $p );
+
+	    if (new_position == original_position) return;
 
 	    var data = {
 	    	readthrough_id: readthrough_id,
