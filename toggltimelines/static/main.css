@@ -532,7 +532,8 @@ svg {
 }
 
 #new-readthrough-search {
-  margin-left: 10px;
+  margin-left: 5px;
+  max-width: 120px;
 }
 
 

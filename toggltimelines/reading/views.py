@@ -64,7 +64,7 @@ def new_readthrough():
 	end_date = False
 	if request.json['end_date']:
 		end_date = datetime.strptime(request.json['end_date'], date_format)
-	
+
 	readthrough_data = {
 		'book_id': request.json['book_id'],
 		'book_format': request.json['book_format'],
@@ -75,10 +75,16 @@ def new_readthrough():
 	if request.json['book_format'] == 'physical':
 		readthrough_data['first_page'] = request.json['first_page']
 		readthrough_data['last_page'] = request.json['last_page']
-		# Default the current position to the first page.
-		readthrough_data['current_position'] = request.json['first_page']
+
+		if end_date:
+			readthrough_data['current_position'] = request.json['last_page']
+		else:
+			readthrough_data['current_position'] = request.json['first_page']
 	else:
-		readthrough_data['current_position'] = 0 # Position defaults to 0% for digital book.
+		if end_date:
+			readthrough_data['current_position'] = 100
+		else:
+			readthrough_data['current_position'] = 0
 
 
 	readthrough = create_readthrough(readthrough_data)
