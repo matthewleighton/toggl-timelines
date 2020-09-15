@@ -138,6 +138,18 @@ def update_daily_reading_goal():
 
 	return jsonify(render_template('reading/readthrough.html', readthrough=readthrough))
 
+@bp.route("/reading/search_books", methods=['POST'])
+def search_books():
+	title = request.json['title'].lower()
+
+	print(title)
+
+	books = Book.query.filter(func.lower(Book.title).contains(title)).all()
+
+	print(books)
+	return jsonify(render_template('reading/books_list.html', books=books))
+
+
 def get_all_books():
 	query = Book.query
 	books = query.all()

@@ -3,6 +3,14 @@
 {% block body %}
 	<div class='container main_container'>
 		
+		<div class="books-container">
+			
+			<p>Add readthrough: <input type="text" id="new-readthrough-serach" name="book_title" placeholder="Book Title"></p>
+
+			<div class="books-search-results"></div>
+			
+		</div>
+		
 		<div class="active-readthroughs">
 			{% if data.active_readthroughs|length == 0 %}
 				No active readthroughs
@@ -13,48 +21,7 @@
 			{% endif %}
 		</div>
 
-		<div class="all-books">
-			{% if data.books|length == 0 %}
-				No books.
-			{% else %}
-				{%for book in data.books%}
-	    			<form class="book-control">
-	    				<h3 class="book-title">{{book.title}}</h3>
-	    				<button type="button" class="btn btn-sm btn-primary new-readthrough-btn">New Readthrough</button>
 
-	    				<div class="new-readthrough-control">
-	    					<div class="btn-group btn-group-toggle comparison_mode_radio" data-toggle="buttons">
-		    					<label class="btn btn-secondary active">
-									<input type="radio" name="book_format" autocomplete="off" value="physical" checked> Physical
-								</label>
-								<label class="btn btn-secondary">
-									<input type="radio" name="book_format" autocomplete="off" value="digital"> Digital
-								</label>
-							</div>
-
-							<label for="readthough-start">First Page</label>
-	    					<input class="first-page-input form-control" type="number" name="first_page"/>
-
-	    					<label for="readthough-start">Last Page</label>
-	    					<input class="first-page-input form-control" type="number" name="last_page"/>
-
-	    					<label for="readthough-start">Start Date</label>
-	    					<input class="readthough-start form-control" type="date" name="start_date"/>
-
-	    					<label for="readthough-end">End Date</label>
-	    					<input class="readthough-end form-control" type="date" name="end_date"/>
-
-	    					<button type="button" class="btn btn-sm btn-success create-readthrough-btn">Save</button>
-
-	    					<input type="hidden" name="book_id" value="{{book.id}}"/>
-	    				</div>
-
-
-
-	    			</form>
-	    		{%endfor%}
-			{% endif %}
-		</div>
 
 	</div>
 

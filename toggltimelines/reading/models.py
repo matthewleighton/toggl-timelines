@@ -15,6 +15,31 @@ class Book(db.Model):
 	readthroughs = db.relationship('Readthrough', backref='book')
 	image_url = db.Column(db.String(200))
 
+	def get_cover(self):
+		if self.image_url:
+			return self.image_url
+
+		return '/static/img/cover_placeholder.png'
+
+	# Return the date for either the first or last entry of a book.
+	def get_default_readthrough_date(self, start_or_end, dt=False):
+		reading_entries = self.get_all_reading_entries()
+
+		target_entry = reading_entries[0] if start_or_end == 'start' else reading_entries[-1]
+
+		if dt:
+			return target_entry.start
+
+		return target_entry.start.strftime('%Y-%m-%d')
+
+	def get_all_reading_entries(self):
+		entries = helpers.get_db_entries(description=self.title)
+
+		return entries
+
+		entries = Book.query.filter(func.lower(Entry.description).contains(self.title.lower()))
+
+
 
 
 class Readthrough(db.Model):

@@ -1,0 +1,59 @@
+<form class="book-control container">
+	<h3 class="book-title">{{book.title}}</h3>
+
+	<div class="book-list-image">
+		<img src="{{book.get_cover()}}">
+	</div>
+
+	<div class="new-readthrough-control">
+
+		<div class="btn-group btn-group-toggle book_format_toggle" data-toggle="buttons">
+			<label class="btn btn-secondary active">
+				<input type="radio" name="book_format" autocomplete="off" value="physical" checked> Physical
+			</label>
+			<label class="btn btn-secondary">
+				<input type="radio" name="book_format" autocomplete="off" value="digital"> Digital
+			</label>
+		</div>
+
+		<div class="row">
+			<div class="form-check">
+				<label class="form-check-label">
+					<input class="form-check-input readthrough-complete-checkbox" name="readthrough_complete" type="checkbox" value="1">
+					Readthrough complete
+				</label>
+			</div>
+		</div>
+
+		<div class="row">
+			<label for="readthough_start">Start Date: </label>
+			<input class="readthough-start form-control" type="date" name="start_date" value="{{book.get_default_readthrough_date('start')}}"/>
+		</div>
+
+
+
+		<div class="row new-readthrough-end-date">
+			<label for="readthough_end">End Date: </label>
+			<input class="readthough-end form-control" type="date" name="end_date" value="{{book.get_default_readthrough_date('end')}}"/>
+		</div>
+
+		<div class="row form-inline new-readthrough-pages">
+				<label for="first_page">First page: </label>
+				<input type="number" name="first_page" class="form-control page-input" min="0">
+				<label for="last_page">Last page: </label>
+				<input type="number" name="last_page" class="form-control page-input" min="0">
+		</div>
+
+		
+		
+
+		
+
+		<button type="button" class="btn btn-sm btn-success create-readthrough-btn">Create Readthrough</button>
+
+		<input type="hidden" name="book_id" value="{{book.id}}"/>
+	</div>
+
+
+
+</form>

@@ -460,18 +460,71 @@ svg {
 
 /* Reading Page */
 
+.error-field {
+  border: 1px solid red;
+}
+
 .book-control {
   margin-bottom: 30px;
   padding: 5px;
-  border: 1px solid black;
+  float: left;
+  /*border: 1px solid black;*/
+  max-width: 500px;
+  min-height: 305px;
+}
+
+.new-readthrough-control {
+  display: inline-block;
+  max-height: 300px;
+  padding-left: 20px;
+}
+
+.new-readthrough-control .row {
+  margin-bottom: 10px;
+}
+
+.page-input {
+  max-width: 75px;
 }
 
 .book-title {
   font-size: 22px;
 }
 
-.new-readthrough-control {
+.book_format_toggle {
+  margin-bottom: 5px;
+}
+
+.book-list-image {
+  float: left;
+  display: inline-block;
+  margin-right: 10px;
+}
+
+.book-list-image img{
+  max-height: 150px;
+}
+
+.new-readthrough-control label {
+  margin-right: 10px;
+  padding-left: 8px;
+}
+
+.new-readthrough-control input[type=date] {
+  max-width: 240px;
+}
+
+.new-readthrough-end-date {
   display: none;
+}
+
+
+
+
+
+
+.active-readthroughs {
+  clear: both;
 }
 
 .readthrough-control {

@@ -4,7 +4,7 @@
 
 <div class="readthrough-control" data-id="{{readthrough.id}}">
 	<div class="readthrough-image">
-		<img src="{{readthrough.book.image_url}}">
+		<img src="{{readthrough.book.get_cover()}}">
 		<p><strong>{{readthrough.format_current_position(html=True)|safe}}</strong></p>
 	</div>
 	<div class="readthough-details">

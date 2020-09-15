@@ -67,8 +67,6 @@ function activate_black_mode(value) {
 	} else {
 		activate_client_mode(false)
 	}
-
-	
 }
 
 function move_time_marker() {
