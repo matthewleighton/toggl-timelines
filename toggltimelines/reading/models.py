@@ -198,7 +198,22 @@ class Readthrough(db.Model):
 		if raw:
 			return milliseconds
 		else:
+
+			if milliseconds == 0:
+				return 'None'
+
 			return helpers.format_milliseconds(milliseconds, days=False)
+
+	def get_reading_goal_completion_class(self):
+		if not self.daily_reading_goal:
+			return 'no-reading-goal'
+
+		goal_complete = self.is_daily_reading_goal_complete()
+
+		if goal_complete:
+			return 'reading-goal-complete'
+		else:
+			return 'reading-goal-incomplete'
 
 	def is_daily_reading_goal_complete(self):
 		seconds_today = self.get_readthrough_time_today(raw=True) / 1000
@@ -366,6 +381,8 @@ class Readthrough(db.Model):
 		goal_in_minutes = self.daily_reading_goal
 
 		if raw:
+			if not goal_in_minutes:
+				goal_in_minutes = 0
 			return goal_in_minutes * 60 * 1000
 
 		if not goal_in_minutes:

@@ -511,3 +511,11 @@ svg {
   margin-left: 100px;
   vertical-align: top;
 }
+
+.reading-goal-complete {
+  color: green;
+}
+
+.reading-goal-incomplete {
+  color: red;
+}

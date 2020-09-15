@@ -49,6 +49,8 @@
 				<p><strong>Resulting end date: </strong>{{readthrough.get_daily_reading_goal_end_estimate()}}</p>
 			{% endif %}
 
+			<p><strong>Time read today: </strong><span class="{{readthrough.get_reading_goal_completion_class()}}">{{readthrough.get_readthrough_time_today()}}</span></p>
+
 		</div>
 	{% endif %}
 
