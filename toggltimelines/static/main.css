@@ -527,6 +527,15 @@ svg {
   cursor: pointer;
 }
 
+#new-readthrough-container {
+  float: right;
+}
+
+#new-readthrough-search {
+  margin-left: 10px;
+}
+
+
 
 .active-readthroughs {
   clear: both;

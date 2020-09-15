@@ -5,7 +5,7 @@ $('.new-readthrough-btn').on('click', function() {
 
 
 var search_timeout = false
-$('#new-readthrough-serach').on('input', function() {
+$('#new-readthrough-search').on('input', function() {
 	var title = this.value.toLowerCase()
 
 	if (search_timeout) {
@@ -22,6 +22,7 @@ function search_books(title) {
 	title = title.trim()
 
 	if (!title) {
+		$('.books-search-results').empty()
 		return
 	}
 
