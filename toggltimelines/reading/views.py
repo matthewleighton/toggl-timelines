@@ -149,6 +149,16 @@ def search_books():
 	print(books)
 	return jsonify(render_template('reading/books_list.html', books=books))
 
+@bp.route("/reading/delete_readthrough", methods=['POST'])
+def delete_readthrough():
+	readthrough_id = request.json['readthrough_id']
+	readthrough = Readthrough.query.get(readthrough_id)
+
+	db.session.delete(readthrough)
+	db.session.commit()
+
+	return jsonify(readthrough_id)
+
 
 def get_all_books():
 	query = Book.query

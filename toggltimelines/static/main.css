@@ -522,7 +522,10 @@ svg {
   text-align: center;
 }
 
-
+.delete-readthrough-btn {
+  text-align: right;
+  cursor: pointer;
+}
 
 
 .active-readthroughs {

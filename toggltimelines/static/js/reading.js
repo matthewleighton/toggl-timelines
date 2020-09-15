@@ -77,14 +77,10 @@ $('body').on('click', '.create-readthrough-btn', function() {
 	$parent_container.find('input').removeClass('error-field')
 	$results_container = $(this).closest('.books-search-results');
 
-
-
 	var data = $(this).closest('.book-control').serializeArray().reduce(function(obj, item) {
 	    obj[item.name] = item.value;
 	    return obj;
 	}, {});
-
-	console.log(data)
 
 	var validation_error = false;
 
@@ -130,22 +126,13 @@ $('body').on('click', '.create-readthrough-btn', function() {
 		"dataType": "json",
 		"data": JSON.stringify(data),
 		success: function(response) {
-			console.log(response)
 			$results_container.empty()
-
 			$(response).insertAfter($results_container)
-
-			// $results_container.insertAfter(response)
 
 			setTimeout(function() {
 				$('.new-readthrough-success').fadeOut(500)
 			},
 			3000)
-
-
-
-
-
 		}
 	})
 })
@@ -214,3 +201,38 @@ $('body').on('click', '.hidden-input', function() {
 
 	$input.one('blur', save).focus();
 });
+
+
+$('body').on('click', '.delete-readthrough-btn', function() {
+	var readthrough_id = $(this).attr('data-id')
+	var title = $(this).attr('data-title')
+	var message = `Delete readthrough for "${title}"?`
+	var $readthrough_element = $(this).closest('.readthrough-control')
+
+	console.log($readthrough_element)
+
+	user_confirmation = confirm(message)
+
+	if (user_confirmation) {
+		delete_readthrough(readthrough_id, $readthrough_element)
+	}
+})
+
+function delete_readthrough(readthrough_id, readthrough_element) {
+	data = {
+		'readthrough_id': readthrough_id
+	}
+
+	readthrough_element.remove()
+
+	$.ajax({
+			"type": "POST",
+			"url": "/reading/delete_readthrough",
+			"contentType": "application/json",
+			"dataType": "json",
+			"data": JSON.stringify(data),
+			success: function(response) {
+				$readthrough_element.remove()
+			}
+		})
+}
