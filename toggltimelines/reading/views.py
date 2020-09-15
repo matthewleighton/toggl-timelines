@@ -81,14 +81,14 @@ def new_readthrough():
 		readthrough_data['current_position'] = 0 # Position defaults to 0% for digital book.
 
 
-	create_readthrough(readthrough_data)
+	readthrough = create_readthrough(readthrough_data)
 
 	db.session.commit()
 
 
 	data = request.json
 
-	return jsonify(data)
+	return jsonify(render_template('reading/new_readthrough_success.html', readthrough=readthrough))
 
 @bp.route("/reading/update_position", methods=['POST'])
 def update_position():

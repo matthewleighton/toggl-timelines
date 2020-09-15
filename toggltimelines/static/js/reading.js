@@ -75,6 +75,7 @@ $('body').on('click', '.create-readthrough-btn', function() {
 
 	var $parent_container = $(this).closest('.new-readthrough-control');
 	$parent_container.find('input').removeClass('error-field')
+	$results_container = $(this).closest('.books-search-results');
 
 
 
@@ -130,6 +131,21 @@ $('body').on('click', '.create-readthrough-btn', function() {
 		"data": JSON.stringify(data),
 		success: function(response) {
 			console.log(response)
+			$results_container.empty()
+
+			$(response).insertAfter($results_container)
+
+			// $results_container.insertAfter(response)
+
+			setTimeout(function() {
+				$('.new-readthrough-success').fadeOut(500)
+			},
+			3000)
+
+
+
+
+
 		}
 	})
 })
