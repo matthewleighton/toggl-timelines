@@ -142,11 +142,8 @@ def update_daily_reading_goal():
 def search_books():
 	title = request.json['title'].lower()
 
-	print(title)
-
 	books = Book.query.filter(func.lower(Book.title).contains(title)).all()
 
-	print(books)
 	return jsonify(render_template('reading/books_list.html', books=books))
 
 @bp.route("/reading/delete_readthrough", methods=['POST'])
@@ -178,6 +175,18 @@ def load_past_readthroughs():
 		none_remaining = none_remaining
 	)
 
+@bp.route("/reading/search_readthroughs", methods=['POST'])
+def search_readthroughs():
+	title = request.json['title']
+	readthroughs = get_readthroughs(status='complete', title=title)
+
+
+	if readthroughs:
+		return jsonify(render_template('reading/readthrough_list.html', readthroughs=readthroughs ))
+	else:
+		message = "<h5>No results</h5>"
+		return jsonify(message)
+
 
 def get_all_books():
 	query = Book.query
@@ -186,13 +195,16 @@ def get_all_books():
 	return books
 
 # Use a status of 'active' to only get currently read books. Or a status of 'complete' for finished books.
-def get_readthroughs(status='all'):
+def get_readthroughs(status='all', title=False):
 	query = Readthrough.query
 	
 	if status == 'active':
 		query = query.filter(Readthrough.end_date == None)
 	elif status == 'complete':
-		query = query.filter(Readthrough.end_date != None)	
+		query = query.filter(Readthrough.end_date != None)
+
+	if title:
+		query = query.join(Book).filter(func.lower(Book.title).contains(title.lower()))
 
 	query = query.order_by(Readthrough.start_date.desc())
 

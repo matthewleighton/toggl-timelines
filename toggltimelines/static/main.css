@@ -594,3 +594,13 @@ svg {
   display: none;
   margin-top: 25px;
 }
+
+#previously-read-header h3 {
+  display: inline-block;
+}
+
+#previously-read-header input {
+  position: relative;
+  top: -3px;
+  left: 10px;
+}

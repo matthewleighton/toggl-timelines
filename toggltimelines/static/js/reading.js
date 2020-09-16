@@ -4,15 +4,15 @@ $('.new-readthrough-btn').on('click', function() {
 
 
 
-var search_timeout = false
+var book_search_timeout = false
 $('#new-readthrough-search').on('input', function() {
 	var title = this.value.toLowerCase()
 
-	if (search_timeout) {
-		clearTimeout(search_timeout)
+	if (book_search_timeout) {
+		clearTimeout(book_search_timeout)
 	}
 
-	search_timeout = setTimeout(function() {
+	book_search_timeout = setTimeout(function() {
 		search_books(title)
 	},
 	600)
@@ -259,7 +259,7 @@ $('.load-past-readthroughs').click(function(e) {
 			$('#previously-read-header').show();
 			$('.load-past-readthroughs').text('Load more')
 
-			$('.past-readthroughs').append(response['html'])
+			$('#past-readthrough-loading-results').append(response['html'])
 
 			if (response['none_remaining']) {
 				$('.load-past-readthroughs').hide()
@@ -267,5 +267,49 @@ $('.load-past-readthroughs').click(function(e) {
 		}
 	})
 
-
 })
+
+
+
+var readthrough_search_timeout = false
+
+$('body').on('input', '#past-readthrough-search', function() {
+	var title = this.value.toLowerCase()
+
+	if (readthrough_search_timeout) {
+		clearTimeout(readthrough_search_timeout)
+	}
+
+	readthrough_search_timeout = setTimeout(function() {
+		search_readthroughs(title)
+	},
+	600)
+})
+
+function search_readthroughs(title) {
+	title = title.trim()
+
+	if (!title) {
+		$('#past-readthrough-search-results').hide()
+		$('#past-readthrough-loading-results').show()
+		return
+	}
+
+	data = {
+		'title': title
+	}
+
+	$.ajax({
+		"type": "POST",
+		"url": "/reading/search_readthroughs",
+		"contentType": "application/json",
+		"dataType": "json",
+		"data": JSON.stringify(data),
+		success: function(response) {
+			$('#past-readthrough-loading-results').hide()
+			$('#past-readthrough-serach-results').show()
+			$('#past-readthrough-search-results').html(response)
+		}
+	})
+
+}
