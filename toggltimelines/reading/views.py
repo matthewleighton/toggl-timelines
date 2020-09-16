@@ -18,11 +18,13 @@ import pytz
 import math
 from datetime import date, datetime, timedelta
 
+import json
+import requests
+from pprint import pprint
+
 from toggltimelines import db
 from toggltimelines.reading.models import Book, Readthrough
 from toggltimelines import helpers
-
-
 
 
 bp = Blueprint("reading", __name__)
@@ -34,8 +36,6 @@ def reading_home():
 
 	active_readthroughs = get_readthroughs('active')
 	books = get_all_books()
-
-	#print(books)
 
 	page_data = {
 		'active_readthroughs': active_readthroughs,
@@ -216,12 +216,12 @@ def get_readthroughs(status='all', title=False):
 def populate_books():
 	db_reading_entries = helpers.get_db_entries(projects=['Reading'])
 
-	uinique_books = set()
+	unique_books = set()
 
 	for entry in db_reading_entries:
-		uinique_books.add(entry.description)
+		unique_books.add(entry.description)
 
-	for title in uinique_books:
+	for title in unique_books:
 		create_book(title)
 
 	db.session.commit()
@@ -234,12 +234,49 @@ def create_book(title):
 		return existing_book
 
 	db_book = Book(
-		title = title
+		title = title,
+		image_url = get_book_cover_url(title)
 	)
 
 	db.session.add(db_book)
 
 	return db_book
+
+def get_book_cover_url(title):
+	cover_placeholder = '/static/img/cover_placeholder.png'
+
+
+	if current_app.failed_image_api_search:
+		return cover_placeholder
+
+	# Make image API request to Bing to find book covers.
+	subscription_key = current_app.config['BING_API_KEY']
+	search_url = "https://api.cognitive.microsoft.com/bing/v7.0/images/search"
+	headers = {"Ocp-Apim-Subscription-Key" : subscription_key}
+	
+	params  = {"q": title + ' book cover'}
+
+	response = requests.get(search_url, headers=headers, params=params)
+
+	if response.status_code != 200:
+		current_app.failed_image_api_search = True
+		return cover_placeholder
+
+	search_results = response.json()
+	cover_url = False
+
+	if not len(search_results['value']):
+		return cover_placeholder
+
+	for result in search_results['value']:
+		if result['height'] > result['width']: # Check that the image is taller than it is wide.
+			cover_url = result['contentUrl']
+			break
+
+	if not cover_url:
+		cover_url = search_results['value'][0]['contentUrl']
+
+	return cover_url
 
 def create_readthrough(data):
 	book = Book.query.get(data['book_id'])

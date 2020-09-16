@@ -9,6 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, timedelta
 import pytz
 import csv
+import requests
 
 #from toggl.TogglPy import Toggl
 
@@ -82,6 +83,9 @@ def create_app(test_config=None):
 	app.register_blueprint(reading.bp)
 	app.add_url_rule("/reading", endpoint="reading")
 
+
+	app.failed_image_api_search = False
+
 	return app
 
 def init_db():
@@ -126,11 +130,45 @@ def toggl_sync_all():
 from toggltimelines.reading.models import Book, Readthrough
 from toggltimelines.timelines.models import Entry, Project
 
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	readthrough = Readthrough.query.get(1)
+	title = 'Sofies Welt book cover'
 
-	test = readthrough.get_readthrough_time_today(raw=False)
+	subscription_key = ""
+	search_url = "https://api.cognitive.microsoft.com/bing/v7.0/images/search"
+	headers = {"Ocp-Apim-Subscription-Key" : subscription_key}
+	
+	params  = {"q": title}
 
-	print(test)
+	response = requests.get(search_url, headers=headers, params=params)
+
+	pp.pprint(response.json())
+
+
+	#response.raise_for_status()
+	search_results = response.json()
+	cover_url = False
+
+	i = 0
+	for result in search_results['value']:
+		if result['height'] > result['width']:
+			cover_url = result['contentUrl']
+			break
+		#i+=1
+
+	if not cover_url:
+		cover_url - search_results['value'][0]['contentUrl']
+
+	print(cover_url)
+
+
+	if len(search_results['value']):
+		cover_url = search_results['value'][0]['contentUrl']
+	else:
+		cover_url = 'No cover :('
+
+	print(cover_url)
