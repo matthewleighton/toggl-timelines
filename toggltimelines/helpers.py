@@ -193,18 +193,16 @@ def get_entry_location(entry_datetime):
 
 	return location
 
-def get_db_entries(start_datetime=False, end_datetime=False, projects=False, clients=False, description=False):
+def get_db_entries(start=False, end=False, projects=False, clients=False, description=False):
 	query = Entry.query
 
+	if start:
+		start = start.astimezone(pytz.utc)
+		query = query.filter(Entry.start >= start)
 
-
-	if start_datetime:
-		start_datetime = start_datetime.astimezone(pytz.utc)
-		query = query.filter(Entry.start >= start_datetime)
-
-	if end_datetime:
-		end_datetime = end_datetime.astimezone(pytz.utc)
-		query = query.filter(Entry.start <= end_datetime)
+	if end:
+		end = end.astimezone(pytz.utc)
+		query = query.filter(Entry.start <= end)
 
 	if projects:
 		query = query.join(Entry.project, aliased=True)
@@ -229,13 +227,23 @@ def get_db_entries(start_datetime=False, end_datetime=False, projects=False, cli
 	return entries
 
 # Return the entries in a new list, grouped by day,
-def sort_db_entries_by_day(db_entries):
-	sorted_by_day = {}
+def sort_db_entries_by_day(db_entries, return_as_dict=False):
+	print('@@@@@@@@@sort_db_entries_by_day@@@@@@@@@@@@@')
 
+	sorted_by_day = {}
 	for entry in db_entries:
+
+		#entry.start = entry.start.replace(tzinfo=pytz.utc)
 		# Below we use get_local_start_time() because we need to make sure we're sorting
 		# with reference to what day it was in the user's location. Not simply UTC.
 		entry_date_label = entry.get_local_start_time().strftime('%Y-%m-%d')
+
+		print('')
+		
+		print(entry.start.tzinfo)
+		print(entry.start)
+		print(entry.get_local_start_time())
+		print(entry.get_local_start_time().strftime('%a %d %b, %Y'))
 
 		if entry_date_label not in sorted_by_day:
 			sorted_by_day[entry_date_label] = {
@@ -244,6 +252,9 @@ def sort_db_entries_by_day(db_entries):
 			}
 
 		sorted_by_day[entry_date_label]['entries'].append(entry)
+
+	if return_as_dict:
+		return sorted_by_day
 
 	days_list = []
 	for day in sorted_by_day.values():

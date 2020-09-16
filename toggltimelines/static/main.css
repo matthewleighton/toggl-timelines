@@ -523,8 +523,9 @@ svg {
 }
 
 .delete-readthrough-btn {
-  text-align: right;
   cursor: pointer;
+  display: inline-block;
+  float: right;
 }
 
 #new-readthrough-container {

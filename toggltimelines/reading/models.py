@@ -169,9 +169,8 @@ class Readthrough(db.Model):
 		return estimated_completion_date.strftime(date_format)
 
 	def get_all_readthrough_entries(self):
-		query = Entry.query.filter(Entry.start >= self.start_date)
-		query = query.filter(func.lower(Entry.description).contains(self.book.title.lower()))
-		return query.all()
+		entries = helpers.get_db_entries(start=self.start_date, end=self.end_date, description=self.book.title)
+		return entries
 
 	# Get the total current time spend on this readthrough. (Raw time in milliseconds)
 	def get_current_reading_time(self, raw = False):
@@ -447,3 +446,58 @@ class Readthrough(db.Model):
 			return estimate_end_date
 
 		return self.format_date(estimate_end_date)
+
+	# Return the current streak for the daily reading goal.
+	def get_current_streak(self, raw=False):
+		streak = 0
+		goal_in_minutes = self.daily_reading_goal
+		goal_in_milliseconds = goal_in_minutes * 60 * 1000
+		
+		date_string_format = '%Y-%m-%d'
+
+		entries = self.get_all_readthrough_entries()
+
+		sorted_by_day = helpers.sort_db_entries_by_day(entries, return_as_dict=True)
+
+		target_date = helpers.get_current_datetime_in_user_timezone() - timedelta(days=1) # Yesterday
+
+		goal_complete_on_date = True
+
+		# We start on yesterday, and see how far back we can go before we find a day where the goal was not met.
+		while goal_complete_on_date:
+			date_string = target_date.strftime(date_string_format)
+
+			if date_string in sorted_by_day.keys():
+				time_on_date = 0
+				for entry in sorted_by_day[date_string]['entries']:
+					time_on_date += entry.dur
+
+				if time_on_date <= goal_in_milliseconds:
+					goal_complete_on_date = False
+				else:
+					target_date = target_date - timedelta(days=1)
+					streak += 1
+			else:
+				goal_complete_on_date = False
+
+
+		# Now we check if the goal was met today. If so, add today to the streak.
+		# (We do it this way since we don't want to show the streak as broken just because today's goal hasn't been met yet.)
+		today_string = helpers.get_current_datetime_in_user_timezone().strftime(date_string_format)
+
+		milliseconds_today = 0
+
+		if today_string in sorted_by_day.keys():
+			for entry in sorted_by_day[today_string]['entries']:
+				milliseconds_today += entry.dur
+
+			if milliseconds_today >= goal_in_milliseconds:
+				streak += 1
+
+		if raw:
+			return streak
+
+		if streak == 1:
+			return f"{streak} day"
+
+		return f"{streak} days"

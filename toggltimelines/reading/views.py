@@ -50,13 +50,7 @@ def reading_home():
 def new_readthrough():
 	
 	book_id = request.json['book_id']
-
 	book = Book.query.get(book_id)
-
-	#print(request.json)
-
-	# print(request.json['start_date'])
-	# print(request.json['end_date'])
 
 	date_format = '%Y-%m-%d'
 
@@ -175,7 +169,12 @@ def get_all_books():
 def get_active_readthroughs():
 	query = Readthrough.query
 
+	query = query.filter(Readthrough.end_date == None)
+
+	query = query.order_by(Readthrough.start_date.desc())
+
 	active_readthroughs = query.all() # TODO: Actually filter to only get active readthroughs.
+
 
 	return active_readthroughs
 
