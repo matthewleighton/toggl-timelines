@@ -128,12 +128,20 @@ $('body').on('click', '.create-readthrough-btn', function() {
 		"data": JSON.stringify(data),
 		success: function(response) {
 			$results_container.empty()
-			$(response).insertAfter($results_container)
+			$('#new-readthrough-search').val('')
 
-			setTimeout(function() {
-				$('.new-readthrough-success').fadeOut(500)
-			},
-			3000)
+			console.log(response)
+
+			if (response['reload_active_readthroughs']) {
+				$('.active-readthroughs').html(response['html'])
+			}
+
+			// $(response).insertAfter($results_container)
+
+			// setTimeout(function() {
+			// 	$('.new-readthrough-success').fadeOut(500)
+			// },
+			// 3000)
 		}
 	})
 })

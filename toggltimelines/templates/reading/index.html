@@ -13,18 +13,8 @@
 			
 		</div>
 
-		<div class="active-readthroughs">
-			<h3>Currently Reading</h3>
-
-			{% if data.active_readthroughs|length == 0 %}
-				No active readthroughs
-			{% else %}
-				{%for readthrough in data.active_readthroughs%}
-	    			{% include "reading/readthrough.html" %}
-	    		{%endfor%}
-			{% endif %}
-		</div>
-
+		
+		{% include "reading/active_readthroughs.html" %}
 
 		{% include "reading/past_readthroughs.html" %}
 

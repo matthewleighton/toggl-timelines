@@ -57,6 +57,10 @@ class Readthrough(db.Model):
 
 	def format_date(self, dt):
 		date_format = '%a %-d %b %Y'
+
+		if not dt:
+			return ''
+
 		return dt.strftime(date_format)
 
 	# i.e. The unit for physical books is a page, while for digital it is a percentage.
@@ -107,11 +111,12 @@ class Readthrough(db.Model):
 
 		days_reading = self.get_total_days_reading()
 
+		average_daily_progress = completed_units / days_reading
 
-		average_daily_progress = round(completed_units / days_reading, 1)
-		
 		if raw:
 			return average_daily_progress
+
+		average_daily_progress = round(average_daily_progress, 1)
 
 		if book_format == 'physical':
 			return str(average_daily_progress) + ' pages'

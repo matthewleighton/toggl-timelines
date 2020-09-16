@@ -56,7 +56,7 @@ def new_readthrough():
 
 	start_date = datetime.strptime(request.json['start_date'], date_format)
 	end_date = False
-	if request.json['end_date']:
+	if request.json['end_date'] and 'readthrough_complete' in request.json.keys():
 		end_date = datetime.strptime(request.json['end_date'], date_format)
 
 	readthrough_data = {
@@ -85,10 +85,19 @@ def new_readthrough():
 
 	db.session.commit()
 
+	data = {
+		'active_readthroughs': get_readthroughs('active'),
+	}
 
-	data = request.json
+	return jsonify(
+		html = render_template('reading/active_readthroughs.html', data=data),
+		reload_active_readthroughs = not bool(end_date)
+	)
 
-	return jsonify(render_template('reading/new_readthrough_success.html', readthrough=readthrough))
+
+
+	return jsonify()
+	# return jsonify(render_template('reading/new_readthrough_success.html', readthrough=readthrough))
 
 @bp.route("/reading/update_position", methods=['POST'])
 def update_position():
@@ -304,6 +313,8 @@ def create_readthrough(data):
 	if data['book_format'] == 'physical':
 		db_readthrough.first_page = data['first_page']
 		db_readthrough.last_page = data['last_page']
+
+	print(data)
 
 	if data['end_date']:
 		db_readthrough.end_date = data['end_date']
