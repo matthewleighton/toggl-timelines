@@ -57,6 +57,7 @@ body {
 	padding-top: 40px;
 	max-width: 95%;
 	position: relative;
+  margin-bottom: 40px;
 }
 
 .current_time_arrow {
@@ -587,4 +588,9 @@ svg {
 
 .reading-goal-incomplete {
   color: red;
+}
+
+#previously-read-header {
+  display: none;
+  margin-top: 25px;
 }

@@ -227,13 +227,45 @@ function delete_readthrough(readthrough_id, readthrough_element) {
 	readthrough_element.remove()
 
 	$.ajax({
-			"type": "POST",
-			"url": "/reading/delete_readthrough",
-			"contentType": "application/json",
-			"dataType": "json",
-			"data": JSON.stringify(data),
-			success: function(response) {
-				$readthrough_element.remove()
-			}
-		})
+		"type": "POST",
+		"url": "/reading/delete_readthrough",
+		"contentType": "application/json",
+		"dataType": "json",
+		"data": JSON.stringify(data),
+		success: function(response) {
+			$readthrough_element.remove()
+		}
+	})
 }
+
+
+var number_loaded = 0
+$('.load-past-readthroughs').click(function(e) {
+	e.preventDefault();
+
+	data = {
+		'number_loaded': number_loaded
+	}
+
+	$.ajax({
+		"type": "POST",
+		"url": "/reading/load_past_readthroughs",
+		"contentType": "application/json",
+		"dataType": "json",
+		"data": JSON.stringify(data),
+		success: function(response) {
+			number_loaded += response['amount_per_request'];
+
+			$('#previously-read-header').show();
+			$('.load-past-readthroughs').text('Load more')
+
+			$('.past-readthroughs').append(response['html'])
+
+			if (response['none_remaining']) {
+				$('.load-past-readthroughs').hide()
+			}
+		}
+	})
+
+
+})

@@ -32,7 +32,7 @@ def reading_home():
 
 	populate_books()
 
-	active_readthroughs = get_active_readthroughs()
+	active_readthroughs = get_readthroughs('active')
 	books = get_all_books()
 
 	#print(books)
@@ -159,6 +159,25 @@ def delete_readthrough():
 
 	return jsonify(readthrough_id)
 
+@bp.route("/reading/load_past_readthroughs", methods=['POST'])
+def load_past_readthroughs():
+	amount_per_request = 10
+
+	all_past_readthroughs = get_readthroughs('complete')
+
+	target_start_number = request.json['number_loaded']
+	target_end_number = target_start_number + amount_per_request
+
+	readthroughs_to_return = all_past_readthroughs[target_start_number : target_end_number]
+
+	none_remaining = True if target_end_number >= len(all_past_readthroughs) else False
+
+	return jsonify(
+		html = render_template('reading/readthrough_list.html', readthroughs=readthroughs_to_return ),
+		amount_per_request = amount_per_request,
+		none_remaining = none_remaining
+	)
+
 
 def get_all_books():
 	query = Book.query
@@ -166,10 +185,14 @@ def get_all_books():
 
 	return books
 
-def get_active_readthroughs():
+# Use a status of 'active' to only get currently read books. Or a status of 'complete' for finished books.
+def get_readthroughs(status='all'):
 	query = Readthrough.query
-
-	query = query.filter(Readthrough.end_date == None)
+	
+	if status == 'active':
+		query = query.filter(Readthrough.end_date == None)
+	elif status == 'complete':
+		query = query.filter(Readthrough.end_date != None)	
 
 	query = query.order_by(Readthrough.start_date.desc())
 
