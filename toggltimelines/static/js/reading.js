@@ -313,3 +313,61 @@ function search_readthroughs(title) {
 	})
 
 }
+
+
+
+/* Updating book covers */
+$('body').on('click', '.readthrough-image img', function() {
+	$cover_image = $(this)
+	$cover_image.css('opacity', 0);
+	$cover_image.css('cursor', 'default');
+	$cover_image.css('pointer-events', 'none')
+
+	var $parent_container = $(this).closest('.readthrough-image');
+	var $cover_input = $parent_container.find('.readthrough-cover-input');
+
+	$cover_input.show();
+	$cover_input.focus();
+})
+
+$('body').on('blur', '.readthrough-cover-input', function() {
+	var $cover_input = $(this)
+	var $parent_container = $(this).closest('.readthrough-image');
+	var $cover_image = $parent_container.find('img')
+
+	cover_url = $cover_input.val()
+
+	user_confirmation = false
+	if (cover_url) {
+		user_confirmation = confirm('Update cover?')
+	}
+
+	if (user_confirmation) {
+		book_id = $cover_input.attr('data-book-id');
+		readthrough_id = $cover_input.attr('data-readthrough-id');
+
+		data = {
+			'book_id': book_id,
+			'readthrough_id': readthrough_id,
+			'cover_url': cover_url
+		}
+
+		$.ajax({
+			"type": "POST",
+			"url": "/reading/update_cover",
+			"contentType": "application/json",
+			"dataType": "json",
+			"data": JSON.stringify(data),
+			success: function(response) {
+				$parent_container = $cover_input.closest('.readthrough-control')
+				$parent_container.replaceWith(response)
+			}
+		})
+	}
+
+	$cover_input.val('')
+	$cover_input.hide();
+	$cover_image.css('opacity', 1)
+	$cover_image.css('cursor', 'pointer')
+	$cover_image.css('pointer-events', 'auto')
+})

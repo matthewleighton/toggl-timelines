@@ -560,8 +560,16 @@ svg {
 }
 
 .readthrough-image img {
+  cursor: pointer;
   max-height: 290px;
   margin-bottom: 4px;
+}
+
+.readthrough-cover-input {
+  display: none;
+  position: absolute;
+  margin-left: -193px;
+  margin-top: 117px;
 }
 
 .readthough-details {

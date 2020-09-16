@@ -182,11 +182,24 @@ def search_readthroughs():
 
 
 	if readthroughs:
-		return jsonify(render_template('reading/readthrough_list.html', readthroughs=readthroughs ))
+		return jsonify(render_template('reading/readthrough_list.html', readthroughs=readthroughs))
 	else:
 		message = "<h5>No results</h5>"
 		return jsonify(message)
 
+@bp.route("/reading/update_cover", methods=['POST'])
+def update_cover():
+	cover_url = request.json['cover_url']
+	book_id = request.json['book_id']
+	readthrough_id = request.json['readthrough_id']
+
+	book = Book.query.get(book_id)
+	book.image_url = cover_url
+	db.session.commit()
+
+	readthrough = Readthrough.query.get(readthrough_id)
+
+	return jsonify(render_template('reading/readthrough.html', readthrough=readthrough))
 
 def get_all_books():
 	query = Book.query

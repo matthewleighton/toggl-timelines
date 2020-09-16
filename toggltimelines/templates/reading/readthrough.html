@@ -5,6 +5,7 @@
 <div class="readthrough-control" data-id="{{readthrough.id}}">
 	<div class="readthrough-image">
 		<img src="{{readthrough.book.get_cover()}}">
+		<input type="text" placeholder="Cover URL" name=cover_url class="readthrough-cover-input" data-book-id="{{readthrough.book.id}}" data-readthrough-id="{{readthrough.id}}"/>
 		<p><strong>{{readthrough.format_current_position(html=True)|safe}}</strong></p>
 	</div>
 	<div class="readthough-details">
