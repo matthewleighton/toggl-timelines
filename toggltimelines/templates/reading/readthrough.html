@@ -36,7 +36,11 @@
 
 				{% if readthrough.get_days_until_target_end(raw=True) >= 0 %}
 					<p><strong>Required pages/percentage per day: </strong>{{readthrough.get_required_daily_units_for_target_end()}}</p>
-					<p><strong>Required time per day: </strong>{{readthrough.get_required_daily_time_for_target_date()}}</p>
+					<p><strong>Required time per day: </strong>
+						<span class="{{readthrough.get_reading_goal_completion_class('end_date')}}">
+							{{readthrough.get_required_daily_time_for_target_date()}}
+						</span>
+					</p>
 				{% endif %}
 
 			{% endif %}
@@ -51,7 +55,11 @@
 
 			<p><strong>Time read today: </strong><span class="{{readthrough.get_reading_goal_completion_class()}}">{{readthrough.get_readthrough_time_today()}}</span></p>
 
-			<p><strong>Current streak: </strong>{{readthrough.get_current_streak()}}</p>
+			{% if readthrough.get_daily_reading_goal(raw=True) %}
+				<p><strong>Current streak: </strong>{{readthrough.get_current_streak()}}</p>
+			{% endif %}
+
+			
 
 		</div>
 	{% endif %}

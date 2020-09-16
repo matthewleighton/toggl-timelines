@@ -228,22 +228,43 @@ class Readthrough(db.Model):
 
 			return helpers.format_milliseconds(milliseconds, days=False)
 
-	def get_reading_goal_completion_class(self):
-		if not self.daily_reading_goal:
+	# Return a class name describing whether a reading goal is complete.
+	# By default this considered the daily reading-time goal.
+	# But can also consider the daily time required for the date goal, using the goal_type argument.
+	def get_reading_goal_completion_class(self, goal_type='progress'):
+		if goal_type == 'progress' and not self.daily_reading_goal:
 			return 'no-reading-goal'
 
-		goal_complete = self.is_daily_reading_goal_complete()
+		elif goal_type == 'end_date' and not self.target_end_date:
+			return 'no-reading-goal'
+
+		if goal_type == 'end_date':
+			goal_value = self.get_required_daily_time_for_target_date(raw=True) / (1000 * 60)
+		else:
+			goal_value = False
+
+		goal_complete = self.is_daily_reading_goal_complete(goal_value)
 
 		if goal_complete:
 			return 'reading-goal-complete'
 		else:
 			return 'reading-goal-incomplete'
 
-	def is_daily_reading_goal_complete(self):
+	def get_target_end_date_completion_class(self):
+		if not self.target_end_date:
+			return 'no-end-date'
+
+
+	# Can be passed a value to test against, instead of using the daily_reading_goal attribute.
+	def is_daily_reading_goal_complete(self, daily_goal=False):
 		seconds_today = self.get_readthrough_time_today(raw=True) / 1000
 		minutes_today = seconds_today / 60
 
-		daily_goal = self.daily_reading_goal
+		print('ppppppppp')
+		print(daily_goal)
+
+		if not daily_goal:
+			daily_goal = self.daily_reading_goal
 
 		return True if minutes_today > daily_goal else False
 
@@ -398,6 +419,9 @@ class Readthrough(db.Model):
 		time_per_unit = self.get_time_per_position_unit(raw=True)
 
 		daily_time_in_milliseconds = required_daily_units * time_per_unit
+
+		if raw:
+			return daily_time_in_milliseconds
 
 		return helpers.format_milliseconds(daily_time_in_milliseconds)
 
