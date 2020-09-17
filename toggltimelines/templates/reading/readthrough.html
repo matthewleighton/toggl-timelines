@@ -8,23 +8,38 @@
 		<input type="text" placeholder="Cover URL" name=cover_url class="readthrough-cover-input" data-book-id="{{readthrough.book.id}}" data-readthrough-id="{{readthrough.id}}"/>
 		<p><strong>{{readthrough.format_current_position(html=True)|safe}}</strong></p>
 	</div>
+
+	
+
 	<div class="readthough-details">
 		<h3 class="book-title">{{readthrough.book.title}}</h3>
-		<p><strong>Format: </strong>{{sentence_case(readthrough.book_format)}}</p>
-		<p><strong>Start date: </strong><span class="hidden-input" data-endpoint="update_start_date" data-date={{readthrough.start_date}}>{{readthrough.format_date(readthrough.start_date)}}</span></p>
-
-		{% if readthrough.is_readthrough_complete() %}
-			<p><strong>End date: </strong><span class="hidden-input" data-endpoint="update_end_date" data-date={{readthrough.end_date}}>{{readthrough.format_date(readthrough.end_date)}}</span></p>
-		{% endif %}
-
-		<p><strong>Total reading time: </strong>{{readthrough.get_current_reading_time()}}</p>
-		<p><strong>Average daily progress: </strong>{{readthrough.get_average_daily_progress()}}</p>
-		<p><strong>Average daily time: </strong>{{readthrough.get_average_daily_reading_time()}}</p>
-		<p><strong>Average time per {{readthrough.get_position_unit()}}: </strong>{{readthrough.get_time_per_position_unit()}}</p>
+		<!--<p><strong>Format: </strong>{{sentence_case(readthrough.book_format)}}</p>-->
 		
+		<!-- <div> -->
+			<p><strong>Start date: </strong><span class="hidden-input" data-endpoint="update_start_date" data-date={{readthrough.start_date}}>{{readthrough.format_date(readthrough.start_date)}}</span></p>
+
+			{% if readthrough.is_readthrough_complete() %}
+				<p><strong>End date: </strong><span class="hidden-input" data-endpoint="update_end_date" data-date={{readthrough.end_date}}>{{readthrough.format_date(readthrough.end_date)}}</span></p>
+			{% endif %}
+
+			<p><strong>Days reading: </strong>{{readthrough.get_total_days_reading()}}</p>
+			<p style="margin-bottom: 8px;"><strong>Total reading time: </strong>{{readthrough.get_current_reading_time()}}</p>
+		<!-- </div> -->
+		
+		<!-- <br/> -->
+
+		<div>
+			<p style="margin-top: 8px"><strong>Average daily time: </strong>{{readthrough.get_average_daily_reading_time()}}</p>
+			<p><strong>Average daily progress: </strong>{{readthrough.get_average_daily_progress()}}</p>
+			<p style="margin-bottom: 8px"><strong>Average time per {{readthrough.get_position_unit()}}: </strong>{{readthrough.get_time_per_position_unit()}}</p>
+		</div>
+
 		{% if not readthrough.is_readthrough_complete() %}
-			<p><strong>Estimated completion time: </strong>{{readthrough.get_estimated_completion_time()}}</p>
-			<p><strong>Estimated completion date: </strong>{{readthrough.get_estimated_completion_date()}}</p>
+			<!-- <br/> -->
+			<div>
+				<p style="margin-top:8px"><strong>Estimated completion time: </strong>{{readthrough.get_estimated_completion_time()}}</p>
+				<p><strong>Estimated completion date: </strong>{{readthrough.get_estimated_completion_date()}}</p>
+			</div>
 		{% endif %}		
 	</div>
 
@@ -36,7 +51,7 @@
 				<p><strong>Remaining days: </strong>{{readthrough.get_days_until_target_end()}}</p>
 
 				{% if readthrough.get_days_until_target_end(raw=True) >= 0 %}
-					<p><strong>Required pages/percentage per day: </strong>{{readthrough.get_required_daily_units_for_target_end()}}</p>
+					<p><strong>Required daily progress: </strong>{{readthrough.get_required_daily_units_for_target_end()}}</p>
 					<p><strong>Required time per day: </strong>
 						<span class="{{readthrough.get_reading_goal_completion_class('end_date')}}">
 							{{readthrough.get_required_daily_time_for_target_date()}}
@@ -65,6 +80,8 @@
 		</div>
 	{% endif %}
 
-	<p class="delete-readthrough-btn" data-id="{{readthrough.id}}" data-title="{{readthrough.book.title}}">Delete</p>
+	<!-- <p class="delete-readthrough-btn" data-id="{{readthrough.id}}" data-title="{{readthrough.book.title}}">Delete</p> -->
+	
+	<button type="button" class="btn btn-secondary delete-readthrough-btn" data-id="{{readthrough.id}}" data-title="{{readthrough.book.title}}">Delete</button>
 
 </div>

@@ -546,6 +546,7 @@ svg {
 
 .readthrough-control {
   border-bottom: 1px solid black;
+  margin-bottom: 5px;
   /*margin: 30px;*/
   padding: 30px;
   min-height: 300px;
@@ -554,9 +555,13 @@ svg {
 .readthrough-image {
   float: left;
   display: inline-block;
-  margin-right: 20px;
+  margin-right: 25px;
   margin-top: 8px;
   text-align: center;
+
+  /*position: relative;
+  left: 10px;
+  top: 20px;*/
 }
 
 .readthrough-image img {
@@ -576,6 +581,10 @@ svg {
   display: inline-block;
 }
 
+.readthough-details div {
+  border-top: 1px dashed #B0B0B0;
+}
+
 .hidden-number-input {
   max-width: 65px;
 }
@@ -586,6 +595,7 @@ svg {
 
 .readthrough-target-end-date {
   display: inline-block;
+  margin-top: 19px;
   margin-left: 100px;
   vertical-align: top;
 }
@@ -611,4 +621,16 @@ svg {
   position: relative;
   top: -3px;
   left: 10px;
+}
+
+.book-serach-none-found {
+  display: inline-block;
+  float: right;
+  clear: both;
+  margin-top: 5px;
+  margin-right: 5px;
+}
+
+.load-past-readthroughs {
+  margin-top: 5px;
 }

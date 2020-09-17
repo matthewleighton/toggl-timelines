@@ -94,11 +94,6 @@ def new_readthrough():
 		reload_active_readthroughs = not bool(end_date)
 	)
 
-
-
-	return jsonify()
-	# return jsonify(render_template('reading/new_readthrough_success.html', readthrough=readthrough))
-
 @bp.route("/reading/update_position", methods=['POST'])
 def update_position():
 	new_position = request.json['value']
@@ -152,6 +147,8 @@ def search_books():
 	title = request.json['title'].lower()
 
 	books = Book.query.filter(func.lower(Book.title).contains(title)).all()
+
+	print(books)
 
 	return jsonify(render_template('reading/books_list.html', books=books))
 

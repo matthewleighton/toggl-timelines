@@ -3,7 +3,7 @@ $('.new-readthrough-btn').on('click', function() {
 })
 
 
-
+/* New Readthrough search */
 var book_search_timeout = false
 $('#new-readthrough-search').on('input', function() {
 	var title = this.value.toLowerCase()
@@ -44,6 +44,7 @@ function search_books(title) {
 }
 
 
+/* Hiding/showing fields in new readthrough creation */
 $('body').on('click', '.readthrough-complete-checkbox', function() {
 	var $parent_container = $(this).closest('.new-readthrough-control');
 	var $end_container = $parent_container.find('.new-readthrough-end-date');
@@ -71,7 +72,7 @@ $('body').on('change', 'input[type=radio][name=book_format]', function() {
 
 
 
-
+/* Creating new readthroughs */
 $('body').on('click', '.create-readthrough-btn', function() {
 
 	var $parent_container = $(this).closest('.new-readthrough-control');
@@ -130,22 +131,16 @@ $('body').on('click', '.create-readthrough-btn', function() {
 			$results_container.empty()
 			$('#new-readthrough-search').val('')
 
-			console.log(response)
-
 			if (response['reload_active_readthroughs']) {
 				$('.active-readthroughs').html(response['html'])
 			}
-
-			// $(response).insertAfter($results_container)
-
-			// setTimeout(function() {
-			// 	$('.new-readthrough-success').fadeOut(500)
-			// },
-			// 3000)
 		}
 	})
 })
 
+
+
+/* Hidden input fields on readthrough display */
 $('body').on('click', '.hidden-input', function() {
 	var $el = $(this);
 	var original_value = $el.text()
@@ -212,6 +207,7 @@ $('body').on('click', '.hidden-input', function() {
 });
 
 
+/* Deleting readthroughs */
 $('body').on('click', '.delete-readthrough-btn', function() {
 	var readthrough_id = $(this).attr('data-id')
 	var title = $(this).attr('data-title')
@@ -247,6 +243,7 @@ function delete_readthrough(readthrough_id, readthrough_element) {
 }
 
 
+/* Loading additional past readthroughs */
 var number_loaded = 0
 $('.load-past-readthroughs').click(function(e) {
 	e.preventDefault();
@@ -279,8 +276,8 @@ $('.load-past-readthroughs').click(function(e) {
 
 
 
+/* Searching past readthroughs */
 var readthrough_search_timeout = false
-
 $('body').on('input', '#past-readthrough-search', function() {
 	var title = this.value.toLowerCase()
 

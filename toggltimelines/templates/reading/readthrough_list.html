@@ -1,3 +1,7 @@
 {% for readthrough in readthroughs %}
 	{% include "reading/readthrough.html" %}
 {% endfor %}
+
+{% if not readthroughs %}
+	<p>No readthroughs</p>
+{% endif %}

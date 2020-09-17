@@ -109,7 +109,7 @@ class Readthrough(db.Model):
 		elif book_format == 'physical':
 			completed_units = self.current_position - self.first_page
 
-		days_reading = self.get_total_days_reading()
+		days_reading = self.get_total_days_reading(raw=True)
 
 		average_daily_progress = completed_units / days_reading
 
@@ -130,7 +130,7 @@ class Readthrough(db.Model):
 			today = helpers.get_current_datetime_in_user_timezone().replace(tzinfo=None)
 			return today
 
-	def get_total_days_reading(self):
+	def get_total_days_reading(self, raw=False):
 		readthrough_complete = self.is_readthrough_complete()
 
 		if readthrough_complete:
@@ -138,12 +138,17 @@ class Readthrough(db.Model):
 		else:
 			end_date = helpers.get_current_datetime_in_user_timezone().replace(tzinfo=None)
 
-		days_reading = (end_date - self.start_date).days
+		days_reading = (end_date - self.start_date).days + 1 # Add 1 since we want to also count the first day as a "reading day".
 
-		if days_reading <= 0:
-			days_reading = 1
+		# if days_reading <= 0:
+		# 	days_reading = 1
 
-		return days_reading
+		if raw:
+			return days_reading
+
+		day_word = 'day' if days_reading == 1 else 'days'
+
+		return f"{days_reading} {day_word}"
 
 	def get_remaining_units(self):
 		if self.book_format == 'digital':
@@ -151,12 +156,12 @@ class Readthrough(db.Model):
 		elif self.book_format == 'physical':
 			return self.last_page - self.first_page - self.current_position
 
-	def get_estimated_completion_date(self, raw_datetime=False):
+	def get_estimated_completion_date(self, raw=False):
 		average_daily_progress = self.get_average_daily_progress(raw=True)
 
 		if average_daily_progress == 0:
 			# Arbitrary date in far future.
-			estimated_completion_date = datetime(3000, 1, 1)
+			estimated_completion_date = False
 		else:
 			remaining_units = self.get_remaining_units()
 
@@ -166,8 +171,11 @@ class Readthrough(db.Model):
 
 			estimated_completion_date = today + timedelta(days=remaining_days)
 
-		if raw_datetime:
+		if raw:
 			return estimated_completion_date
+
+		if not estimated_completion_date:
+			return 'Never'
 
 		date_format = '%a %-d %b %Y'
 
@@ -194,7 +202,7 @@ class Readthrough(db.Model):
 	# Get the daily average time spent reading on this readthrough. (Average time in milliseconds)
 	def get_average_daily_reading_time(self, raw=False):
 		total_reading_time = self.get_current_reading_time(raw = True)
-		total_days_reading = self.get_total_days_reading()
+		total_days_reading = self.get_total_days_reading(raw=True)
 
 		average = total_reading_time/total_days_reading
 
@@ -415,6 +423,9 @@ class Readthrough(db.Model):
 			decimal_digits = 0
 
 		units_per_day = round(units_per_day, decimal_digits)
+
+		if self.book_format == 'physical':
+			units_per_day = int(units_per_day)
 
 		return f"{units_per_day}{unit_name}"
 
