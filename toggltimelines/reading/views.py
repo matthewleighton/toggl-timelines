@@ -256,49 +256,49 @@ def create_book(title):
 		return existing_book
 
 	db_book = Book(
-		title = title,
-		image_url = get_book_cover_url(title)
+		title = title
 	)
 
 	db.session.add(db_book)
 
 	return db_book
 
-def get_book_cover_url(title):
-	cover_placeholder = '/static/img/cover_placeholder.png'
+# --------- This has been moved to a command, instead of running when each book is imported.
+# def get_book_cover_url(title):
+# 	cover_placeholder = '/static/img/cover_placeholder.png'
 
 
-	if current_app.failed_image_api_search:
-		return cover_placeholder
+# 	if current_app.failed_image_api_search:
+# 		return cover_placeholder
 
-	# Make image API request to Bing to find book covers.
-	subscription_key = current_app.config['BING_API_KEY']
-	search_url = "https://api.cognitive.microsoft.com/bing/v7.0/images/search"
-	headers = {"Ocp-Apim-Subscription-Key" : subscription_key}
+# 	# Make image API request to Bing to find book covers.
+# 	subscription_key = current_app.config['BING_API_KEY']
+# 	search_url = "https://api.cognitive.microsoft.com/bing/v7.0/images/search"
+# 	headers = {"Ocp-Apim-Subscription-Key" : subscription_key}
 	
-	params  = {"q": title + ' book cover'}
+# 	params  = {"q": title + ' book cover'}
 
-	response = requests.get(search_url, headers=headers, params=params)
+# 	response = requests.get(search_url, headers=headers, params=params)
 
-	if response.status_code != 200:
-		current_app.failed_image_api_search = True
-		return cover_placeholder
+# 	if response.status_code != 200:
+# 		current_app.failed_image_api_search = True
+# 		return cover_placeholder
 
-	search_results = response.json()
-	cover_url = False
+# 	search_results = response.json()
+# 	cover_url = False
 
-	if not len(search_results['value']):
-		return cover_placeholder
+# 	if not len(search_results['value']):
+# 		return cover_placeholder
 
-	for result in search_results['value']:
-		if result['height'] > result['width']: # Check that the image is taller than it is wide.
-			cover_url = result['contentUrl']
-			break
+# 	for result in search_results['value']:
+# 		if result['height'] > result['width']: # Check that the image is taller than it is wide.
+# 			cover_url = result['contentUrl']
+# 			break
 
-	if not cover_url:
-		cover_url = search_results['value'][0]['contentUrl']
+# 	if not cover_url:
+# 		cover_url = search_results['value'][0]['contentUrl']
 
-	return cover_url
+# 	return cover_url
 
 def create_readthrough(data):
 	book = Book.query.get(data['book_id'])

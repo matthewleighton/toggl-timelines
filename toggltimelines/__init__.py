@@ -65,6 +65,7 @@ def create_app(test_config=None):
 	app.cli.add_command(init_db_command)
 	app.cli.add_command(toggl_sync_all)
 	app.cli.add_command(mytest)
+	app.cli.add_command(update_book_covers)
 
 	from toggltimelines import timelines
 	app.register_blueprint(timelines.bp)
@@ -133,42 +134,50 @@ from toggltimelines.timelines.models import Entry, Project
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 
+# Use Bing API to find covers for books which don't already have one.
+@click.command('update-book-covers')
+@with_appcontext
+def update_book_covers():
+	subscription_key = app.config['BING_API_KEY']
+	search_url = "https://api.cognitive.microsoft.com/bing/v7.0/images/search"
+	headers = {"Ocp-Apim-Subscription-Key" : subscription_key}
+
+	books_without_cover = Book.query.filter(Book.image_url == None).all()
+
+	if not books_without_cover:
+		print("All books have covers.")
+
+	for book in books_without_cover:
+		print(f"Searching for cover for {book.title}...")
+
+		params  = {"q": book.title + ' book cover'}
+		response = requests.get(search_url, headers=headers, params=params)
+		search_results = response.json()
+
+		if not len(search_results):
+			print (f"No cover found for {book.title}")
+			break
+
+		cover_url = False
+		for result in search_results['value']:
+			if result['height'] > result['width']: # Check that the image is taller than it is wide.
+				cover_url = result['contentUrl']
+				break
+
+		if not cover_url:
+			cover_url = search_results['value'][0]['contentUrl']
+
+		print(f"Cover found:")
+		print(cover_url)
+		print('')
+
+		book.image_url = cover_url
+
+	db.session.commit()
+
+
+
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	title = 'Sofies Welt book cover'
-
-	subscription_key = ""
-	search_url = "https://api.cognitive.microsoft.com/bing/v7.0/images/search"
-	headers = {"Ocp-Apim-Subscription-Key" : subscription_key}
-	
-	params  = {"q": title}
-
-	response = requests.get(search_url, headers=headers, params=params)
-
-	pp.pprint(response.json())
-
-
-	#response.raise_for_status()
-	search_results = response.json()
-	cover_url = False
-
-	i = 0
-	for result in search_results['value']:
-		if result['height'] > result['width']:
-			cover_url = result['contentUrl']
-			break
-		#i+=1
-
-	if not cover_url:
-		cover_url - search_results['value'][0]['contentUrl']
-
-	print(cover_url)
-
-
-	if len(search_results['value']):
-		cover_url = search_results['value'][0]['contentUrl']
-	else:
-		cover_url = 'No cover :('
-
-	print(cover_url)
+	print('mytest')
