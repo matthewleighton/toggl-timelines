@@ -273,9 +273,6 @@ class Readthrough(db.Model):
 		seconds_today = self.get_readthrough_time_today(raw=True) / 1000
 		minutes_today = seconds_today / 60
 
-		print('ppppppppp')
-		print(daily_goal)
-
 		if not daily_goal:
 			daily_goal = self.daily_reading_goal
 

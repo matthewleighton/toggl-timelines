@@ -145,8 +145,14 @@ $('body').on('click', '.hidden-input', function() {
 	var $el = $(this);
 	var original_value = $el.text()
 
+	var $parent = $el.closest('.readthrough-control');
+
 	var $container = $el.closest('.readthrough-control');
 	var readthrough_id = $container.attr('data-id');
+
+	var $readthrough_fields = $container.find('.readthrough-fields')
+	var $readthrough_position = $container.find('.readthrough-position')
+
 	var endpoint = $el.attr('data-endpoint')
 
 	switch(endpoint) {
@@ -198,7 +204,9 @@ $('body').on('click', '.hidden-input', function() {
 			"data": JSON.stringify(data),
 			success: function(response) {
 				// TODO: Some kind of validation. Only replace if True.
-				$container.replaceWith(response)
+				console.log(response)
+				$readthrough_fields.replaceWith(response['readthrough_fields'])
+				$readthrough_position.replaceWith(response['readthrough_position'])
 			}
 		})
 	};

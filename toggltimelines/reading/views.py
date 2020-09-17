@@ -105,7 +105,10 @@ def update_position():
 
 	db.session.commit()
 
-	return jsonify(render_template('reading/readthrough.html', readthrough=readthrough))
+	return jsonify(
+		readthrough_fields = render_template('reading/readthrough_fields.html', readthrough=readthrough),
+		readthrough_position = render_template('reading/readthrough_position.html', readthrough=readthrough)
+	)
 
 @bp.route("/reading/update_end_date", methods=['POST'])
 @bp.route("/reading/update_start_date", methods=['POST'])
