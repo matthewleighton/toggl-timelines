@@ -372,7 +372,7 @@ class Readthrough(db.Model):
 		if date_type == 'start':
 			self.start_date = dt
 
-			if dt and self.start_date > self.end_date:
+			if dt and self.end_date and self.start_date > self.end_date:
 				self.end_date = dt
 
 			return self.start_date

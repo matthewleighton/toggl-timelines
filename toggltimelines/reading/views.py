@@ -131,7 +131,10 @@ def update_date():
 
 	db.session.commit()
 
-	return jsonify(render_template('reading/readthrough.html', readthrough=readthrough))
+	return jsonify(
+		readthrough_fields = render_template('reading/readthrough_fields.html', readthrough=readthrough),
+		readthrough_position = render_template('reading/readthrough_position.html', readthrough=readthrough)
+	)
 
 @bp.route("/reading/update_daily_reading_goal", methods=['POST'])
 def update_daily_reading_goal():
@@ -143,7 +146,10 @@ def update_daily_reading_goal():
 
 	db.session.commit()
 
-	return jsonify(render_template('reading/readthrough.html', readthrough=readthrough))
+	return jsonify(
+		readthrough_fields = render_template('reading/readthrough_fields.html', readthrough=readthrough),
+		readthrough_position = render_template('reading/readthrough_position.html', readthrough=readthrough)
+	)
 
 @bp.route("/reading/search_books", methods=['POST'])
 def search_books():
