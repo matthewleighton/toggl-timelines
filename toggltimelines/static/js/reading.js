@@ -392,3 +392,78 @@ $('body').on('blur', '.readthrough-cover-input', function() {
 	$cover_image.css('cursor', 'pointer')
 	$cover_image.css('pointer-events', 'auto')
 })
+
+$('.reading-reload').click(function() {
+	$.ajax({
+		"type": "POST",
+		"url": "/reading/toggl_sync",
+		"contentType": "application/json",
+		"dataType": "json",
+		"data": JSON.stringify(),
+		success: function(response) {
+			$active_readthroughs_div = $('.active-readthroughs')
+			$active_readthroughs_div.replaceWith(response['html'])
+		}
+	})
+})
+
+/* Start tracking */
+$('body').on('click', '.start-track', function() {
+	
+	console.log('Clicked start track button.')
+
+	$button = $(this)
+	readthrough_id = $button.attr('data-id')
+
+	data = {
+		'readthrough_id': readthrough_id
+	}
+
+	$.ajax({
+		"type": "POST",
+		"url": "/reading/start_track",
+		"contentType": "application/json",
+		"dataType": "json",
+		"data": JSON.stringify(data),
+		success: function(response) {
+			console.log(response)
+
+			$button.removeClass('start-track')
+			$button.removeClass('btn-success')
+
+			$button.addClass('stop-track')
+			$button.addClass('btn-danger')
+			$button.html('&#9632;') // Stop sign
+		}
+	})
+})
+
+/* Stop tracking */
+
+$('body').on('click', '.stop-track', function() {
+
+	$button = $(this)
+	readthrough_id = $button.attr('data-id')
+
+	data = {
+		'readthrough_id': readthrough_id
+	}
+
+	$.ajax({
+		"type": "POST",
+		"url": "/reading/stop_track",
+		"contentType": "application/json",
+		"dataType": "json",
+		"data": JSON.stringify(data),
+		success: function(response) {
+			console.log(response)
+
+			$button.removeClass('stop-track')
+			$button.removeClass('btn-danger')
+
+			$button.addClass('start-track')
+			$button.addClass('btn-success')
+			$button.html('&#9658;') // Stop sign
+		}
+	})
+})

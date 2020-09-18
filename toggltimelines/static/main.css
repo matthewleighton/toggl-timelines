@@ -529,6 +529,14 @@ svg {
   float: right;
 }
 
+.readthrough-fields .track-btn {
+  border-radius: 100px;
+  cursor: pointer;
+  display: inline-block;
+  float: right;
+  margin-right: 10px;
+}
+
 #new-readthrough-container {
   float: right;
 }
@@ -637,4 +645,9 @@ svg {
 
 .load-past-readthroughs {
   margin-top: 5px;
+}
+
+.reading-reload {
+  cursor: pointer;
+  margin-left: 5px;
 }

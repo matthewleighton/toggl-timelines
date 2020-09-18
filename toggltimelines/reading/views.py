@@ -120,16 +120,12 @@ def update_date():
 
 	readthrough = Readthrough.query.get(readthrough_id)
 
-	print('update_date')
-	print(endpoint)
-
 	if endpoint == 'update_start_date':
 		date_type = 'start'
 	elif endpoint == 'update_end_date':
 		date_type = 'end'
 	elif endpoint == 'update_target_end_date':
 		date_type = 'target_end'
-		#new_date = new_date.replace(hour=23, minute=59, second=59)
 
 	readthrough.update_date(new_date, date_type)
 
@@ -219,6 +215,42 @@ def update_cover():
 	readthrough = Readthrough.query.get(readthrough_id)
 
 	return jsonify(render_template('reading/readthrough.html', readthrough=readthrough))
+
+@bp.route("/reading/toggl_sync", methods=['POST'])
+def toggl_sync():
+	sync_start = datetime.now() - timedelta(days=1)
+	helpers.toggl_sync(sync_start)
+
+	data = {
+		'active_readthroughs': get_readthroughs('active'),
+	}
+
+	return jsonify(
+		html = render_template('reading/active_readthroughs.html', data=data),
+	)
+
+@bp.route("/reading/start_track", methods=['POST'])
+def start_track():
+	readthrough_id = request.json['readthrough_id']
+	readthrough = Readthrough.query.get(readthrough_id)
+	title = readthrough.book.title
+
+	#TODO: Add the project ID to the request.
+
+	response = helpers.start_tracking(title)
+
+	return jsonify(
+		response = response
+	)
+
+@bp.route("/reading/stop_track", methods=['POST'])
+def stop_track():
+
+	helpers.stop_tracking()
+
+	#TODO: Return something sensible.
+
+	return jsonify('test')
 
 def get_all_books():
 	query = Book.query

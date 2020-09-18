@@ -486,3 +486,23 @@ def format_milliseconds(milliseconds, days=True, include_seconds=False):
 		formatted_string += seconds_string
 
 	return formatted_string 
+
+def start_tracking(description='', project=''):
+	
+	project = None
+
+	response = current_app.toggl.startTimeEntry(description, project)
+
+	return response
+
+def stop_tracking():
+	current_tracking = get_current_toggl_entry()
+
+	print(current_tracking)
+
+	if current_tracking:
+		current_tracking_id = current_tracking['id']
+
+		return current_app.toggl.stopTimeEntry(current_tracking_id)
+
+	return False
