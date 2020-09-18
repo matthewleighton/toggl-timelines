@@ -601,7 +601,7 @@ svg {
 }
 
 .readthrough-goals hr {
-  border-top: 1px solid #B0B0B0;
+  border-top: 1px dashed #B0B0B0;
 }
 
 .reading-goal-complete {
