@@ -2,6 +2,14 @@ $('.new-readthrough-btn').on('click', function() {
 	$(this).siblings('.new-readthrough-control').show()
 })
 
+/* Trigger hidden field submission by pressing Enter. */
+$('body').keypress(function(e) {
+	if (e.which == 13) {
+		var $focused = $(':focus');
+		$focused.blur()
+	}
+})
+
 
 /* New Readthrough search */
 var book_search_timeout = false
