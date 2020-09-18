@@ -107,7 +107,7 @@ class Readthrough(db.Model):
 		if book_format == 'digital':
 			completed_units = self.current_position
 		elif book_format == 'physical':
-			completed_units = self.current_position - self.first_page
+			completed_units = self.current_position - self.first_page + 1
 
 		days_reading = self.get_total_days_reading(raw=True)
 
@@ -140,8 +140,8 @@ class Readthrough(db.Model):
 
 		days_reading = (end_date - self.start_date).days + 1 # Add 1 since we want to also count the first day as a "reading day".
 
-		# if days_reading <= 0:
-		# 	days_reading = 1
+		if days_reading <= 0:
+		 	days_reading = 1
 
 		if raw:
 			return days_reading
@@ -154,7 +154,8 @@ class Readthrough(db.Model):
 		if self.book_format == 'digital':
 			return 100 - self.current_position
 		elif self.book_format == 'physical':
-			return self.last_page - self.first_page - self.current_position
+			#return self.last_page - self.first_page - self.current_position
+			return self.last_page - self.current_position
 
 	def get_estimated_completion_date(self, raw=False):
 		average_daily_progress = self.get_average_daily_progress(raw=True)
@@ -276,6 +277,9 @@ class Readthrough(db.Model):
 		if not daily_goal:
 			daily_goal = self.daily_reading_goal
 
+		if not daily_goal:
+			return False
+
 		return True if minutes_today > daily_goal else False
 
 	def get_completion_percentage(self):
@@ -310,10 +314,15 @@ class Readthrough(db.Model):
 		current_position = self.current_position
 
 		if self.book_format == 'physical':
-			current_position = current_position - self.first_page
+			current_position = current_position - self.first_page + 1
+
+			print(f"Current position: {current_position}")
 
 		if current_position == 0:
-			return 'N/A'
+			if raw:
+				return False
+			else:
+				return 'N/A'
 
 		average_time_in_milliseconds = total_reading_time / current_position
 
@@ -391,26 +400,36 @@ class Readthrough(db.Model):
 			return self.end_date
 
 		elif date_type == 'target_end':
+			
 			if dt and dt < self.start_date:
 				dt = self.start_date
 
+			if dt:
+				dt = dt.replace(hour=23, minute=59, second=59)
+
 			self.target_end_date = dt
+
+
 
 			return self.target_end_date
 
 	def get_days_until_target_end(self, raw=False):
 		today = helpers.get_current_datetime_in_user_timezone().replace(tzinfo=None)
 
-		days = (self.target_end_date - today).days + 2 # Plus two since we can also read on the first/last days.
+		days = (self.target_end_date - today).days + 1
 
 		if raw:
 			return days
 
 		return f"{days} days"
 
+	# Returns units per day
 	def get_required_daily_units_for_target_end(self, raw=False):
 		remaining_days = self.get_days_until_target_end(raw=True)
 		remaining_units = self.get_remaining_units()
+
+		if not remaining_days:
+			remaining_days = 1
 
 		units_per_day = remaining_units / remaining_days
 
@@ -430,18 +449,6 @@ class Readthrough(db.Model):
 			units_per_day = int(units_per_day)
 
 		return f"{units_per_day}{unit_name}"
-
-	def get_required_daily_time_for_target_date(self, raw=False):
-		required_daily_units = self.get_required_daily_units_for_target_end(raw=True)
-
-		time_per_unit = self.get_time_per_position_unit(raw=True)
-
-		daily_time_in_milliseconds = required_daily_units * time_per_unit
-
-		if raw:
-			return daily_time_in_milliseconds
-
-		return helpers.format_milliseconds(daily_time_in_milliseconds)
 
 	def get_daily_reading_goal(self, raw=False):
 		goal_in_minutes = self.daily_reading_goal
@@ -470,6 +477,20 @@ class Readthrough(db.Model):
 
 		return self.daily_reading_goal
 
+	# Top section
+	def get_required_daily_time_for_target_date(self, raw=False):
+		required_daily_units = self.get_required_daily_units_for_target_end(raw=True)
+
+		time_per_unit = self.get_time_per_position_unit(raw=True)
+
+		daily_time_in_milliseconds = required_daily_units * time_per_unit
+
+		if raw:
+			return daily_time_in_milliseconds
+
+		return helpers.format_milliseconds(daily_time_in_milliseconds)
+
+	#Resulting end date (Bottom section)
 	def get_daily_reading_goal_end_estimate(self, raw=False):
 		daily_goal = self.get_daily_reading_goal(raw=True)
 		time_per_unit = self.get_time_per_position_unit(raw=True)
@@ -480,7 +501,11 @@ class Readthrough(db.Model):
 
 		remaining_days = remaining_units / units_per_day
 
-		today = helpers.get_current_datetime_in_user_timezone().replace(tzinfo=None)
+		today = helpers.get_current_datetime_in_user_timezone().replace(tzinfo=None, hour=0, minute=0, second=0)
+		today = today - timedelta(seconds = 1) # We actually want this to be the very end of yesterday.
+											   # This seems to get it to match up with the estimate
+											   # given by the end date goal.
+											   # (Hence subtracting one second).
 
 		estimate_end_date = today + timedelta(days=remaining_days)
 

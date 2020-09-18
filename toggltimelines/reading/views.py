@@ -120,12 +120,16 @@ def update_date():
 
 	readthrough = Readthrough.query.get(readthrough_id)
 
+	print('update_date')
+	print(endpoint)
+
 	if endpoint == 'update_start_date':
 		date_type = 'start'
 	elif endpoint == 'update_end_date':
 		date_type = 'end'
 	elif endpoint == 'update_target_end_date':
 		date_type = 'target_end'
+		#new_date = new_date.replace(hour=23, minute=59, second=59)
 
 	readthrough.update_date(new_date, date_type)
 

@@ -449,6 +449,11 @@ def get_project_data(comparison_mode = False):
 	return project_data
 
 def format_milliseconds(milliseconds, days=True, include_seconds=False):
+	# If we're not including seconds, round the milliseconds up/down to the nearest minute
+	milliseconds_per_minute = 60 * 1000
+	if not include_seconds:
+		milliseconds = milliseconds_per_minute * round(milliseconds/milliseconds_per_minute)
+
 	seconds=(milliseconds/1000)%60
 	seconds = int(seconds)
 	minutes=(milliseconds/(1000*60))%60
@@ -468,6 +473,7 @@ def format_milliseconds(milliseconds, days=True, include_seconds=False):
 
 	if minutes_string and include_seconds:
 		minutes_string += ", "
+
 
 	seconds_string = ("%d seconds" % (seconds))
 	if seconds == 1:
