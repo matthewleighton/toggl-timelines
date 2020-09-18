@@ -283,8 +283,9 @@ class Readthrough(db.Model):
 			return self.current_position
 
 		pages_to_read = self.last_page - self.first_page + 1 # Adding one, since we do also read the first page.
+		relative_position = self.current_position - self.first_page + 1
 
-		percentage = round((self.current_position / pages_to_read) * 100, 1)
+		percentage = round((relative_position / pages_to_read) * 100, 1)
 
 		return percentage
 
