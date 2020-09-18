@@ -353,6 +353,7 @@ class Readthrough(db.Model):
 			new_position = min(100, new_position)
 		elif self.book_format == 'physical':
 			new_position = min(self.last_page, new_position)
+			new_position = max(self.first_page, new_position)
 
 		self.current_position = new_position
 
