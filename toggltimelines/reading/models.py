@@ -161,7 +161,6 @@ class Readthrough(db.Model):
 		average_daily_progress = self.get_average_daily_progress(raw=True)
 
 		if average_daily_progress == 0:
-			# Arbitrary date in far future.
 			estimated_completion_date = False
 		else:
 			remaining_units = self.get_remaining_units()
