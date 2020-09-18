@@ -309,6 +309,9 @@ class Readthrough(db.Model):
 		total_reading_time = self.get_current_reading_time(raw=True)
 		current_position = self.current_position
 
+		if self.book_format == 'physical':
+			current_position = current_position - self.first_page
+
 		if current_position == 0:
 			return 'N/A'
 
