@@ -98,17 +98,17 @@ def start_stop():
 
 
 	if not validated:
-		return jsonify({'message': 'Invalid password'})
+		return jsonify({'status': '0'})
 
 
 	currently_tracking = helpers.get_current_toggl_entry()
 
 	if not currently_tracking:
 		helpers.start_tracking()
-		message = 'Started tracking'
+		status = 'start'
 	else:
 		current_id = currently_tracking['id']
 		helpers.stop_tracking(current_id)
-		message = 'Stopped tracking'
+		status = 'stop'
 
-	return jsonify({'message':message})
+	return jsonify({'status':status})
