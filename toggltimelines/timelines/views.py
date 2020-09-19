@@ -98,7 +98,7 @@ def start_stop():
 
 
 	if not validated:
-		return jsonify({'status': '0'})
+		return jsonify('0')
 
 
 	currently_tracking = helpers.get_current_toggl_entry()
@@ -111,4 +111,4 @@ def start_stop():
 		helpers.stop_tracking(current_id)
 		status = 'stop'
 
-	return jsonify(status)
+	return status
