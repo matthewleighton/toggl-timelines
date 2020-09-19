@@ -111,4 +111,4 @@ def start_stop():
 		helpers.stop_tracking(current_id)
 		status = 'stop'
 
-	return jsonify({'status':status})
+	return jsonify(status)
