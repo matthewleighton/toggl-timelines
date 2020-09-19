@@ -86,3 +86,29 @@ def load_more():
 
 	return jsonify(render_template('timelines/day.html', data=page_data))
 
+@bp.route("/timelines/start_stop", methods=['GET', 'POST'])
+def start_stop():
+	
+	config_auth = current_app.config['START_STOP_AUTH']
+	submitted_auth = request.args.get('auth')
+
+	validated = False
+	if config_auth and config_auth == submitted_auth:
+		validated = True
+
+
+	if not validated:
+		return jsonify({'message': 'Invalid password'})
+
+
+	currently_tracking = helpers.get_current_toggl_entry()
+
+	if not currently_tracking:
+		helpers.start_tracking()
+		message = 'Started tracking'
+	else:
+		current_id = currently_tracking['id']
+		helpers.stop_tracking(current_id)
+		message = 'Stopped tracking'
+
+	return jsonify({'message':message})

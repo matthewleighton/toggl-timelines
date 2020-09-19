@@ -495,7 +495,10 @@ def start_tracking(description='', project=''):
 
 	return response
 
-def stop_tracking():
+def stop_tracking(current_tracking_id=False):
+	if current_tracking_id:
+		return current_app.toggl.stopTimeEntry(current_tracking_id)
+
 	current_tracking = get_current_toggl_entry()
 
 	print(current_tracking)
