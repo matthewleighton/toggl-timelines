@@ -108,23 +108,12 @@ def comparison_data():
 	current_days = helpers.sort_db_entries_by_day(db_entries)
 
 
-	# current_days = helpers.get_days_list(
-	# 	start=start_end_values['current_start'],
-	# 	end=start_end_values['current_end'],
-	# )
-
-
 	if period_type != "goals": # Don't need to do historic days work if we're in goals mode.
 	
 		db_entries = helpers.get_db_entries(start_end_values['historic_start'], start_end_values['historic_end'])
 
 		historic_days = helpers.sort_db_entries_by_day(db_entries)
 
-
-		# historic_days=get_days_list(
-		# 	start=start_end_values['historic_start'],
-		# 	end=start_end_values['historic_end'],
-		# )
 
 		# Assign tracked time to historic data.
 		sum_category_durations(historic_days, project_data, period_type, historic=True, live_mode=live_mode, weekdays=target_weekdays)

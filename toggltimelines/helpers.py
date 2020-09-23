@@ -44,11 +44,6 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 
 	local_projects = get_all_projects_from_database()
 
-	# (Toggl needed the user timezone, but our database is all in UTC. So we convert.)
-	# I don't think this is true. For now I've commented these out.
-	#start_date = start_date.astimezone(tz=pytz.utc)
-	#end_date = end_date.astimezone(tz=pytz.utc)
-
 	# Remove database entries which already exist in the sync window.
 	existing_db_entries = get_db_entries(start_date, end_date)
 	for db_entry in existing_db_entries:
@@ -206,8 +201,6 @@ def split_entries_over_midnight(entries):
 			dur1 = (end_of_first_day - start).total_seconds() * 1000
 			dur2 = (end - start_of_next_day).total_seconds() * 1000
 
-
-			
 			entry_before_midnight = entry
 			entry_after_midnight = copy.deepcopy(entry)
 
@@ -219,18 +212,11 @@ def split_entries_over_midnight(entries):
 			entry_after_midnight['end'] = end2
 			entry_after_midnight['dur'] = dur2
 
-
-
 			# TODO: Is this a goodway of handling the ID?
 			# Just adding a 0 onto the end of the new entry.
 			entry_after_midnight['id'] = str(entry['id']) + '0'
 
 			entries.append(entry_after_midnight)
-
-			print(entry_before_midnight)
-			print(entry_after_midnight)
-			print('')
-
 
 	return entries
 

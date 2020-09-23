@@ -13,7 +13,6 @@ class Entry(db.Model):
 	end = db.Column(db.DateTime(timezone=True))
 	dur = db.Column(db.Integer)
 	project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
-	client = db.Column(db.String(50))
 	project_hex_color = db.Column(db.String(7))
 	#tags = db.relationship('Tag', secondary=tags, backref=db.backref('entries', lazy=True), lazy='select')
 	user_id = db.Column(db.Integer)
@@ -36,16 +35,21 @@ class Entry(db.Model):
 			return '#C8C8C8'
 
 	def get_client_hex_color(self):
-		return '#a6a6a6' #TODO
+		default_color = '#C8C8C8'
 
-		hex_color_config = togglconfig.client_colors
+		client_hex_codes = current_app.config['CLIENT_COLORS']
 
-		client = self.get_client
+		client = self.get_client()
 
-		if client in hex_color_config.keys():
-			return hex_color_config[self.client]
+		if not client:
+			return default_color
+
+		client_name = client.client_name
+
+		if client_name in client_hex_codes.keys():
+			return client_hex_codes[client_name]
 		else:
-			return '#a6a6a6'
+			return default_color
 
 	def get_client(self):
 		project = self.project
@@ -88,9 +92,11 @@ class Entry(db.Model):
 		project = self.get_project_name()
 		description = self.description
 		duration = self.format_duration(self.dur)
-		client = self.client
 
-		return '<b>{0}</b>: {1}<br/>Client: {2}<br/>{3}-{4}<br/>{5}'.format(project, description, client, start_time, end_time, duration)
+		client = self.get_client()
+		client_name = client.client_name if client else 'None'
+
+		return '<b>{0}</b>: {1}<br/>Client: {2}<br/>{3}-{4}<br/>{5}'.format(project, description, client_name, start_time, end_time, duration)
 
 	def get_project_name(self):
 		project = self.project
