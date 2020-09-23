@@ -173,8 +173,6 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 				# So we compare things in UTC.
 
 				now = datetime.utcnow()
-				# entry_mid = entry.get_raw_start_time().replace(hour=now.hour, minute=now.minute)
-				# entry_start = entry.get_raw_start_time()
 				entry_mid = entry.start.replace(hour=now.hour, minute=now.minute)
 				entry_start = entry.start
 
@@ -192,8 +190,10 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 				# 		if tag.tag_name in categories:
 				# 			categories[tag.tag_name]['current_tracked'] += duration
 
-				if entry.client in categories:
-					categories[entry.client]['current_tracked'] += duration
+
+				client = entry.get_client()
+				if client and client.client_name in categories:
+					categories[entry.get_client().client_name]['current_tracked'] += duration
 
 			categories[project_name][current_or_historic_tracked] += duration
 

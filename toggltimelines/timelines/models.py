@@ -40,10 +40,20 @@ class Entry(db.Model):
 
 		hex_color_config = togglconfig.client_colors
 
-		if self.client in hex_color_config.keys():
+		client = self.get_client
+
+		if client in hex_color_config.keys():
 			return hex_color_config[self.client]
 		else:
 			return '#a6a6a6'
+
+	def get_client(self):
+		project = self.project
+
+		if not project:
+			return False
+
+		return project.client
 
 	def get_day_percentage(self):
 		duration = self.dur/1000
@@ -111,4 +121,10 @@ class Project(db.Model):
 	project_name = db.Column(db.String(50))
 	project_hex_color = db.Column(db.String(7))
 	entries = db.relationship('Entry', backref='project')
+	client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
 
+class Client(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	client_name = db.Column(db.String(50))
+	client_hex_color = db.Column(db.String(7))
+	projects = db.relationship('Project', backref='client')

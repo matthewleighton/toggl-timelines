@@ -28,6 +28,9 @@ def create_app(test_config=None):
 
 	app.config.from_object("config.DevelopmentConfig")
 
+	# Use this to store the User's Toggl data if we get it via API request.
+	app.user_toggl_data = False
+
 	from toggltimelines import MyTogglPy
 
 	app.toggl = MyTogglPy.MyTogglPy()
@@ -180,4 +183,13 @@ def update_book_covers():
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	print('mytest')
+	toggl_projects = helpers.get_user_toggl_data()['projects']
+	pp.pprint(toggl_projects)
+	
+	return ''
+
+	entries = Entry.query.all()
+
+	recent_entry = entries[-1]
+
+	print(recent_entry.project.client.client_name)

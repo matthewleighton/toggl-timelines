@@ -6,9 +6,12 @@ import pytz
 import csv
 import sys
 import copy
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 
 from toggltimelines.timelines.models import Entry
 from toggltimelines.timelines.models import Project
+from toggltimelines.timelines.models import Client
 from toggltimelines import db
 
 
@@ -28,12 +31,8 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 	end_date = end_date.replace(hour=23, minute=59, second=59).astimezone(tz=timezone)
 
 
-	# print(f"toggl_sync... Start: {start_date}")
-	# print(f"toggl_sync... End: {end_date}")
-
 	entries = get_entries_from_toggl(start_date, end_date)
 
-	#print(f"Toggl entries: {len(entries)}")
 
 	#Only get the current entry if we're getting today's entries.
 	if start_date <= datetime.now().replace(tzinfo=timezone) <= end_date:
@@ -45,12 +44,10 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 
 	local_projects = get_all_projects_from_database()
 
-	# Toggl needed the user timezone, but our database is all in UTC. So we convert.
-	start_date = start_date.astimezone(tz=pytz.utc)
-	end_date = end_date.astimezone(tz=pytz.utc)
-
-	# print(f"Deleting start: {start_date}")
-	# print(f"Deleting end: {end_date}")
+	# (Toggl needed the user timezone, but our database is all in UTC. So we convert.)
+	# I don't think this is true. For now I've commented these out.
+	#start_date = start_date.astimezone(tz=pytz.utc)
+	#end_date = end_date.astimezone(tz=pytz.utc)
 
 	# Remove database entries which already exist in the sync window.
 	existing_db_entries = get_db_entries(start_date, end_date)
@@ -63,38 +60,10 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 	for entry in entries:
 		project_id = entry['pid'] if 'pid' in entry.keys() else None
 
-		db_project = get_database_project_by_id(project_id, local_projects)
-
-		if project_id and not db_project : # Create the database project if it doesn't exist.
-
-			if not 'project' in entry.keys(): # If the project name isn't given in the entry details, we ask Toggl for details about all projects
-											  # (This is the case for currently running projects).
-				toggl_projects = get_user_toggl_data()['projects']
-
-				for toggl_project in toggl_projects:
-					toggl_project_id = toggl_project['id']
-
-					if toggl_project_id == project_id:
-						entry['project'] = toggl_project['name']
-						entry['project_hex_color'] = toggl_project['hex_color']
-						break
-
-			db_project = create_project({
-				'project_id': 		 project_id,
-				'project_name': 	 entry['project'],
-				'project_hex_color': entry['project_hex_color']
-			})
-
-			local_projects.append(db_project)
-
+		db_project = get_or_create_project(project_id)
 
 		start_datetime = timestamp_to_datetime(entry['start'])
 		end_datetime = timestamp_to_datetime(entry['end'])
-
-
-		if not 'client' in entry.keys():
-			entry['client'] = None #TODO: This is temporary. Need to check how clients are actually working.
-								   # Clients should probably be their own table. I'll leave this as is for now until I do that rework.
 
 		location = get_entry_location(start_datetime)
 
@@ -106,15 +75,106 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 			'start': 	   start_datetime,
 			'end': 		   end_datetime,
 			'dur': 		   entry['dur'],
-			'client': 	   entry['client'],
 			'location':	   location,
 			'user_id': 	   entry['uid'],
 			'db_project':  db_project
 		})
 
+	check_project_client_integrity()
+
 	db.session.commit()
 
 	return entries
+
+# Make sure that the database projects are assigned to the same clients as in Toggl.
+# (Also check database projects colors against Toggl).
+def check_project_client_integrity():
+	user_toggl_data = get_user_toggl_data()
+	toggl_projects = user_toggl_data['projects']
+	toggl_clients = user_toggl_data['clients']
+
+	db_projects = Project.query.all()
+
+	for db_project in db_projects:
+		project_id = db_project.id
+		toggl_project = get_toggl_project(project_id)
+
+		toggl_client_id = toggl_project['cid'] if 'cid' in toggl_project.keys() else None
+		db_client_id = db_project.client_id
+
+		if toggl_client_id != db_client_id:
+			
+			if toggl_client_id:
+				db_client = get_or_create_client(toggl_client_id)
+			
+			db_project.client_id = toggl_client_id
+
+		toggl_project_color = toggl_project['hex_color']
+		db_project_color = db_project.project_hex_color
+
+		if toggl_project_color != db_project_color:
+			db_project.project_hex_color = toggl_project_color
+
+def get_toggl_project(project_id):
+	toggl_project_list = get_user_toggl_data()['projects']
+
+	toggl_project = next((project for project in toggl_project_list if project['id'] == project_id), None)
+
+	return toggl_project
+
+def get_toggl_client(client_id):
+	toggl_client_list = get_user_toggl_data()['clients']
+
+	toggl_client = next((client for client in toggl_client_list if client['id'] == client_id), None)
+
+	return toggl_client
+
+
+# Get a project from the datbase if it exists, or create it otherwise.
+def get_or_create_project(project_id):
+	db_project = Project.query.get(project_id)
+
+	if db_project:
+		return db_project
+
+	toggl_project = get_toggl_project(project_id)	
+
+	if not toggl_project:
+		return False
+
+	client_id = toggl_project['cid'] if 'cid' in toggl_project.keys() else None
+
+	db_project = create_project({
+				'project_id': 		 project_id,
+				'project_name': 	 toggl_project['name'],
+				'project_hex_color': toggl_project['hex_color'],
+				'client_id':		 client_id
+			})
+
+	if client_id:
+		get_or_create_client(client_id)
+
+	return db_project
+
+def get_or_create_client(client_id):
+	db_client = Client.query.get(client_id)
+
+	if db_client:
+		return db_client
+
+	toggl_client = get_toggl_client(client_id)
+
+	if not toggl_client:
+		return False
+
+	db_client = create_client({
+			'client_id': client_id,
+			'client_name': toggl_client['name']
+		})
+
+	return db_client
+
+
 
 # If an entry received from Toggl spans midnight, we split it into two.
 def split_entries_over_midnight(entries):
@@ -134,8 +194,6 @@ def split_entries_over_midnight(entries):
 		end = end.astimezone(tz=entry_timezone)
 
 		if start.day != end.day:
-			#print(entry)
-
 			end_of_first_day = start.replace(hour=23, minute=59, second=59)
 			start_of_next_day = end_of_first_day + timedelta(seconds=1)
 
@@ -214,9 +272,6 @@ def get_db_entries(start=False, end=False, projects=False, clients=False, descri
 	if description:
 		query = query.filter(func.lower(Entry.description).contains(description.lower()))
 
-
-	#print(f"\n{query}\n")
-
 	entries = query.order_by(Entry.start).all()
 
 	# Entries are timezone naive when we retreive them.
@@ -271,7 +326,7 @@ def create_entry(entry_data):
 		start 			  = entry_data['start'],
 		end 			  = entry_data['end'],
 		dur 			  = entry_data['dur'],
-		client 			  = entry_data['client'],
+		#client 			  = entry_data['client'],
 		location 		  = entry_data['location'],
 		user_id 		  = entry_data['user_id']
 	)
@@ -295,6 +350,16 @@ def create_project(project_data):
 	db.session.add(db_project)
 
 	return db_project
+
+def create_client(client_data):
+	db_client = Client(
+			id = client_data['client_id'],
+			client_name = client_data['client_name']
+		)
+
+	db.session.add(db_client)
+
+	return db_client
 
 # Given a project ID, return the project object from the database.
 # Can provide a project list, to avoid unneeded database queries.
@@ -347,13 +412,14 @@ def get_current_toggl_entry():
 
 	return current_entry
 
+# Return a dictionary of all the user data. (Projects, clients, etc)
+# Store it as an app variable, so we only make the API request once.
 def get_user_toggl_data():
-	user_data = current_app.toggl.request("https://www.toggl.com/api/v8/me?with_related_data=true")['data']
+	if not current_app.user_toggl_data:
+		request_url = "https://www.toggl.com/api/v8/me?with_related_data=true"
+		current_app.user_toggl_data = current_app.toggl.request(request_url)['data']
 
-	projects = user_data['projects']
-	clients = user_data['clients']
-
-	return user_data
+	return current_app.user_toggl_data
 
 def get_all_projects_from_database():
 	#print('get_projects_from_database')
