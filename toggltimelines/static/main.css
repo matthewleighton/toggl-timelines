@@ -650,6 +650,7 @@ svg {
 
 .load-past-readthroughs {
   margin-top: 5px;
+  overflow-anchor: none;
 }
 
 .reading-reload {
