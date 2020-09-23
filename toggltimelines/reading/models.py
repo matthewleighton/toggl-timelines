@@ -267,7 +267,6 @@ class Readthrough(db.Model):
 		if not self.target_end_date:
 			return 'no-end-date'
 
-
 	# Can be passed a value to test against, instead of using the daily_reading_goal attribute.
 	def is_daily_reading_goal_complete(self, daily_goal=False):
 		seconds_today = self.get_readthrough_time_today(raw=True) / 1000
@@ -314,8 +313,6 @@ class Readthrough(db.Model):
 
 		if self.book_format == 'physical':
 			current_position = current_position - self.first_page + 1
-
-			print(f"Current position: {current_position}")
 
 		if current_position == 0:
 			if raw:
@@ -408,8 +405,6 @@ class Readthrough(db.Model):
 
 			self.target_end_date = dt
 
-
-
 			return self.target_end_date
 
 	def get_days_until_target_end(self, raw=False):
@@ -420,7 +415,7 @@ class Readthrough(db.Model):
 		if raw:
 			return days
 
-		return f"{days} days"
+		return self.pluralize_days(days)
 
 	# Returns units per day
 	def get_required_daily_units_for_target_end(self, raw=False):
@@ -563,7 +558,35 @@ class Readthrough(db.Model):
 		if raw:
 			return streak
 
-		if streak == 1:
-			return f"{streak} day"
+		return self.pluralize_days(streak)
 
-		return f"{streak} days"
+	def get_estimated_total_days(self, raw=False):
+		estimated_completion_date = self.get_estimated_completion_date(raw=True)
+		
+		days = (estimated_completion_date - self.start_date).days + 1
+
+		if raw:
+			return days
+
+		return_string = self.pluralize_days(days)
+
+		return return_string
+
+		percentage = round(days*100/365, 1)
+
+		return f"{return_string} <span>({percentage}% of year)</span>"
+
+	def get_estimated_year_percentage(self, raw=False):
+		estimated_days = self.get_estimated_total_days(raw=True)
+
+		percentage = round(estimated_days*100/365, 1)
+
+		return percentage
+
+	def pluralize_days(self, number):
+		string = f"{number} day"
+
+		if number != 1:
+			string += "s"
+
+		return string

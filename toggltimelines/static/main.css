@@ -585,6 +585,11 @@ svg {
   margin-top: 117px;
 }
 
+.year-percentage-estimate {
+  font-size: 13.5px;
+  font-style: italic;
+}
+
 .readthough-details {
   display: inline-block;
 }
