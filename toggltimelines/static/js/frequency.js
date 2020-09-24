@@ -99,6 +99,11 @@ $('#frequency_graph_submit').on('click', function() {
 		}
 
 		serialized_object['y_axis_type'] = $("select[name='y_axis_type']").val()
+		serialized_object['scope_type'] = $("input[type='radio'][name='scope_type']:checked").val()
+		serialized_object['graph_type'] = $("input[type='radio'][name='graph_type']:checked").val()
+		serialized_object['graph_style'] = $("input[type='radio'][name='graph_style']:checked").val()
+
+		console.log(serialized_object)
 
 		submission_data.push(serialized_object)
 	})
@@ -113,8 +118,11 @@ $('#frequency_graph_submit').on('click', function() {
 		success: function(response) {
 			console.log(response)
 			scope_type = get_scope_type()
+			graph_type = get_graph_type()
+			graph_style = get_graph_style()
+			console.log(graph_style)
 
-			if (scope_type == 'minutes') {
+			if (graph_style == 'line') {
 				create_line_graph(response)
 			} else {
 				create_bar_graph(response, scope_type)
@@ -163,21 +171,40 @@ function get_scope_type() {
 	return $("input[name='scope_type']:checked").val()
 }
 
-function get_x_tick_values() {
-	hours = []
-
-	for (var i = 0; i <= 24; i++) {
-		hours.push(i*60)
-	}
-
-	return hours
+function get_graph_type() {
+	return $("input[name='graph_type']:checked").val()	
 }
 
-function get_x_tick_format(d) {
-	return d/60
+function get_graph_style() {
+	return $("input[name='graph_style']:checked").val()
+
+}
+
+function get_x_tick_values(data) {
+	if (graph_type == 'frequency' && scope_type == 'minutes') {
+		hours = []
+		for (var i = 0; i <= 24; i++) {
+			hours.push(i*60)
+		}
+		return hours
+	} else {
+		return null;
+	}
+}
+
+function get_x_tick_format(d, data, graph_type, scope_type) {
+	if (graph_type == 'frequency' && scope_type == 'minutes') {
+		console.log(d)
+		console.log(d/60)
+		return d/60
+	}
+
+	return data[0]['keys'][d]
 }
 
 function get_y_tick_format(d, y_axis_type) {
+	return d
+
 	if (y_axis_type == 'absolute') {
 		return d
 	}
@@ -218,6 +245,7 @@ function create_bar_graph(data, user_scope) {
 
 
 	var scope_types = {
+		'minutes': [],
 		'days': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
 		'months': ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 	}
@@ -234,7 +262,7 @@ function create_bar_graph(data, user_scope) {
 	var height = $(window).height() - 100 - margin.top - margin.bottom;
 
 	var max_frequency = d3.max(data, function(array) {
-		return d3.max(array[user_scope])
+		return d3.max(array['entry_data'])
 	})
 
 	var yScale = d3.scaleLinear()
@@ -296,30 +324,33 @@ function create_bar_graph(data, user_scope) {
 		.enter()
 			.append('g')
 			.selectAll('rect')
+			.data(data)
 
-			.data(function(d, i) {
-				a = []
-				for (var j = d[user_scope].length - 1; j >= 0; j--) {
-					a.push({
-						days: d[user_scope],
-						months: d[user_scope],
-						details: d['line_data'],
-						line_number: i
-					})
-				}
+			// .data(function(d, i) {
+			// 	a = []
+			// 	for (var j = d['entry_data'].length - 1; j >= 0; j--) {
+			// 		a.push({
+			// 			entry_data: d['entry_data'],
+			// 			//months: d['entry_data'],
+			// 			details: d['line_data'],
+			// 			line_number: i
+			// 		})
+			// 	}
 
-				return a
-			})
+			// 	return a
+			// })
+
 			.enter()
 				.append('rect')
 				.attr('x', function(d,i) {
 					return (xScale(i) + xSubgroup(d['line_number']))
 				})
 				.attr('y', function(d,i) {
-					return yScale(d[user_scope][i])
+					console.log(d)
+					return yScale(d['entry_data'][i])
 				})
 				.attr('height', function(d,i) {
-					return (height - yScale(d[user_scope][i]))
+					return (height - yScale(d['entry_data'][i]))
 				})
 				.attr('width', function(d,i) {
 					return xSubgroup.bandwidth()
@@ -361,6 +392,9 @@ function reset_graph_view() {
 function create_line_graph(data) {
     reset_graph_view()
 
+    console.log('Data: ')
+    console.log(data)
+
     var y_axis_type = $("select[name='y_axis_type']").val()
 
     var margin = {top: 10, right: 30, bottom: 50, left: 60};
@@ -371,19 +405,26 @@ function create_line_graph(data) {
 	var max_time = 1439
 	var min_time = 0
 
+	var min_x = 0
+	var max_x = data[0]['values'].length
+
 	var max_frequency = d3.max(data, function(array) {
-		return d3.max(array['minutes']);
+		return d3.max(array['values']);
 	});
 
-	var min_frequency = 0;
+	var min_frequency = d3.min(data, function(array) {
+		return d3.min(array['values']);
+	});
+
+
 	
 	var y = d3.scaleLinear()
-		.domain([0, max_frequency])
+		.domain([min_frequency, max_frequency])
 		.range([height, 0])
 		.nice();
 
 	var x = d3.scaleLinear()
-		.domain([min_time, max_time])
+		.domain([min_x, max_x])
 		.range([0, width])
 		.nice();
 
@@ -404,12 +445,11 @@ function create_line_graph(data) {
 
 	for (var i = 0; i <= data.length - 1; i++) {
 		svg.append('path')
-			.data([data[i]['minutes']])
-			//.data([data[i]])
+			.data([data[i]['values']])
 			.attr('class', 'line')
 			.attr('class', 'graph_line')
 			.attr('d', line)
-			.attr('stroke', data[i]['line_data']['color'])		
+			.attr('stroke', data[i]['line_data']['color'])
 	}
 
 	var legend = svg.selectAll('g')
@@ -440,18 +480,18 @@ function create_line_graph(data) {
 
 	var current_time_in_minutes = get_minutes_since_midnight()
 
-	svg.append('line')
-		.attr('x1', x(current_time_in_minutes))
-		.attr('y1', 0)
-		.attr('x2', x(current_time_in_minutes))
-		.attr('y1', height)
-		.style("stroke-width", 2)
-		.style("stroke", "black")
-		.style("fill", "none");
+	if (graph_type == 'frequency' && scope_type == 'minutes') {
+		svg.append('line')
+			.attr('x1', x(current_time_in_minutes))
+			.attr('y1', 0)
+			.attr('x2', x(current_time_in_minutes))
+			.attr('y1', height)
+			.style("stroke-width", 2)
+			.style("stroke", "black")
+			.style("fill", "none");
+	}
 
 	
-
-
 
 	// TODO: Currently this only takes into account y distance. It needs to also consider x axis distance to lines.
 	function moved() {
@@ -469,7 +509,7 @@ function create_line_graph(data) {
 
 		for (var i = data.length - 1; i >= 0; i--) {
 
-			y_value = data[i]['minutes'][xm]
+			y_value = data[i]['entry_data'][xm]
 
 
 			diff = Math.abs(ym - y_value)
@@ -491,12 +531,15 @@ function create_line_graph(data) {
 			})
 	}
 
+	number_of_ticks = d3.min([width/60, data[0]['keys'].length])
+
 	svg.append('g')
 		.attr('transform', 'translate(0,' + height + ')')
 		.call(
 			d3.axisBottom(x)
-			.tickValues(get_x_tick_values())
-			.tickFormat(d => get_x_tick_format(d))
+			.ticks(number_of_ticks)
+			.tickValues(get_x_tick_values(data))
+			.tickFormat(d => get_x_tick_format(d, data, graph_type, scope_type))
 		);
 	
 	svg.append('g')
@@ -505,8 +548,9 @@ function create_line_graph(data) {
 			.tickFormat(d => get_y_tick_format(d, y_axis_type))
 		);
 
-	//svg.on('mousemove', moved)
 	d3.select('#frequency_graph_container').on('mousemove', moved)
+
+	
 
 	/* GRID LINES-------
 	svg.append('g')

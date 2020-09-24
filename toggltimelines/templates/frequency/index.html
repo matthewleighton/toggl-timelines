@@ -22,7 +22,16 @@
 
 				<select name="y_axis_type" id="frequecy_y_axis_type" class="form-control"></select>
 
-				<div class="btn-group btn-group-toggle sort_type_radio" data-toggle="buttons">
+				<div class="btn-group btn-group-toggle graph_type" data-toggle="buttons">
+					<label class="btn btn-secondary active">
+						<input type="radio" name="graph_type" id="normal" autocomplete="off" value="normal"> Normal
+					</label>
+					<label class="btn btn-secondary">
+						<input type="radio" name="graph_type" id="frequency" autocomplete="off" value="frequency" checked> Frequency
+					</label>
+				</div>
+
+				<div class="btn-group btn-group-toggle scope_type" data-toggle="buttons">
 					<label class="btn btn-secondary active">
 						<input type="radio" name="scope_type" id="frequency_minutes" autocomplete="off" value="minutes" checked> Minutes
 					</label>
@@ -31,6 +40,14 @@
 					</label>
 					<label class="btn btn-secondary">
 						<input type="radio" name="scope_type" id="frequency_months" autocomplete="off" value="months"> Months
+					</label>
+				</div>
+				<div class="btn-group btn-group-toggle graph_style" data-toggle="buttons">
+					<label class="btn btn-secondary active">
+						<input type="radio" name="graph_style" id="line" autocomplete="off" value="line" checked> Line Graph
+					</label>
+					<label class="btn btn-secondary">
+						<input type="radio" name="graph_style" id="bar" autocomplete="off" value="bar"> Bar Graph
 					</label>
 				</div>
 			</div>

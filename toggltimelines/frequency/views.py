@@ -20,6 +20,12 @@ from toggltimelines import db
 from toggltimelines.timelines.models import Entry, Project
 from toggltimelines import helpers
 
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
+weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
 bp = Blueprint("frequency", __name__)
 
 @bp.route("/frequency")
@@ -29,7 +35,7 @@ def index():
 	projects = helpers.get_project_data()
 
 	page_data = {
-		'projects': projects,
+		'projects': projects
 	}
 
 	response = make_response(render_template('frequency/index.html', data=page_data))
@@ -54,21 +60,37 @@ def new_frequency_line():
 
 	return jsonify(render_template('frequency/frequency_line_controls.html', data=page_data))
 
+
+
 @bp.route('/frequency/frequency_data', methods=['POST'])
 def frequency_data():
 	submission_data = request.json
 
+	print(submission_data)
+
 	data = []
 
-	for line in submission_data:
-		days = [0, 0, 0, 0, 0, 0, 0]
+	scope_type = submission_data[0]['scope_type']
+	graph_type = submission_data[0]['graph_type']
+	print(graph_type)
 
-		months = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+	for line in submission_data:
+		frequency_weekdays = [0, 0, 0, 0, 0, 0, 0]
+
+		frequency_months = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
+		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d')
+
+
+		line_data_container = get_line_data_container(graph_type, scope_type, start_datetime, end_datetime)
+
+		#pp.pprint(line_data_container)
 
 		if isinstance(line['projects'], str):
 			line['projects'] = [line['projects']]
-		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
-		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d')
+
+		
 
 		#print(line['description'])
 	
@@ -83,82 +105,251 @@ def frequency_data():
 
 
 
-		day_minutes_list = get_day_minutes_list()
+		frequency_minutes = get_day_minutes_list()
+
+
+		calendar_period_dict = get_calendar_period_dict(scope_type, start_datetime, end_datetime)
+
+		target_date = start_datetime
+
+
+		if scope_type == 'days':
+			date_format = '%Y-%m-%d'
+		elif scope_type == 'months':
+			date_format = '%Y-%m'
+		else:
+			date_format = '%Y'
+
 
 		for entry in entries:
 			
-			entry_start = entry.get_local_start_time()
+			# entry_start = entry.get_local_start_time()
 
-			duration_minutes = math.ceil(entry.dur / 60000)
-			target_minute = get_minute_of_day(entry_start)
+			# duration_minutes = math.ceil(entry.dur / 60000)
+			# target_minute = get_minute_of_day(entry_start)
 
-			weekday 	 = entry_start.weekday()
-			month 		 = entry_start.month
-			day_of_month = entry_start.day
-			year 		 = entry_start.year
+			# weekday 	 = entry_start.weekday()
+			# month 		 = entry_start.month
+			# day_of_month = entry_start.day
+			# year 		 = entry_start.year
 
-			# Minute 1440 does not exist.
-			if target_minute >= 1440:
-				target_minute = 0
+			# target_day = entry_start
 
-			i = 0
-			while i <= duration_minutes:
-				day_minutes_list[target_minute] += 1
-				target_minute += 1
 
-				days[weekday] += 1
-				months[month] += 1
 
-				if target_minute >= 1440: # If the entry overflows to the next day...
-					target_minute = 0
+			# # Minute 1440 does not exist.
+			# if target_minute >= 1440:
+			# 	target_minute = 0
 
-					weekday += 1
-					day_of_month += 1
 
-					if weekday == 7:
-						weekday = 0#
 
-					last_day_of_month = calendar.monthrange(year, month)[1]
+			target_moment = entry.get_local_start_time()
 
-					if day_of_month > last_day_of_month:
-						month += 1
+			while target_moment <= entry.get_local_end_time():
+				moment_label = get_moment_label(target_moment, graph_type, scope_type)
+				line_data_container[moment_label] += 1
 
-						if month > 12:
-							month = 1
+				target_moment += timedelta(minutes=1)
 
-				i += 1
+
+			# i = 0
+			# while i <= duration_minutes:
+
+			# 	frequency_minutes[target_minute] += 1
+
+
+
+			# 	datestamp = target_day.strftime(date_format)
+
+			# 	if graph_type == 'normal':
+			# 		calendar_period_dict[datestamp] += 1
+
+			# 	target_minute += 1
+
+			# 	frequency_weekdays[weekday] += 1
+			# 	frequency_months[month] += 1
+
+			# 	if target_minute >= 1440: # If the entry overflows to the next day...
+			# 		target_minute = 0
+			# 		target_day += timedelta(days=1)
+
+			# 		weekday += 1
+			# 		day_of_month += 1
+
+			# 		if weekday == 7:
+			# 			weekday = 0
+
+			# 		last_day_of_month = calendar.monthrange(year, month)[1]
+
+			# 		if day_of_month > last_day_of_month:
+			# 			month += 1
+
+			# 			if month > 12:
+			# 				month = 1
+
+			# 	i += 1
 
 		# Semi-temporary fix because we end up getting a lot of additional minutes tracked at minute 0.
-		day_minutes_list[0] = day_minutes_list[1439]
+		# frequency_minutes[0] = frequency_minutes[1439]
 
-		if submission_data[0]['y_axis_type'] in ['relative', 'percentage-tracked-time']:
-			period_duration = end_datetime - start_datetime
-			day_minutes_list = [i / period_duration.days for i in day_minutes_list]
 
-			total_minutes = sum(days)
 
-			days = list(map(lambda n: n/total_minutes, days))
 
-			months = list(map(lambda n: n/total_minutes, months))
 
-		elif submission_data[0]['y_axis_type'] == 'average':
-			weekday_occurances = get_weekday_occurances(start_datetime, end_datetime)
 
-			for i in range(0, 7):
-				days[i] = days[i] / weekday_occurances[i]
 
-		months.pop(0) # Remove the first month, since we want them to be zero indexed.
+		# if submission_data[0]['y_axis_type'] in ['relative', 'percentage-tracked-time']:
+		# 	period_duration = end_datetime - start_datetime
+		# 	frequency_minutes = [i / period_duration.days for i in frequency_minutes]
 
-		print(months)
+		# 	total_minutes = sum(frequency_weekdays)
+
+		# 	frequency_weekdays = list(map(lambda n: n/total_minutes, frequency_weekdays))
+
+		# 	frequency_months = list(map(lambda n: n/total_minutes, frequency_months))
+
+		# elif submission_data[0]['y_axis_type'] == 'average':
+		# 	weekday_occurances = get_weekday_occurances(start_datetime, end_datetime)
+
+		# 	for i in range(0, 7):
+		# 		frequency_weekdays[i] = frequency_weekdays[i] / weekday_occurances[i]
+
+
+
+
+
+
+
+		# frequency_months.pop(0) # Remove the first month, since we want them to be zero indexed.
+
+		# print(graph_type)
+		# print(scope_type)
+
+
+
+
+		# if graph_type == 'normal':
+		# 	entry_data = calendar_period_dict
+		# else:
+		# 	if scope_type == 'minutes':
+		# 		entry_data = frequency_minutes
+		# 		print('Weeeeee!')
+		# 	elif scope_type == 'days':
+		# 		entry_data = frequency_weekdays
+		# 	elif scope_type == 'months':
+		# 		entry_data = frequency_months
+
+
+
+
+
+		#print(entry_data)
+
+		# pp.pprint(line_data_container)
+
+		values = list(line_data_container.values())
+		keys = list(line_data_container.keys())
+
 
 		data.append({
 			'line_data': line,
-			'minutes': day_minutes_list,
-			'days': days,
-			'months': months
+			#'minutes': frequency_minutes,
+			#'days': frequency_weekdays,
+			#'months': frequency_months,
+			#'calendar': calendar_period_dict
+			'entry_data': line_data_container,
+			'values': values,
+			'keys': keys
 		})
 
 	return jsonify(data)
+
+def get_line_data_container(graph_type, scope_type, start_datetime, end_datetime):
+	if graph_type == 'frequency':
+		if scope_type == 'minutes':
+			 line_data_container = { i : 0 for i in list(range(0,1440)) }
+		elif scope_type == 'days':
+			line_data_container = {i : 0 for i in weekdays}
+		elif scope_type == 'months':
+			line_data_container = {i : 0 for i in months}
+	else:
+		line_data_container = {}
+		target = start_datetime
+
+		if scope_type == 'minutes':
+			increment = 1
+			date_format = '%Y-%m-%d %H:%M'
+		elif scope_type == 'days':
+			increment = 60*24
+			date_format = '%Y-%m-%d'
+		elif scope_type == 'months':
+			increment = 60*24
+			date_format = '%Y-%m'
+			
+		while target <= end_datetime:
+			date = target.strftime(date_format)
+
+			if not date in line_data_container.keys():
+				line_data_container[date] = 0
+
+			target += timedelta(minutes=increment)
+
+	return line_data_container
+
+def get_moment_label(moment_datetime,graph_type, scope_type):
+	if graph_type == 'normal':
+		if scope_type == 'minutes':
+			date_format = '%Y-%m-%d %H:%M'
+		elif scope_type == 'days':
+			date_format = '%Y-%m-%d'
+		elif scope_type == 'months':
+			date_format = '%Y-%m'
+
+		return moment_datetime.strftime(date_format)
+	else:
+		if scope_type == 'minutes':
+			label = moment_datetime.hour * 60 + moment_datetime.minute
+		elif scope_type == 'days':
+			day_number = moment_datetime.weekday()
+			label = weekdays[day_number]
+		elif scope_type == 'months':
+			month_number = moment_datetime.month - 1
+			label = months[month_number]
+
+		return label
+
+
+def get_calendar_period_dict(scope_type, start_datetime, end_datetime):
+	if scope_type == 'days':
+		date_format = '%Y-%m-%d'
+	elif scope_type == 'months':
+		date_format = '%Y-%m'
+	elif scope_type == 'years':
+		date_format = '%Y'
+	else:
+		return {}
+
+	calendar_period_dict = {}
+
+	target_datetime = start_datetime
+
+	while target_datetime <= end_datetime:
+		date = target_datetime.strftime(date_format)
+		calendar_period_dict[date] = 0
+
+		if scope_type == 'days':
+			target_datetime += timedelta(days=1)
+		elif scope_type == 'months':
+			target_datetime += timedelta(days=1)
+		elif scope_type == 'years':
+			target_datetime += timedelta(years=1)
+
+	return calendar_period_dict
+
+
+
+
+
 
 # Return a list of the number of times each weekdays occured between two dates.
 def get_weekday_occurances(start, end):
