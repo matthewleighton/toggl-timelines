@@ -1,15 +1,48 @@
 
 $(document).ready(function() {
-	update_y_axis_select_options()
+	// update_y_axis_select_options()
 	$('.new_frequency_line_button').click()
 	toggle_line_date_display()
+	toggle_y_axis_type()
 })
 
+// On change of graph type...
 $('body').on('change', 'input[type=radio][name=graph_type]', function() {
-	
-
+	toggle_y_axis_type()
 	toggle_line_date_display()
 })
+
+// On change of scope type...
+$('body').on('change', 'input[type=radio][name=scope_type]', function() {
+	toggle_y_axis_type()
+})
+
+function toggle_y_axis_type() {
+	graph_type = get_graph_type()
+	scope_type = get_scope_type()
+
+	select_element = $('#y_axis_type')
+
+	console.log(select_element)
+
+	select_element.empty()
+
+	var absolute = "<option value='absolute'>Absolute</option>"
+	var average = "<option value='average'>Average Hours</option>"
+	var percentage_tracked = "<option value='percentage_tracked'>Percentage of tracked time</option>"
+	var percentage_occurance = "<option value='percentage_occurance'>Percentage of times project occurs</option>"
+
+	select_element.append(absolute)
+
+	if (graph_type == 'normal') return;
+
+	if (scope_type == 'minutes') {
+		select_element.append(percentage_occurance)
+	} else {
+		select_element.append(average)
+		select_element.append(percentage_tracked)
+	}	
+}
 
 function get_graph_type() {
 	return $("input[type=radio][name=graph_type]:checked").val()
@@ -19,10 +52,10 @@ function toggle_line_date_display() {
 	graph_type = get_graph_type()
 	if (graph_type == 'normal') {
 		$('body').addClass('hide-line-date-controls')
-		$('.global-graph-dates').removeClass('hidden')
+		$('#global-graph-dates').removeClass('hidden')
 	} else {
 		$('body').removeClass('hide-line-date-controls')
-		$('.global-graph-dates').addClass('hidden')
+		$('#global-graph-dates').addClass('hidden')
 	}
 }
 
@@ -74,7 +107,7 @@ $('#graph_line_controllers').on('change', '.frequency_project_selector', functio
 	}
 })
 
-$('input[type=radio][name=scope_type]').change(update_y_axis_select_options)
+// $('input[type=radio][name=scope_type]').change(update_y_axis_select_options)
 
 $('.new_frequency_line_button').on('click', function() {
 	$.ajax({
@@ -167,41 +200,41 @@ $('#frequency_graph_submit').on('click', function() {
 	})
 })
 
-function update_y_axis_select_options() {
-	var options
-	var dropdown = $("select[name='y_axis_type']")
+// function update_y_axis_select_options() {
+// 	var options
+// 	var dropdown = $("select[name='y_axis_type']")
 
-	var selected_scope = $("input[type=radio][name=scope_type]:checked").val()
+// 	var selected_scope = $("input[type=radio][name=scope_type]:checked").val()
 
 	
-	var minutes_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
-	var minutes_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total minutes tracked at time)')	
+// 	var minutes_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
+// 	var minutes_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total minutes tracked at time)')	
 
-	var days_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
-	var days_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total hours tracked on day)')
-	var days_average = $('<option></option>').attr('value', 'average').text('Average hours tracked on each day')
+// 	var days_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
+// 	var days_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total hours tracked on day)')
+// 	var days_average = $('<option></option>').attr('value', 'average').text('Average hours tracked on each day')
 
-	var months_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
-	var months_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total hours tracked in month)')
+// 	var months_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
+// 	var months_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total hours tracked in month)')
 
-	switch(selected_scope) {
-		case 'minutes':
-			options = [minutes_absolute, minutes_relative]
-			break;
-		case 'days':
-			options = [days_average, days_absolute, days_relative]
-			break;
-		case 'months':
-			options = [months_absolute, months_relative]
-			break;
-	}
+// 	switch(selected_scope) {
+// 		case 'minutes':
+// 			options = [minutes_absolute, minutes_relative]
+// 			break;
+// 		case 'days':
+// 			options = [days_average, days_absolute, days_relative]
+// 			break;
+// 		case 'months':
+// 			options = [months_absolute, months_relative]
+// 			break;
+// 	}
 
-	dropdown.empty()
+// 	dropdown.empty()
 
-	for (var i = options.length - 1; i >= 0; i--) {
-		dropdown.append(options[i])
-	}
-}
+// 	for (var i = options.length - 1; i >= 0; i--) {
+// 		dropdown.append(options[i])
+// 	}
+// }
 
 function get_scope_type() {
 	return $("input[name='scope_type']:checked").val()

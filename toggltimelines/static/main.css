@@ -469,6 +469,10 @@ body.hide-line-date-controls .line-date-control {
   display: none;
 }
 
+#graph_controls #global-graph-dates {
+  margin-left: 20px;
+}
+
 /* Reading Page */
 
 .error-field {

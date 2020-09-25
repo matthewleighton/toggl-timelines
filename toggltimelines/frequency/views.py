@@ -85,14 +85,11 @@ def frequency_data():
 
 		line_data_container = get_line_data_container(graph_type, scope_type, start_datetime, end_datetime)
 
-		#pp.pprint(line_data_container)
-
 		if isinstance(line['projects'], str):
 			line['projects'] = [line['projects']]
 
 		
 
-		#print(line['description'])
 	
 		# TODO: Need to consider the timezones here.
 		# The request will be made purely in UTC, but it should be first converted from the user's timezone? 
@@ -103,10 +100,7 @@ def frequency_data():
 			description=line['description']
 		)
 
-
-
 		frequency_minutes = get_day_minutes_list()
-
 
 		calendar_period_dict = get_calendar_period_dict(scope_type, start_datetime, end_datetime)
 
@@ -122,27 +116,7 @@ def frequency_data():
 
 
 		for entry in entries:
-			
-			# entry_start = entry.get_local_start_time()
-
-			# duration_minutes = math.ceil(entry.dur / 60000)
-			# target_minute = get_minute_of_day(entry_start)
-
-			# weekday 	 = entry_start.weekday()
-			# month 		 = entry_start.month
-			# day_of_month = entry_start.day
-			# year 		 = entry_start.year
-
-			# target_day = entry_start
-
-
-
-			# # Minute 1440 does not exist.
-			# if target_minute >= 1440:
-			# 	target_minute = 0
-
-
-
+		
 			target_moment = entry.get_local_start_time()
 
 			while target_moment <= entry.get_local_end_time():
@@ -151,101 +125,27 @@ def frequency_data():
 
 				target_moment += timedelta(minutes=1)
 
+		y_axis_type = submission_data[0]['y_axis_type']
 
-			# i = 0
-			# while i <= duration_minutes:
+		values = list(line_data_container.values())
 
-			# 	frequency_minutes[target_minute] += 1
+		if y_axis_type == 'percentage_tracked':
+			total_minutes = sum(values)
 
+			for key, value in line_data_container.items():
+				line_data_container[key] = (value/total_minutes) * 100
+		
+		elif y_axis_type == 'average':
+			time_block_occurances = get_time_block_occurances(start_datetime, end_datetime, scope_type)
+			pp.pprint(time_block_occurances)
+			for key, value in line_data_container.items():
+				line_data_container[key] = line_data_container[key] / time_block_occurances[key]
+		elif y_axis_type == 'percentage_occurance':
+			# Note: this only makes sense for Frequency-Minute graphs
+			days = (end_datetime - start_datetime).days
 
-
-			# 	datestamp = target_day.strftime(date_format)
-
-			# 	if graph_type == 'normal':
-			# 		calendar_period_dict[datestamp] += 1
-
-			# 	target_minute += 1
-
-			# 	frequency_weekdays[weekday] += 1
-			# 	frequency_months[month] += 1
-
-			# 	if target_minute >= 1440: # If the entry overflows to the next day...
-			# 		target_minute = 0
-			# 		target_day += timedelta(days=1)
-
-			# 		weekday += 1
-			# 		day_of_month += 1
-
-			# 		if weekday == 7:
-			# 			weekday = 0
-
-			# 		last_day_of_month = calendar.monthrange(year, month)[1]
-
-			# 		if day_of_month > last_day_of_month:
-			# 			month += 1
-
-			# 			if month > 12:
-			# 				month = 1
-
-			# 	i += 1
-
-		# Semi-temporary fix because we end up getting a lot of additional minutes tracked at minute 0.
-		# frequency_minutes[0] = frequency_minutes[1439]
-
-
-
-
-
-
-
-		# if submission_data[0]['y_axis_type'] in ['relative', 'percentage-tracked-time']:
-		# 	period_duration = end_datetime - start_datetime
-		# 	frequency_minutes = [i / period_duration.days for i in frequency_minutes]
-
-		# 	total_minutes = sum(frequency_weekdays)
-
-		# 	frequency_weekdays = list(map(lambda n: n/total_minutes, frequency_weekdays))
-
-		# 	frequency_months = list(map(lambda n: n/total_minutes, frequency_months))
-
-		# elif submission_data[0]['y_axis_type'] == 'average':
-		# 	weekday_occurances = get_weekday_occurances(start_datetime, end_datetime)
-
-		# 	for i in range(0, 7):
-		# 		frequency_weekdays[i] = frequency_weekdays[i] / weekday_occurances[i]
-
-
-
-
-
-
-
-		# frequency_months.pop(0) # Remove the first month, since we want them to be zero indexed.
-
-		# print(graph_type)
-		# print(scope_type)
-
-
-
-
-		# if graph_type == 'normal':
-		# 	entry_data = calendar_period_dict
-		# else:
-		# 	if scope_type == 'minutes':
-		# 		entry_data = frequency_minutes
-		# 		print('Weeeeee!')
-		# 	elif scope_type == 'days':
-		# 		entry_data = frequency_weekdays
-		# 	elif scope_type == 'months':
-		# 		entry_data = frequency_months
-
-
-
-
-
-		#print(entry_data)
-
-		# pp.pprint(line_data_container)
+			for key, value in line_data_container.items():
+				line_data_container[key] = (line_data_container[key] / days)*100
 
 		values = list(line_data_container.values())
 		keys = list(line_data_container.keys())
@@ -253,16 +153,72 @@ def frequency_data():
 
 		data.append({
 			'line_data': line,
-			#'minutes': frequency_minutes,
-			#'days': frequency_weekdays,
-			#'months': frequency_months,
-			#'calendar': calendar_period_dict
 			'entry_data': line_data_container,
 			'values': values,
 			'keys': keys
 		})
 
 	return jsonify(data)
+
+def get_time_block_occurances(start_datetime, end_datetime, scope_type):
+	print(scope_type)
+
+	if scope_type == 'days':
+		return get_weekday_occurances(start_datetime, end_datetime)
+	elif scope_type == 'months':
+		return get_month_occurances(start_datetime, end_datetime)
+
+def get_weekday_occurances(start_datetime, end_datetime):
+	period = end_datetime - start_datetime
+	number_of_days = period.days
+
+	weekday_occurances = [0, 0, 0, 0, 0, 0, 0]
+
+	full_weeks = number_of_days // 7
+	remainder = number_of_days % 7
+	first_day = start_datetime.weekday()
+
+	for i in range(0, 7):
+		weekday_occurances[i] = full_weeks
+	
+	for i in range(0, remainder):
+		weekday_occurances[(first_day + i) % 7] += 1
+
+	# Turn the result into our dictionary format.
+	return_value = {}
+	for i, day in enumerate(weekdays):
+		return_value[day] = weekday_occurances[i]
+
+	return return_value
+
+def get_month_occurances(start_datetime, end_datetime):
+	period = end_datetime - start_datetime
+
+	month_occurances = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+	target_datetime = start_datetime
+	while target_datetime <= end_datetime:
+		month_number = target_datetime.month - 1
+		month_occurances[month_number] += 1
+
+		print(month_number)
+
+		target_datetime += timedelta(days=35)
+		target_datetime = target_datetime.replace(day=1)
+
+	# Turn the result into our dictionary format.
+	return_value = {}
+	for i, day in enumerate(months):
+		return_value[day] = month_occurances[i]
+
+	return return_value
+
+
+
+
+
+
+
 
 def get_line_data_container(graph_type, scope_type, start_datetime, end_datetime):
 	if graph_type == 'frequency':
@@ -346,29 +302,6 @@ def get_calendar_period_dict(scope_type, start_datetime, end_datetime):
 
 	return calendar_period_dict
 
-
-
-
-
-
-# Return a list of the number of times each weekdays occured between two dates.
-def get_weekday_occurances(start, end):
-	period = end - start
-	number_of_days = period.days
-
-	weekday_occurances = [0, 0, 0, 0, 0, 0, 0]
-
-	full_weeks = number_of_days // 7
-	remainder = number_of_days % 7
-	first_day = start.weekday()
-
-	for i in range(0, 7):
-		weekday_occurances[i] = full_weeks
-	
-	for i in range(0, remainder):
-		weekday_occurances[(first_day + i) % 7] += 1
-
-	return weekday_occurances
 
 # Return a dictionary with minutes from 0 to 1440, each with a value of 0.
 def get_day_minutes_list():
