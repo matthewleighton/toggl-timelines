@@ -3,6 +3,10 @@ body {
 	overflow-x: hidden;
 }
 
+.hidden {
+  display: none;
+}
+
 /* Home Page */
 
 .home_page_container {
@@ -461,7 +465,9 @@ svg {
   margin: 5px 3px;
 }
 
-
+body.hide-line-date-controls .line-date-control {
+  display: none;
+}
 
 /* Reading Page */
 

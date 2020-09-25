@@ -2,7 +2,29 @@
 $(document).ready(function() {
 	update_y_axis_select_options()
 	$('.new_frequency_line_button').click()
+	toggle_line_date_display()
 })
+
+$('body').on('change', 'input[type=radio][name=graph_type]', function() {
+	
+
+	toggle_line_date_display()
+})
+
+function get_graph_type() {
+	return $("input[type=radio][name=graph_type]:checked").val()
+}
+
+function toggle_line_date_display() {
+	graph_type = get_graph_type()
+	if (graph_type == 'normal') {
+		$('body').addClass('hide-line-date-controls')
+		$('.global-graph-dates').removeClass('hidden')
+	} else {
+		$('body').removeClass('hide-line-date-controls')
+		$('.global-graph-dates').addClass('hidden')
+	}
+}
 
 $('#frequency_settings_button').on('click', function() {
 	$('#frequency_graph_container').hide()
@@ -102,6 +124,20 @@ $('#frequency_graph_submit').on('click', function() {
 		serialized_object['scope_type'] = $("input[type='radio'][name='scope_type']:checked").val()
 		serialized_object['graph_type'] = $("input[type='radio'][name='graph_type']:checked").val()
 		serialized_object['graph_style'] = $("input[type='radio'][name='graph_style']:checked").val()
+
+		graph_type = get_graph_type()
+		if (graph_type == 'normal') {
+			start = $('.global-start-date').val()
+			serialized_object['start'] = start
+
+			end = $('.global-end-date').val()
+			serialized_object['end'] = end
+
+			console.log(start)
+			console.log(end)
+
+			console.log($('.global-start-date'))
+		}
 
 		console.log(serialized_object)
 
