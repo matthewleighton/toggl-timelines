@@ -60,6 +60,12 @@ def new_frequency_line():
 
 	return jsonify(render_template('frequency/frequency_line_controls.html', data=page_data))
 
+date_formats = {
+	'minutes': '%Y-%m-%d %H:%M',
+	'days': '%Y-%m-%d',
+	'weeks': '%W',
+	'months': '%Y-%m'
+}
 
 
 @bp.route('/frequency/frequency_data', methods=['POST'])
@@ -72,25 +78,17 @@ def frequency_data():
 
 	scope_type = submission_data[0]['scope_type']
 	graph_type = submission_data[0]['graph_type']
-	print(graph_type)
 
 	for line in submission_data:
-		frequency_weekdays = [0, 0, 0, 0, 0, 0, 0]
-
-		frequency_months = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
 		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
 		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d')
 
-
 		line_data_container = get_line_data_container(graph_type, scope_type, start_datetime, end_datetime)
+		#pp.pprint(line_data_container)
 
 		if isinstance(line['projects'], str):
 			line['projects'] = [line['projects']]
 
-		
-
-	
 		# TODO: Need to consider the timezones here.
 		# The request will be made purely in UTC, but it should be first converted from the user's timezone? 
 		entries = helpers.get_db_entries(
@@ -100,20 +98,7 @@ def frequency_data():
 			description=line['description']
 		)
 
-		frequency_minutes = get_day_minutes_list()
-
-		calendar_period_dict = get_calendar_period_dict(scope_type, start_datetime, end_datetime)
-
 		target_date = start_datetime
-
-
-		if scope_type == 'days':
-			date_format = '%Y-%m-%d'
-		elif scope_type == 'months':
-			date_format = '%Y-%m'
-		else:
-			date_format = '%Y'
-
 
 		for entry in entries:
 		
@@ -125,8 +110,8 @@ def frequency_data():
 
 				target_moment += timedelta(minutes=1)
 
-		y_axis_type = submission_data[0]['y_axis_type']
 
+		y_axis_type = submission_data[0]['y_axis_type']
 		values = list(line_data_container.values())
 
 		if y_axis_type == 'percentage_tracked':
@@ -160,19 +145,20 @@ def frequency_data():
 
 	return jsonify(data)
 
-def get_time_block_occurances(start_datetime, end_datetime, scope_type):
-	print(scope_type)
 
+# Get how many times a certain time block (week/month) occurs between two dates.
+def get_time_block_occurances(start_datetime, end_datetime, scope_type):
 	if scope_type == 'days':
 		return get_weekday_occurances(start_datetime, end_datetime)
 	elif scope_type == 'months':
 		return get_month_occurances(start_datetime, end_datetime)
 
+# Get how many times each weekday occurs between two dates.
 def get_weekday_occurances(start_datetime, end_datetime):
 	period = end_datetime - start_datetime
 	number_of_days = period.days
 
-	weekday_occurances = [0, 0, 0, 0, 0, 0, 0]
+	weekday_occurances = [0] * 7
 
 	full_weeks = number_of_days // 7
 	remainder = number_of_days % 7
@@ -191,17 +177,16 @@ def get_weekday_occurances(start_datetime, end_datetime):
 
 	return return_value
 
+# Get how many times each month occurs between two dates.
 def get_month_occurances(start_datetime, end_datetime):
 	period = end_datetime - start_datetime
 
-	month_occurances = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+	month_occurances = [0] * 12
 
 	target_datetime = start_datetime
 	while target_datetime <= end_datetime:
 		month_number = target_datetime.month - 1
 		month_occurances[month_number] += 1
-
-		print(month_number)
 
 		target_datetime += timedelta(days=35)
 		target_datetime = target_datetime.replace(day=1)
@@ -213,19 +198,15 @@ def get_month_occurances(start_datetime, end_datetime):
 
 	return return_value
 
-
-
-
-
-
-
-
+# Generate the main container which will hold the data for our line. 
 def get_line_data_container(graph_type, scope_type, start_datetime, end_datetime):
 	if graph_type == 'frequency':
 		if scope_type == 'minutes':
 			 line_data_container = { i : 0 for i in list(range(0,1440)) }
 		elif scope_type == 'days':
 			line_data_container = {i : 0 for i in weekdays}
+		elif scope_type == 'weeks':
+			line_data_container = {i: 0 for i in range(0, 54)}
 		elif scope_type == 'months':
 			line_data_container = {i : 0 for i in months}
 	else:
@@ -234,15 +215,18 @@ def get_line_data_container(graph_type, scope_type, start_datetime, end_datetime
 
 		if scope_type == 'minutes':
 			increment = 1
-			date_format = '%Y-%m-%d %H:%M'
-		elif scope_type == 'days':
+		else:
 			increment = 60*24
-			date_format = '%Y-%m-%d'
-		elif scope_type == 'months':
-			increment = 60*24
-			date_format = '%Y-%m'
+
+		date_format = date_formats[scope_type]
 			
 		while target <= end_datetime:
+			
+			if scope_type == 'weeks': # For weeks we're doing this inside of the loop,
+									  # since we need to remove the leading 0s from week number
+				week_number = int(target.strftime('%W'))
+				date_format = f"'%-y w{week_number}"
+
 			date = target.strftime(date_format)
 
 			if not date in line_data_container.keys():
@@ -252,65 +236,28 @@ def get_line_data_container(graph_type, scope_type, start_datetime, end_datetime
 
 	return line_data_container
 
+# Get a label describing the given moment.
+# i.e. date string or month name, etc.
 def get_moment_label(moment_datetime,graph_type, scope_type):
 	if graph_type == 'normal':
-		if scope_type == 'minutes':
-			date_format = '%Y-%m-%d %H:%M'
-		elif scope_type == 'days':
-			date_format = '%Y-%m-%d'
-		elif scope_type == 'months':
-			date_format = '%Y-%m'
+		date_format = date_formats[scope_type]
+
+		if scope_type == 'weeks':
+			week_number = int(moment_datetime.strftime('%W'))
+			date_format = f"'%-y w{week_number}"
 
 		return moment_datetime.strftime(date_format)
+
 	else:
 		if scope_type == 'minutes':
 			label = moment_datetime.hour * 60 + moment_datetime.minute
 		elif scope_type == 'days':
 			day_number = moment_datetime.weekday()
 			label = weekdays[day_number]
+		elif scope_type == 'weeks':
+			label = int(moment_datetime.strftime('%W'))
 		elif scope_type == 'months':
 			month_number = moment_datetime.month - 1
 			label = months[month_number]
 
 		return label
-
-
-def get_calendar_period_dict(scope_type, start_datetime, end_datetime):
-	if scope_type == 'days':
-		date_format = '%Y-%m-%d'
-	elif scope_type == 'months':
-		date_format = '%Y-%m'
-	elif scope_type == 'years':
-		date_format = '%Y'
-	else:
-		return {}
-
-	calendar_period_dict = {}
-
-	target_datetime = start_datetime
-
-	while target_datetime <= end_datetime:
-		date = target_datetime.strftime(date_format)
-		calendar_period_dict[date] = 0
-
-		if scope_type == 'days':
-			target_datetime += timedelta(days=1)
-		elif scope_type == 'months':
-			target_datetime += timedelta(days=1)
-		elif scope_type == 'years':
-			target_datetime += timedelta(years=1)
-
-	return calendar_period_dict
-
-
-# Return a dictionary with minutes from 0 to 1440, each with a value of 0.
-def get_day_minutes_list():
-	return [0] * 1440
-
-def get_minute_of_day(dt):
-	hour = dt.hour
-	minute = dt.minute
-
-	minute_of_day = 60*hour + minute
-
-	return minute_of_day
