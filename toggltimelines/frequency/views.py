@@ -150,6 +150,8 @@ def frequency_data():
 def get_time_block_occurances(start_datetime, end_datetime, scope_type):
 	if scope_type == 'days':
 		return get_weekday_occurances(start_datetime, end_datetime)
+	elif scope_type == 'weeks':
+		return get_week_occurances(start_datetime, end_datetime)
 	elif scope_type == 'months':
 		return get_month_occurances(start_datetime, end_datetime)
 
@@ -177,10 +179,32 @@ def get_weekday_occurances(start_datetime, end_datetime):
 
 	return return_value
 
+def get_week_occurances(start_datetime, end_datetime):
+	week_occurances = [0] * 54
+
+	target_datetime = start_datetime
+	current_week_number = int(target_datetime.strftime('%W'))
+	week_occurances[current_week_number] += 1
+
+	while target_datetime <= end_datetime:
+		target_datetime += timedelta(days=1)
+		new_week_number = int(target_datetime.strftime('%W'))
+
+		if new_week_number == current_week_number:
+			continue
+
+		current_week_number = new_week_number
+		week_occurances[current_week_number] += 1
+
+	# Turn the result into our dictionary format.
+	return_value = {}
+	for i, week in enumerate(week_occurances):
+		return_value[i] = week
+
+	return return_value
+
 # Get how many times each month occurs between two dates.
 def get_month_occurances(start_datetime, end_datetime):
-	period = end_datetime - start_datetime
-
 	month_occurances = [0] * 12
 
 	target_datetime = start_datetime
