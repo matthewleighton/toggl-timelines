@@ -8,14 +8,39 @@ $(document).ready(function() {
 
 // On change of graph type...
 $('body').on('change', 'input[type=radio][name=graph_type]', function() {
+	console.log('Changed graph type')
 	toggle_y_axis_type()
 	toggle_line_date_display()
+	hide_show_minutes_scope()
 })
 
 // On change of scope type...
 $('body').on('change', 'input[type=radio][name=scope_type]', function() {
 	toggle_y_axis_type()
 })
+
+function hide_show_minutes_scope() {
+	var graph_type = get_graph_type();
+	var scope_type = get_scope_type();
+	
+	var minutes_button = $('#frequency-minutes')
+	var days_button = $('#frequency-days')
+
+	if (graph_type == 'frequency') {
+		minutes_button.show()
+		days_button.css('cssText', 'border-radius: 0 !important');
+		return
+	}
+
+	minutes_button.hide()
+
+	if (scope_type == 'minutes') {
+		minutes_button.removeClass('active')
+		days_button.trigger('click')
+		days_button.css('cssText', 'border-radius: 2px 0 0 2px !important');
+	}
+
+}
 
 function toggle_y_axis_type() {
 	graph_type = get_graph_type()
@@ -44,9 +69,6 @@ function toggle_y_axis_type() {
 	}	
 }
 
-function get_graph_type() {
-	return $("input[type=radio][name=graph_type]:checked").val()
-}
 
 function toggle_line_date_display() {
 	graph_type = get_graph_type()
@@ -119,6 +141,7 @@ $('.new_frequency_line_button').on('click', function() {
 			$('#graph_line_controllers').append(response)
 
 			$('.frequency_project_selector').last().selectize()
+			hide_show_minutes_scope()
 		}
 	})
 
