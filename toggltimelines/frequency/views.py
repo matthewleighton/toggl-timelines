@@ -35,7 +35,9 @@ def index():
 	projects = helpers.get_project_data()
 
 	page_data = {
-		'projects': projects
+		'projects': projects,
+		'today_date': date.today(),
+		'first_entry_date': get_first_entry_date()
 	}
 
 	response = make_response(render_template('frequency/index.html', data=page_data))
@@ -55,7 +57,8 @@ def new_frequency_line():
 
 	page_data = {
 		'projects': sorted_project_data,
-		'today_date': date.today()
+		'today_date': date.today(),
+		'first_entry_date': get_first_entry_date()
 	}
 
 	return jsonify(render_template('frequency/frequency_line_controls.html', data=page_data))
@@ -285,3 +288,6 @@ def get_moment_label(moment_datetime,graph_type, scope_type):
 			label = months[month_number]
 
 		return label
+
+def get_first_entry_date():
+	return Entry.query.first().get_local_start_time().date()

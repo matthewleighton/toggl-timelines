@@ -183,13 +183,6 @@ def update_book_covers():
 @click.command('mytest')
 @with_appcontext
 def mytest():
-	toggl_projects = helpers.get_user_toggl_data()['projects']
-	pp.pprint(toggl_projects)
-	
-	return ''
+	entry = Entry.query.first()
 
-	entries = Entry.query.all()
-
-	recent_entry = entries[-1]
-
-	print(recent_entry.project.client.client_name)
+	print(entry.start)
