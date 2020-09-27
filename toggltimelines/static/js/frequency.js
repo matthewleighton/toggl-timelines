@@ -1,6 +1,5 @@
 
 $(document).ready(function() {
-	// update_y_axis_select_options()
 	$('.new_frequency_line_button').click()
 	toggle_line_date_display()
 	toggle_y_axis_type()
@@ -22,7 +21,7 @@ $('body').on('change', 'input[type=radio][name=scope_type]', function() {
 function hide_show_minutes_scope() {
 	var graph_type = get_graph_type();
 	var scope_type = get_scope_type();
-	
+
 	var minutes_button = $('#frequency-minutes')
 	var days_button = $('#frequency-days')
 
@@ -47,8 +46,6 @@ function toggle_y_axis_type() {
 	scope_type = get_scope_type()
 
 	select_element = $('#y_axis_type')
-
-	console.log(select_element)
 
 	select_element.empty()
 
@@ -129,8 +126,6 @@ $('#graph_line_controllers').on('change', '.frequency_project_selector', functio
 	}
 })
 
-// $('input[type=radio][name=scope_type]').change(update_y_axis_select_options)
-
 $('.new_frequency_line_button').on('click', function() {
 	$.ajax({
 		"type": "POST",
@@ -144,8 +139,6 @@ $('.new_frequency_line_button').on('click', function() {
 			hide_show_minutes_scope()
 		}
 	})
-
-	
 })
 
 $('#frequency_graph_submit').on('click', function() {
@@ -188,11 +181,6 @@ $('#frequency_graph_submit').on('click', function() {
 
 			end = $('.global-end-date').val()
 			serialized_object['end'] = end
-
-			console.log(start)
-			console.log(end)
-
-			console.log($('.global-start-date'))
 		}
 
 		console.log(serialized_object)
@@ -215,49 +203,17 @@ $('#frequency_graph_submit').on('click', function() {
 			console.log(graph_style)
 
 			if (graph_style == 'line') {
-				create_line_graph(response)
-			} else {
+				//create_line_graph(response)
+				create_graph(response, 'line')
+			} else if (graph_style == 'bar') {
 				create_bar_graph(response, scope_type)
+			} else {
+				//create_scatter_graph(response)
+				create_graph(response, 'scatter')
 			}
 		}
 	})
 })
-
-// function update_y_axis_select_options() {
-// 	var options
-// 	var dropdown = $("select[name='y_axis_type']")
-
-// 	var selected_scope = $("input[type=radio][name=scope_type]:checked").val()
-
-	
-// 	var minutes_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
-// 	var minutes_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total minutes tracked at time)')	
-
-// 	var days_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
-// 	var days_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total hours tracked on day)')
-// 	var days_average = $('<option></option>').attr('value', 'average').text('Average hours tracked on each day')
-
-// 	var months_relative = $('<option></option>').attr('value', 'relative').text('Relative (Percentage of tracked project time in period)')
-// 	var months_absolute = $('<option></option>').attr('value', 'absolute').text('Absolute (Total hours tracked in month)')
-
-// 	switch(selected_scope) {
-// 		case 'minutes':
-// 			options = [minutes_absolute, minutes_relative]
-// 			break;
-// 		case 'days':
-// 			options = [days_average, days_absolute, days_relative]
-// 			break;
-// 		case 'months':
-// 			options = [months_absolute, months_relative]
-// 			break;
-// 	}
-
-// 	dropdown.empty()
-
-// 	for (var i = options.length - 1; i >= 0; i--) {
-// 		dropdown.append(options[i])
-// 	}
-// }
 
 function get_scope_type() {
 	return $("input[name='scope_type']:checked").val()
@@ -329,6 +285,21 @@ function get_minutes_since_midnight() {
 }
 
 
+function bar_graph_y_tick_format(d, y_axis_type) {
+	if (y_axis_type == 'absolute' || y_axis_type == 'average') {
+		return Math.round((d/60)*10) / 10
+	} else {
+		return Math.round(d*1000)/10 + '%'
+	}
+}
+
+function reset_graph_view() {
+	$('#frequency_settings_container').hide()
+	$('#frequency_graph_container').show()
+	$('svg').remove()
+}
+
+
 function create_bar_graph(data, user_scope) {
 	reset_graph_view()
 
@@ -346,7 +317,9 @@ function create_bar_graph(data, user_scope) {
 	var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 	var y_axis_type = data[0]['line_data']['y_axis_type']
 
-	var x_domain = Object.keys(scope_types[user_scope])
+	//var x_domain = Object.keys(scope_types[user_scope])
+
+	var x_domain = Object.keys(data[0]['keys'])
 
     var margin = {top: 10, right: 30, bottom: 50, left: 60};
 
@@ -357,25 +330,78 @@ function create_bar_graph(data, user_scope) {
 		return d3.max(array['entry_data'])
 	})
 
-	var yScale = d3.scaleLinear()
-		.domain([0, max_frequency])
+
+
+
+	//var x_domain = data[0]['keys']
+
+	console.log('x_domain')
+	console.log(x_domain)
+
+
+	var margin = {top: 10, right: 30, bottom: 50, left: 60};
+
+	var width = $('#frequency_graph_container').width() - margin.left - margin.right;
+	var height = $(window).height() - 100 - margin.top - margin.bottom;
+
+	var min_x = 0
+	var max_x = data[0]['values'].length
+
+
+	var max_frequency = d3.max(data, function(array) {
+		return d3.max(array['values']);
+	});
+
+	var min_frequency = d3.min(data, function(array) {
+		return d3.min(array['values']);
+	});
+
+	var y = d3.scaleLinear()
+		.domain([min_frequency, max_frequency])
 		.range([height, 0])
 		.nice();
 
-	xRange = []
-	for (i = 0; i < data.length; i++){
-		xRange.push(i)
-	}
-
-	var xScale = d3.scaleBand()
+	var x = d3.scaleBand()
 		.domain(x_domain)
 		.range([0, width])
 		.padding(0.2)
 
-	var xSubgroup = d3.scaleBand()
-		.domain(xRange)
-		.range([0, xScale.bandwidth()])
+	x_range = []
+	for (i = 0; i < data.length; i++){
+		x_range.push(i)
+	}
+
+	var x_sub = d3.scaleBand()
+		.domain(x_range)
+		.range([0, x.bandwidth()])
 		.padding([0.05])
+
+
+
+
+
+
+
+
+	// var yScale = d3.scaleLinear()
+	// 	.domain([0, max_frequency])
+	// 	.range([height, 0])
+	// 	.nice();
+
+	// xRange = []
+	// for (i = 0; i < data.length; i++){
+	// 	xRange.push(i)
+	// }
+
+	// var xScale = d3.scaleBand()
+	// 	.domain(x_domain)
+	// 	.range([0, width])
+	// 	.padding(0.2)
+
+	// var xSubgroup = d3.scaleBand()
+	// 	.domain(xRange)
+	// 	.range([0, xScale.bandwidth()])
+	// 	.padding([0.05])
 
 
 	var svg = d3.select('#frequency_graph_container').append('svg')
@@ -409,16 +435,16 @@ function create_bar_graph(data, user_scope) {
 		.text(function(d, i) {
 			return d['line_data']['label']
 		});
-
 	svg.append('g')
 		.selectAll('g')
 		.data(data)
 		.enter()
 			.append('g')
 			.selectAll('rect')
-			.data(data)
+			.data(data[0]['entry_data'])
 
 			// .data(function(d, i) {
+			// 	console.log(d)
 			// 	a = []
 			// 	for (var j = d['entry_data'].length - 1; j >= 0; j--) {
 			// 		a.push({
@@ -429,57 +455,54 @@ function create_bar_graph(data, user_scope) {
 			// 		})
 			// 	}
 
+			// 	console.log(a)
+
 			// 	return a
 			// })
 
 			.enter()
 				.append('rect')
 				.attr('x', function(d,i) {
-					return (xScale(i) + xSubgroup(d['line_number']))
+					//return (x(i) + x_sub(d['line_number']))
+					console.log('dufhgkdhgkjdfhg')
+					console.log(i)
+					console.log(d)
+					return (x(i) + x_sub(i))
 				})
 				.attr('y', function(d,i) {
+					key = data[0]['keys'][i]
+					// key =  d['keys'][i]
 					console.log(d)
-					return yScale(d['entry_data'][i])
+					console.log(key)
+					return y(d['entry_data'][key])
 				})
 				.attr('height', function(d,i) {
-					return (height - yScale(d['entry_data'][i]))
+					key = d['keys'][i]
+					h = d['entry_data'][key]
+					return (height - y(h))
 				})
 				.attr('width', function(d,i) {
-					return xSubgroup.bandwidth()
+					return 300
+					return x_sub.bandwidth()
 				})
 				.attr('fill', function(d,i) {
-					return d['details']['color']
+					return d['line_data']['color']
 				})
 
 	svg.append('g')
 		.attr('transform', 'translate(0,' + height + ')')
 		.call(
-			d3.axisBottom(xScale)
+			d3.axisBottom(x)
 			.tickValues(x_domain)
 			.tickFormat(d => scope_types[user_scope][d])
 		);
 	
 	svg.append('g')
 		.call(
-			d3.axisLeft(yScale)
+			d3.axisLeft(y)
 				.tickFormat(d => bar_graph_y_tick_format(d, y_axis_type))
 		);
 }
-
-function bar_graph_y_tick_format(d, y_axis_type) {
-	if (y_axis_type == 'absolute' || y_axis_type == 'average') {
-		return Math.round((d/60)*10) / 10
-	} else {
-		return Math.round(d*1000)/10 + '%'
-	}
-}
-
-function reset_graph_view() {
-	$('#frequency_settings_container').hide()
-	$('#frequency_graph_container').show()
-	$('svg').remove()
-}
-
 
 function create_line_graph(data) {
     reset_graph_view()
@@ -487,15 +510,10 @@ function create_line_graph(data) {
     console.log('Data: ')
     console.log(data)
 
-    var y_axis_type = $("select[name='y_axis_type']").val()
-
     var margin = {top: 10, right: 30, bottom: 50, left: 60};
 
 	var width = $('#frequency_graph_container').width() - margin.left - margin.right;
 	var height = $(window).height() - 100 - margin.top - margin.bottom;
-
-	var max_time = 1439
-	var min_time = 0
 
 	var min_x = 0
 	var max_x = data[0]['values'].length
@@ -533,7 +551,9 @@ function create_line_graph(data) {
 					})
 					.y(function(d){
 						return y(d)
-					});
+					})
+					.curve(d3.curveMonotoneX)
+					
 
 	for (var i = 0; i <= data.length - 1; i++) {
 		svg.append('path')
@@ -662,3 +682,248 @@ function create_line_graph(data) {
 	*/
 
 }
+
+function create_scatter_graph(data) {
+	console.log('create_scatter_graph')
+	console.log(data)
+
+	reset_graph_view()
+
+	var margin = {top: 10, right: 30, bottom: 50, left: 60};
+
+	var width = $('#frequency_graph_container').width() - margin.left - margin.right;
+	var height = $(window).height() - 100 - margin.top - margin.bottom;
+
+	var min_x = 0
+	var max_x = data[0]['values'].length
+
+	var max_frequency = d3.max(data, function(array) {
+		return d3.max(array['values']);
+	});
+
+	var min_frequency = d3.min(data, function(array) {
+		return d3.min(array['values']);
+	});
+
+
+	
+	var y = d3.scaleLinear()
+		.domain([min_frequency, max_frequency])
+		.range([height, 0])
+		.nice();
+
+	var x = d3.scaleLinear()
+		.domain([min_x, max_x])
+		.range([0, width])
+		.nice();
+
+
+	var svg = d3.select('#frequency_graph_container').append('svg')
+				.attr('width', width)
+				.attr('height', height)
+			.append('g')
+				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
+
+
+	
+	svg.selectAll('g')
+		.data(data)
+		.enter()
+			.append('g')
+			.selectAll('circle')
+
+			.data(function(d, i) {
+				formatted_data = []
+
+				for(var j = 0; j < d['values'].length; j++) {
+					formatted_data.push({
+						'line_number': i,
+						'value': d['values'][j]
+					})
+				}
+
+				return formatted_data
+			})
+			.enter()
+				.append('circle')
+				.attr('cx', function(d, i) {
+					console.log(d)
+					console.log(i)
+					return x(i)
+				})
+				.attr('cy', function(d, i) {
+					return y(d['value'])
+				})
+				.attr('r', 4)
+				.attr('fill', function(d, i){
+					line_number = d['line_number']
+					return data[line_number]['line_data']['color']
+				})
+
+	number_of_ticks = d3.min([width/60, data[0]['keys'].length])
+
+	svg.append('g')
+		.attr('transform', 'translate(0,' + height + ')')
+		.call(
+			d3.axisBottom(x)
+			.ticks(number_of_ticks)
+			.tickValues(get_x_tick_values(data))
+			.tickFormat(d => get_x_tick_format(d, data, graph_type, scope_type))
+		);
+	
+	svg.append('g')
+		.call(
+			d3.axisLeft(y)
+			.tickFormat(d => get_y_tick_format(d, y_axis_type))
+		);
+
+
+	
+}
+
+function create_graph(data, graph_style) {
+	console.log(data)
+	reset_graph_view()
+
+	var margin = {top: 10, right: 30, bottom: 50, left: 60};
+
+	var width = $('#frequency_graph_container').width() - margin.left - margin.right;
+	var height = $(window).height() - 100 - margin.top - margin.bottom;
+
+	var min_x = 0
+	var max_x = data[0]['values'].length
+
+	var max_frequency = d3.max(data, function(array) {
+		return d3.max(array['values']);
+	});
+
+	var min_frequency = d3.min(data, function(array) {
+		return d3.min(array['values']);
+	});
+
+	var y = d3.scaleLinear()
+		.domain([min_frequency, max_frequency])
+		.range([height, 0])
+		.nice();
+
+	var x = d3.scaleLinear()
+		.domain([min_x, max_x])
+		.range([0, width])
+		.nice();
+
+
+	var svg = d3.select('#frequency_graph_container').append('svg')
+				.attr('width', width)
+				.attr('height', height)
+			.append('g')
+				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
+
+
+	if (graph_style == 'line') {
+		var element_name = 'circle'
+	} else if (graph_style == 'scatter') {
+		var element_name = 'circle'
+	}
+
+	var graph_elements = svg.selectAll('g')
+		.data(data)
+		.enter()
+			.append('g')
+			.selectAll(element_name)
+
+			.data(function(d, i) {
+				formatted_data = []
+
+				for(var j = 0; j < d['values'].length; j++) {
+					formatted_data.push({
+						'line_number': i,
+						'value': d['values'][j]
+					})
+				}
+
+				//console.log(formatted_data)
+
+				return formatted_data
+			})
+
+	if (graph_style == 'scatter') {
+		graph_elements.enter()
+				.append(element_name)
+				.attr('cx', function(d, i) {
+					// console.log(d)
+					// console.log(i)
+					return x(i)
+				})
+				.attr('cy', function(d, i) {
+					return y(d['value'])
+				})
+				.attr('r', 4)
+				.attr('fill', function(d, i){
+					line_number = d['line_number']
+					return data[line_number]['line_data']['color']
+				})
+	} else if (graph_style == 'line') {
+
+
+		graph_elements.enter()
+			.append(element_name)
+			.attr('cx', function(d, i) {
+				// console.log(d)
+				// console.log(i)
+				return x(i)
+			})
+			.attr('cy', function(d, i) {
+				return y(d['value'])
+			})
+			.attr('r', 4)
+			.attr('fill', function(d, i){
+				line_number = d['line_number']
+				return data[line_number]['line_data']['color']
+			})
+
+		var line = d3.line()
+				.x(function(d, i){
+					console.log(x(i))
+					return x(i)
+				})
+				.y(function(d, i) {
+					console.log(y(d))
+					return y(d)
+				})
+				.curve(d3.curveMonotoneX)
+
+		// TODO: This probably isn't really how it should be done in d3, but I couldn't get the proper way to work.
+		for (var i = 0; i <= data.length - 1; i++) {
+			svg.append('path')
+				.data([data[i]['values']])
+				.attr('class', 'line')
+				.attr('class', 'graph_line')
+				.attr('d', line)
+				.attr('stroke', data[i]['line_data']['color'])
+		}
+
+
+
+
+		
+	}
+
+	var number_of_ticks = d3.min([width/60, data[0]['keys'].length])
+
+	svg.append('g')
+		.attr('transform', 'translate(0,' + height + ')')
+		.call(
+			d3.axisBottom(x)
+			.ticks(number_of_ticks)
+			.tickValues(get_x_tick_values(data))
+			.tickFormat(d => get_x_tick_format(d, data, graph_type, scope_type))
+		);
+	
+	svg.append('g')
+		.call(
+			d3.axisLeft(y)
+			.tickFormat(d => get_y_tick_format(d, y_axis_type))
+		);
+			
+}
+

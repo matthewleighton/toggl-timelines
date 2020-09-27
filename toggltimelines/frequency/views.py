@@ -139,6 +139,9 @@ def frequency_data():
 		keys = list(line_data_container.keys())
 
 
+		
+
+
 		data.append({
 			'line_data': line,
 			'entry_data': line_data_container,
