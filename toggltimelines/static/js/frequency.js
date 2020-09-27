@@ -206,7 +206,8 @@ $('#frequency_graph_submit').on('click', function() {
 				//create_line_graph(response)
 				create_graph(response, 'line')
 			} else if (graph_style == 'bar') {
-				create_bar_graph(response, scope_type)
+				//create_bar_graph(response, scope_type)
+				create_graph(response, 'bar')
 			} else {
 				//create_scatter_graph(response)
 				create_graph(response, 'scatter')
@@ -806,10 +807,37 @@ function create_graph(data, graph_style) {
 		.range([height, 0])
 		.nice();
 
-	var x = d3.scaleLinear()
-		.domain([min_x, max_x])
-		.range([0, width])
-		.nice();
+
+	if (graph_style == 'bar') {
+		var element_name = 'rect';
+
+		var x_domain = Object.keys(data[0]['keys'])
+
+		var x = d3.scaleBand()
+			.domain(x_domain)
+			.range([0, width])
+			.padding(0.2)
+
+		x_range = []
+		for (i = 0; i < data.length; i++){
+			x_range.push(i)
+		}
+
+		var x_sub = d3.scaleBand()
+			.domain(x_range)
+			.range([0, x.bandwidth()])
+			.padding([0.05])
+		}
+	else {
+		var element_name = 'circle';
+
+		var x = d3.scaleLinear()
+			.domain([min_x, max_x])
+			.range([0, width])
+			.nice();
+	}
+
+	
 
 
 	var svg = d3.select('#frequency_graph_container').append('svg')
@@ -819,11 +847,7 @@ function create_graph(data, graph_style) {
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
 
 
-	if (graph_style == 'line') {
-		var element_name = 'circle'
-	} else if (graph_style == 'scatter') {
-		var element_name = 'circle'
-	}
+	
 
 	var graph_elements = svg.selectAll('g')
 		.data(data)
@@ -900,12 +924,40 @@ function create_graph(data, graph_style) {
 				.attr('class', 'graph_line')
 				.attr('d', line)
 				.attr('stroke', data[i]['line_data']['color'])
-		}
-
-
-
-
-		
+		} 	
+	} else if (graph_style == 'bar') {
+		graph_elements.enter()
+			.append('rect')
+			.attr('x', function(d,i) {
+				//return (x(i) + x_sub(d['line_number']))
+				console.log('dufhgkdhgkjdfhg')
+				console.log(i)
+				console.log(d)
+				return (x(i) + x_sub(d['line_number']))
+			})
+			.attr('y', function(d,i) {
+				//key = data[0]['keys'][i]
+				// key =  d['keys'][i]
+				console.log(d)
+				//console.log(key)
+				//return y(d['entry_data'][key])
+				return y(d['value'])
+			})
+			.attr('height', function(d,i) {
+				//key = d['keys'][i]
+				//h = d['entry_data'][key]
+				h = d['value']
+				return (height - y(h))
+			})
+			.attr('width', function(d,i) {
+				//return 300
+				return x_sub.bandwidth()
+			})
+			.attr('fill', function(d,i) {
+				line_number = d['line_number']
+				return data[line_number]['line_data']['color']
+				//return d['line_data']['color']
+			})
 	}
 
 	var number_of_ticks = d3.min([width/60, data[0]['keys'].length])
