@@ -87,7 +87,14 @@ def frequency_data():
 		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d')
 
 		line_data_container = get_line_data_container(graph_type, scope_type, start_datetime, end_datetime)
-		#pp.pprint(line_data_container)
+
+		# If no projects are specified, get all the projects.
+		if not 'projects' in line.keys():
+			db_projects = helpers.get_all_projects_from_database()
+
+			line['projects'] = []
+			for db_project in db_projects:
+				line['projects'].append(db_project.project_name)
 
 		if isinstance(line['projects'], str):
 			line['projects'] = [line['projects']]
