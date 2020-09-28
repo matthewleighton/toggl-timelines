@@ -408,7 +408,6 @@ def get_user_toggl_data():
 	return current_app.user_toggl_data
 
 def get_all_projects_from_database():
-	#print('get_projects_from_database')
 	projects = Project.query.all()
 
 	return projects

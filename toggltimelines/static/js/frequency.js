@@ -11,16 +11,28 @@ $('body').on('change', 'input[type=radio][name=graph_type]', function() {
 	toggle_y_axis_type()
 	toggle_line_date_display()
 	hide_show_minutes_scope()
+	toggle_current_minute_checkbox()
 })
 
 // On change of scope type...
 $('body').on('change', 'input[type=radio][name=scope_type]', function() {
 	toggle_y_axis_type()
+	toggle_current_minute_checkbox()
 })
 
 $('body').on('change', 'input[type=radio][name=graph_style]', function() {
 	hide_show_line_graph_checkboxes()
+	toggle_current_minute_checkbox()
 })
+
+function toggle_current_minute_checkbox() {
+	checkbox_container = $('.day-view-live-line')
+	if (is_day_view()) {
+		checkbox_container.show()
+	} else {
+		checkbox_container.hide()
+	}
+}
 
 function hide_show_line_graph_checkboxes() {
 	graph_style = get_graph_style()
@@ -234,7 +246,11 @@ function get_animate_value() {
 }
 
 function get_show_datapoints_value() {
-	return $('#show-datapoints-checkbox').is(":checked");	
+	return $('#show-datapoints-checkbox').is(":checked");
+}
+
+function get_show_current_time_value() {
+	return $('#day-view-live-line').is(":checked");
 }
 
 function get_x_tick_values(data, width=false) {
@@ -427,8 +443,6 @@ function create_graph(data, graph_style) {
 
 		show_datapoints = get_show_datapoints_value()
 
-		console.log(show_datapoints)
-
 		if (show_datapoints) {
 			graph_elements.enter()
 				.append(element_name)
@@ -454,7 +468,6 @@ function create_graph(data, graph_style) {
 				})
 				.curve(d3.curveMonotoneX)
 
-
 		var animation_duration = data[0]['keys'].length * 350
 		var max_duration = 20000
 		if (graph_type == 'frequency' && scope_type == 'minutes') {
@@ -476,8 +489,6 @@ function create_graph(data, graph_style) {
 				.attr('stroke', data[i]['line_data']['color'])
 
 			var totalLength = path.node().getTotalLength()
-			console.log('totalLength')
-			console.log(totalLength)
 
 			if (animate) {
 				path.attr("stroke-dasharray", totalLength + " " + totalLength)
@@ -526,6 +537,25 @@ function create_graph(data, graph_style) {
 			d3.axisLeft(y)
 			.tickFormat(d => get_y_tick_format(d, y_axis_type))
 		);
-			
+
+
+	if (is_day_view() && get_show_current_time_value()) {
+		var current_time_in_minutes = get_minutes_since_midnight()
+		var x_position = x(Math.round(current_time_in_minutes))
+
+		svg.append('line')
+			.attr('x1', x_position)
+			.attr('y1', 0)
+			.attr('x2', x_position)
+			.attr('y1', height)
+			.style("stroke-width", 2)
+			.style("stroke", "black")
+			.style("fill", "none");
+		}
 }
 
+function is_day_view() {
+	if (get_graph_type() == 'frequency' && get_scope_type() == 'minutes') {
+		return true
+	}
+}
