@@ -253,6 +253,10 @@ function get_show_current_time_value() {
 	return $('#day-view-live-line').is(":checked");
 }
 
+function get_y_axis_type() {
+	return $('#y_axis_type').val()
+}
+
 function get_x_tick_values(data, width=false) {
 	if (graph_type == 'frequency' && scope_type == 'minutes') {
 		hours = []
@@ -298,13 +302,18 @@ function get_x_tick_format(d, data, graph_type, scope_type) {
 }
 
 function get_y_tick_format(d, y_axis_type) {
-	return d
+	if (['absolute', 'average'].includes(y_axis_type)) {
+		var total_minutes = d;
+		var hours = Math.floor(total_minutes / 60);
+		var minutes = total_minutes % 60
 
-	if (y_axis_type == 'absolute') {
-		return d
+		return hours.toString() + 'H, ' + minutes.toString() + 'M';
+
+	} else if (['percentage_tracked', 'percentage_occurance'].includes(y_axis_type)) {
+		return d + '%'
 	}
 
-	return Math.round(d*1000)/10 + '%'
+	return d
 }
 
 function make_y_gridlines(y) {
@@ -531,13 +540,13 @@ function create_graph(data, graph_style) {
 			.tickValues(get_x_tick_values(data, width))
 			.tickFormat(d => get_x_tick_format(d, data, graph_type, scope_type))
 		);
-	
+
+	y_axis_type = get_y_axis_type()
 	svg.append('g')
 		.call(
 			d3.axisLeft(y)
 			.tickFormat(d => get_y_tick_format(d, y_axis_type))
 		);
-
 
 	if (is_day_view() && get_show_current_time_value()) {
 		var current_time_in_minutes = get_minutes_since_midnight()

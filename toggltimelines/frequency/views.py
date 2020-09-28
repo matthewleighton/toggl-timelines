@@ -65,9 +65,9 @@ def new_frequency_line():
 
 date_formats = {
 	'minutes': '%Y-%m-%d %H:%M',
-	'days': '%Y-%m-%d',
+	'days': "%d %b %Y",
 	'weeks': '%W',
-	'months': '%Y-%m'
+	'months': "%b '%y"
 }
 
 
