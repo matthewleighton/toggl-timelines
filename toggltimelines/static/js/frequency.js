@@ -407,40 +407,66 @@ function create_graph(data, graph_style) {
 				})
 	} else if (graph_style == 'line') {
 
+		display_data_points = false
 
-		graph_elements.enter()
-			.append(element_name)
-			.attr('cx', function(d, i) {
-				return x(i)
-			})
-			.attr('cy', function(d, i) {
-				return y(d['value'])
-			})
-			.attr('r', 4)
-			.attr('fill', function(d, i){
-				line_number = d['line_number']
-				return data[line_number]['line_data']['color']
-			})
+		if (display_data_points) {
+			graph_elements.enter()
+				.append(element_name)
+				.attr('cx', function(d, i) {
+					return x(i)
+				})
+				.attr('cy', function(d, i) {
+					return y(d['value'])
+				})
+				.attr('r', 4)
+				.attr('fill', function(d, i){
+					line_number = d['line_number']
+					return data[line_number]['line_data']['color']
+				})
+		}
 
 		var line = d3.line()
 				.x(function(d, i){
-					console.log(x(i))
 					return x(i)
 				})
 				.y(function(d, i) {
-					console.log(y(d))
 					return y(d)
 				})
 				.curve(d3.curveMonotoneX)
 
+		var animation_duration = data[0]['keys'].length * 350
+		var max_duration = 20000
+
+		if (graph_type == 'frequency' && scope_type == 'minutes') {
+			max_duration = 500*24
+		} else if (graph_type == 'normal' && scope_type == 'days') {
+			max_duration = (data[0]['keys']/30) * 500
+		}
+
+		animation_duration = d3.min([animation_duration, max_duration])
+
+		console.log('animation_duration')
+		console.log(animation_duration)
+
 		// TODO: This probably isn't really how it should be done in d3, but I couldn't get the proper way to work.
 		for (var i = 0; i <= data.length - 1; i++) {
-			svg.append('path')
+			var path = svg.append('path')
 				.data([data[i]['values']])
 				.attr('class', 'line')
 				.attr('class', 'graph_line')
 				.attr('d', line)
 				.attr('stroke', data[i]['line_data']['color'])
+
+			var totalLength = path.node().getTotalLength()
+			console.log('totalLength')
+			console.log(totalLength)
+
+			path.attr("stroke-dasharray", totalLength + " " + totalLength)
+				.attr("stroke-dashoffset", totalLength)
+				.transition()
+					.duration(animation_duration)
+					.ease(d3.easeLinear)
+					.attr("stroke-dashoffset", 0);
 		} 	
 	} else if (graph_style == 'bar') {
 		graph_elements.enter()
