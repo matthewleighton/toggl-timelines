@@ -18,6 +18,21 @@ $('body').on('change', 'input[type=radio][name=scope_type]', function() {
 	toggle_y_axis_type()
 })
 
+$('body').on('change', 'input[type=radio][name=graph_style]', function() {
+	hide_show_line_graph_checkboxes()
+})
+
+function hide_show_line_graph_checkboxes() {
+	graph_style = get_graph_style()
+	checkbox_container = $('.line-graph-checkboxes')
+
+	if (graph_style == 'line') {
+		checkbox_container.show()
+	} else {
+		checkbox_container.hide()
+	}
+}
+
 function hide_show_minutes_scope() {
 	var graph_type = get_graph_type();
 	var scope_type = get_scope_type();
@@ -216,7 +231,14 @@ function get_graph_type() {
 
 function get_graph_style() {
 	return $("input[name='graph_style']:checked").val()
+}
 
+function get_animate_value() {
+	return $('#animate-checkbox').is(":checked");
+}
+
+function get_show_datapoints_value() {
+	return $('#show-datapoints-checkbox').is(":checked");	
 }
 
 function get_x_tick_values(data, width=false) {
@@ -407,9 +429,11 @@ function create_graph(data, graph_style) {
 				})
 	} else if (graph_style == 'line') {
 
-		display_data_points = false
+		show_datapoints = get_show_datapoints_value()
 
-		if (display_data_points) {
+		console.log(show_datapoints)
+
+		if (show_datapoints) {
 			graph_elements.enter()
 				.append(element_name)
 				.attr('cx', function(d, i) {
@@ -434,19 +458,17 @@ function create_graph(data, graph_style) {
 				})
 				.curve(d3.curveMonotoneX)
 
+
 		var animation_duration = data[0]['keys'].length * 350
 		var max_duration = 20000
-
 		if (graph_type == 'frequency' && scope_type == 'minutes') {
 			max_duration = 500*24
 		} else if (graph_type == 'normal' && scope_type == 'days') {
 			max_duration = (data[0]['keys']/30) * 500
 		}
-
 		animation_duration = d3.min([animation_duration, max_duration])
+		animate = get_animate_value()
 
-		console.log('animation_duration')
-		console.log(animation_duration)
 
 		// TODO: This probably isn't really how it should be done in d3, but I couldn't get the proper way to work.
 		for (var i = 0; i <= data.length - 1; i++) {
@@ -461,12 +483,15 @@ function create_graph(data, graph_style) {
 			console.log('totalLength')
 			console.log(totalLength)
 
-			path.attr("stroke-dasharray", totalLength + " " + totalLength)
-				.attr("stroke-dashoffset", totalLength)
-				.transition()
-					.duration(animation_duration)
-					.ease(d3.easeLinear)
-					.attr("stroke-dashoffset", 0);
+			if (animate) {
+				path.attr("stroke-dasharray", totalLength + " " + totalLength)
+					.attr("stroke-dashoffset", totalLength)
+					.transition()
+						.duration(animation_duration)
+						.ease(d3.easeLinear)
+						.attr("stroke-dashoffset", 0);	
+			}
+			
 		} 	
 	} else if (graph_style == 'bar') {
 		graph_elements.enter()

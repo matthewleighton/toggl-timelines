@@ -481,6 +481,14 @@ body.hide-line-date-controls .line-date-control {
   border-radius: 2px 0 0 2px;
 }
 
+#graph_controls .line-graph-checkboxes {
+  margin-left: 10px;
+}
+
+.line-graph-checkboxes label {
+  margin-right: 20px;
+}
+
 /* Reading Page */
 
 .error-field {
