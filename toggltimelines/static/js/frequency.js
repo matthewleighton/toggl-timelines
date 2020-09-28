@@ -230,16 +230,23 @@ function get_x_tick_values(data, width=false) {
 	} else if (graph_style == 'bar' && graph_type == 'normal') {
 
 		last_tick = data[0]['keys'].length
-		number_of_ticks = d3.min([width/60, last_tick])
+
+		if (graph_type == 'normal' && (scope_type == 'months' || scope_type == 'weeks')) {
+			width_divider = 38
+		} else {
+			width_divider = 60
+		}
+
+		number_of_ticks = d3.min([width/width_divider, last_tick])
 
 		if (number_of_ticks >= last_tick) {
 			return null;
 		}
 
-		step_size = last_tick / number_of_ticks
+		step_size = Math.round(last_tick / number_of_ticks)
 		ticks = []
 		for (var i = 0; i <= number_of_ticks; i++) {
-			ticks.push(Math.floor(i*step_size))
+			ticks.push(i*step_size)
 		}
 
 		return ticks
