@@ -401,7 +401,7 @@ function create_graph(data, sort_type) {
 	var margin = ({top: 30, right: 60, bottom: 10, left: 60})
 	var bar_height = 35
 	var height = Math.ceil((data.length + 0.1) * bar_height) + margin.top + margin.bottom
-	var tooltip = d3.select("body").append("div").attr("class", "toolTip");
+	//var tooltip = d3.select("body").append("div").attr("class", "toolTip");
 
 	var current_period_string = get_current_period_string()
 	

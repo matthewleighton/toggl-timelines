@@ -301,19 +301,21 @@ function get_x_tick_format(d, data, graph_type, scope_type) {
 	return data[0]['keys'][d]
 }
 
-function get_y_tick_format(d, y_axis_type) {
+function format_y_value(value) {
+	var y_axis_type = get_y_axis_type()
+
 	if (['absolute', 'average'].includes(y_axis_type)) {
-		var total_minutes = d;
+		var total_minutes = value;
 		var hours = Math.floor(total_minutes / 60);
 		var minutes = total_minutes % 60
 
-		return hours.toString() + 'H, ' + minutes.toString() + 'M';
+		return hours.toString() + 'h, ' + minutes.toString() + 'm';
 
 	} else if (['percentage_tracked', 'percentage_occurance'].includes(y_axis_type)) {
-		return d + '%'
+		return value + '%'
 	}
 
-	return d
+	return value
 }
 
 function make_y_gridlines(y) {
@@ -416,6 +418,7 @@ function create_graph(data, graph_style) {
 			.append('g')
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
 
+
 	var graph_elements = svg.selectAll('g')
 		.data(data)
 		.enter()
@@ -434,6 +437,23 @@ function create_graph(data, graph_style) {
 				return formatted_data
 			})
 
+	var tip = d3.tip()
+	  .attr('class', 'd3-tip')
+	  .offset([-10, 0])
+	  .html(function(d, i) {
+	    line_number = d['line_number']
+	    label = data[line_number]['line_data']['label']
+	    x_value = data[line_number]['keys'][i]
+	    y_value = format_y_value(d['value'])
+
+	    return "<div class='tooltip-title'><span>" + label + "</span></div><div>" + x_value + "</div><div>" + y_value + "</div>" 
+
+	    return '<strong>' + label + '</strong>' + x_value + '<br/>' + y_value
+
+	    // return "<strong>" + d.name + "</strong><div><span>" + current_period_string + "</span>" + current_tracked + "</div><div><span>" + average_label + "</span>" + average + "</div><div><span>Difference: </span>" + difference_string + "</div>";
+	  })
+	  svg.call(tip)
+
 	if (graph_style == 'scatter') {
 		graph_elements.enter()
 				.append(element_name)
@@ -443,30 +463,14 @@ function create_graph(data, graph_style) {
 				.attr('cy', function(d, i) {
 					return y(d['value'])
 				})
-				.attr('r', 4)
+				.attr('r', 4.5)
 				.attr('fill', function(d, i){
 					line_number = d['line_number']
 					return data[line_number]['line_data']['color']
 				})
+				.on('mouseover', tip.show)
+      			.on('mouseout', tip.hide)
 	} else if (graph_style == 'line') {
-
-		show_datapoints = get_show_datapoints_value()
-
-		if (show_datapoints) {
-			graph_elements.enter()
-				.append(element_name)
-				.attr('cx', function(d, i) {
-					return x(i)
-				})
-				.attr('cy', function(d, i) {
-					return y(d['value'])
-				})
-				.attr('r', 4)
-				.attr('fill', function(d, i){
-					line_number = d['line_number']
-					return data[line_number]['line_data']['color']
-				})
-		}
 
 		var line = d3.line()
 				.x(function(d, i){
@@ -508,7 +512,27 @@ function create_graph(data, graph_style) {
 						.attr("stroke-dashoffset", 0);	
 			}
 			
-		} 	
+		}
+
+		show_datapoints = get_show_datapoints_value()
+		if (show_datapoints) {
+			graph_elements.enter()
+				.append(element_name)
+				.attr('cx', function(d, i) {
+					return x(i)
+				})
+				.attr('cy', function(d, i) {
+					return y(d['value'])
+				})
+				.attr('r', 4.5)
+				.attr('fill', function(d, i){
+					line_number = d['line_number']
+					return data[line_number]['line_data']['color']
+				})
+				.on('mouseover', tip.show)
+      			.on('mouseout', tip.hide)
+		}
+
 	} else if (graph_style == 'bar') {
 		graph_elements.enter()
 			.append('rect')
@@ -528,6 +552,8 @@ function create_graph(data, graph_style) {
 				line_number = d['line_number']
 				return data[line_number]['line_data']['color']
 			})
+			.on('mouseover', tip.show)
+      		.on('mouseout', tip.hide)
 	}
 
 	var number_of_ticks = d3.min([width/60, data[0]['keys'].length])
@@ -541,11 +567,10 @@ function create_graph(data, graph_style) {
 			.tickFormat(d => get_x_tick_format(d, data, graph_type, scope_type))
 		);
 
-	y_axis_type = get_y_axis_type()
 	svg.append('g')
 		.call(
 			d3.axisLeft(y)
-			.tickFormat(d => get_y_tick_format(d, y_axis_type))
+			.tickFormat(d => format_y_value(d))
 		);
 
 	if (is_day_view() && get_show_current_time_value()) {
@@ -561,6 +586,37 @@ function create_graph(data, graph_style) {
 			.style("stroke", "black")
 			.style("fill", "none");
 		}
+
+
+
+	// Adding legend.
+	svg.selectAll('myLegendDots')
+		.data(data)
+		.enter()
+			.append('rect')
+			.attr('x', width - 150)
+			.attr('y', function(d, i) {
+				return i * 20;
+			})
+			.attr('width', 12)
+			.attr('height', 12)
+			.style('fill', function(d) {
+				console.log(d)
+				return d['line_data']['color']
+			});
+
+	svg.selectAll('myLegendLabels')
+		.data(data)
+		.enter()
+			.append('text')
+			.attr('x', width - 135)
+			.attr('y', function(d, i) {
+				return (i*20) + 11;
+			})
+			.text(function(d, i) {
+				return d['line_data']['label']
+			});
+
 }
 
 function is_day_view() {

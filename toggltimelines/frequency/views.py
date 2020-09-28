@@ -84,7 +84,7 @@ def frequency_data():
 
 	for line in submission_data:
 		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
-		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d')
+		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d').replace(hour=23, minute=59, second=59)
 
 		line_data_container = get_line_data_container(graph_type, scope_type, start_datetime, end_datetime)
 
@@ -100,7 +100,9 @@ def frequency_data():
 			line['projects'] = [line['projects']]
 
 		# TODO: Need to consider the timezones here.
-		# The request will be made purely in UTC, but it should be first converted from the user's timezone? 
+		# The request will be made purely in UTC, but it should be first converted from the user's timezone?
+		print(start_datetime)
+		print(end_datetime)
 		entries = helpers.get_db_entries(
 			start_datetime,
 			end_datetime,

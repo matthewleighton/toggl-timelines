@@ -508,6 +508,10 @@ body.hide-line-date-controls .line-date-control {
   width: 38px;
 }
 
+.tooltip-title {
+  text-align: center;
+}
+
 /* Reading Page */
 
 .error-field {
