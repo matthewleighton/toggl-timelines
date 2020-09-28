@@ -98,10 +98,6 @@ $('#frequency_settings_button').on('click', function() {
 	$('#frequency_settings_container').show()
 })
 
-$('#graph_line_controllers').on('change', '.frequency_line_color', function() {
-	color = $(this).val()
-	$(this).parents('form').first().find('.frequency_color_sample').css('background-color', color)
-})
 
 $('#graph_line_controllers').on('click', '.frequency_control_remove', function() {
 	var current_index = $(this).parent().index();

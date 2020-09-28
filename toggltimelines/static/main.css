@@ -489,6 +489,25 @@ body.hide-line-date-controls .line-date-control {
   margin-right: 20px;
 }
 
+.colorpick-eyedropper-input-trigger {
+  display: none;
+}
+
+.frequency_line_color {
+  border: 0;
+  padding: 0;
+}
+
+.selectize-input {
+  min-height: 38px;
+  position: relative;
+  top: 3px;
+}
+
+.color-th {
+  width: 38px;
+}
+
 /* Reading Page */
 
 .error-field {
