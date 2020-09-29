@@ -154,19 +154,20 @@ def frequency_data():
 			total_minutes = sum(values)
 
 			for key, value in line_data_container.items():
-				line_data_container[key] = (value/total_minutes) * 100
+				line_data_container[key] = round((value/total_minutes) * 100, 2)
 		
 		elif y_axis_type == 'average':
 			time_block_occurances = get_time_block_occurances(start_datetime, end_datetime, scope_type)
 			pp.pprint(time_block_occurances)
 			for key, value in line_data_container.items():
-				line_data_container[key] = line_data_container[key] / time_block_occurances[key]
+				line_data_container[key] = round(line_data_container[key] / time_block_occurances[key], 0)
 		elif y_axis_type == 'percentage_occurance':
 			# Note: this only makes sense for Frequency-Minute graphs
 			days = (end_datetime - start_datetime).days
 
 			for key, value in line_data_container.items():
-				line_data_container[key] = (line_data_container[key] / days)*100
+
+				line_data_container[key] = round((line_data_container[key] / days)*100, 2)
 
 		values = list(line_data_container.values())
 		keys = list(line_data_container.keys())
