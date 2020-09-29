@@ -46,18 +46,14 @@ def index():
 
 @bp.route('/frequency/new_frequency_line', methods=['POST'])
 def new_frequency_line():
-	data = request.json
-
-	print(data)
-
-	unsorted_projects = helpers.get_project_data()
-
+	unsorted_projects    = helpers.get_project_data()
 	project_names_sorted = sorted(unsorted_projects.keys(), key=lambda x:x.lower())
-
-	sorted_project_data = {}
+	sorted_project_data  = {}
 
 	for project_name in project_names_sorted:
 		sorted_project_data[project_name] = unsorted_projects[project_name]
+
+	data = request.json
 
 	description = data['description'] if 'description' in data.keys() else ''
 	label = data['label'] if 'label' in data.keys() else ''
@@ -65,7 +61,6 @@ def new_frequency_line():
 	end = data['end'] if 'end' in data.keys() else date.today()
 	color = data['color'] if 'color' in data.keys() else '#000000'
 	active_projects = data['projects'] if 'projects' in data.keys() else {}
-
 
 	page_data = {
 		'all_projects': sorted_project_data,

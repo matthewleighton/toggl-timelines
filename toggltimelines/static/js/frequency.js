@@ -72,7 +72,9 @@ function toggle_y_axis_type() {
 	graph_type = get_graph_type()
 	scope_type = get_scope_type()
 
-	select_element = $('#y_axis_type')
+	var select_element = $('#y_axis_type')
+
+	var initially_selected = select_element.val()
 
 	select_element.empty()
 
@@ -82,14 +84,25 @@ function toggle_y_axis_type() {
 	var percentage_occurance = "<option value='percentage_occurance'>Percentage of times project occurs</option>"
 
 	select_element.append(absolute)
+	var valid_options = ['absolute']
 
 	if (graph_type == 'normal') return;
 
 	if (scope_type == 'minutes') {
 		select_element.append(percentage_occurance)
+		valid_options.push('percentage_occurance')
 	} else {
 		select_element.append(average)
+		valid_options.push('average')
+
 		select_element.append(percentage_tracked)
+		valid_options.push('percentage_tracked')
+	}
+
+	if (valid_options.includes(initially_selected)) {
+		select_element.val(initially_selected)	
+	} else {
+		select_element.val('absolute')
 	}	
 }
 
