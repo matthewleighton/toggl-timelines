@@ -399,7 +399,7 @@ function create_graph(data, graph_style) {
 	var margin = {top: 10, right: 30, bottom: 50, left: 60};
 
 	var width = $('#frequency_graph_container').width() - margin.left - margin.right;
-	var height = $(window).height() - 100 - margin.top - margin.bottom;
+	var height = $(window).height() - margin.top - margin.bottom
 
 	var min_x = 0
 	var max_x = data[0]['values'].length
