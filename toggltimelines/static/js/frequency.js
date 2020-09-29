@@ -471,8 +471,10 @@ function create_graph(data, graph_style) {
 		var min_frequency = 0
 	} else {
 		var min_frequency = d3.min(data, function(array) {
-			return d3.min(array['values']);
+			return d3.min(array['values']) - 20;
 		});
+
+		var min_frequency = d3.max([0, min_frequency])
 	}
 
 	var y = d3.scaleLinear()
@@ -535,21 +537,39 @@ function create_graph(data, graph_style) {
 				return formatted_data
 			})
 
+	console.log('height')
+	console.log(height)
+
 	var tip = d3.tip()
-	  .attr('class', 'd3-tip')
-	  .offset([-10, 0])
-	  .html(function(d, i) {
-	    line_number = d['line_number']
-	    label = data[line_number]['line_data']['label']
-	    x_value = data[line_number]['keys'][i]
-	    y_value = format_y_value(d['value'])
+		.attr('class', 'd3-tip')
+		.offset([-10, 0])
+		.html(function(d, i) {
+			line_number = d['line_number']
+			label = data[line_number]['line_data']['label']
+			x_value = data[line_number]['keys'][i]
+			y_value = format_y_value(d['value'])
 
-	    return "<div class='tooltip-title'><span>" + label + "</span></div><div>" + x_value + "</div><div>" + y_value + "</div>" 
+			return "<div class='tooltip-title'><span>" + label + "</span></div><div>" + x_value + "</div><div>" + y_value + "</div>"
+		})
+		.direction(function() {
+			if (graph_style == 'bar' && this.getBBox().height >= height-80) {
+				return "w"
+			} else if ( (graph_style == 'scatter' || graph_style == 'line') && this.getBBox().y <= 80) {
+				return "w"
+			} else {
+				return "n"
+			}
+		})
+		.offset(function() {
+			if (graph_style == 'bar' && this.getBBox().height >= height-80) {
+				return [-((this.getBBox().height / 2) - 42), 0]
+			} else if ( (graph_style == 'scatter' || graph_style == 'line') && this.getBBox().y <= 80) {
+				return [42, 0]
+			} else {
+				return [-8, 0]
+			}
+		})
 
-	    return '<strong>' + label + '</strong>' + x_value + '<br/>' + y_value
-
-	    // return "<strong>" + d.name + "</strong><div><span>" + current_period_string + "</span>" + current_tracked + "</div><div><span>" + average_label + "</span>" + average + "</div><div><span>Difference: </span>" + difference_string + "</div>";
-	  })
 	  svg.call(tip)
 
 	if (graph_style == 'scatter') {
@@ -671,6 +691,7 @@ function create_graph(data, graph_style) {
 			.tickFormat(d => format_y_value(d))
 		);
 
+	// Adding current time line
 	if (is_day_view() && get_show_current_time_value()) {
 		var current_time_in_minutes = get_minutes_since_midnight()
 		var x_position = x(Math.round(current_time_in_minutes))
@@ -684,8 +705,6 @@ function create_graph(data, graph_style) {
 			.style("stroke", "black")
 			.style("fill", "none");
 		}
-
-
 
 	// Adding legend.
 	svg.selectAll('myLegendDots')
