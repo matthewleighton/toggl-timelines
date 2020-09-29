@@ -9,30 +9,32 @@
 			<th>Label</th>
 			<th class="color-th">&nbsp;</th>
 			<th>&nbsp;</th>
+			<th>&nbsp;</th>
 		</tr>
 		<tr>
 			<th>
 				<select name="projects" multiple class="frequency_project_selector">
-					{% for project_name in data.projects %}
-						<option value="{{project_name}}" data-color="{{data.projects[project_name]['color']}}">{{project_name}}</option>
+					{% for project_name in data.all_projects %}
+						<option value="{{project_name}}" data-color="{{data.all_projects[project_name]['color']}}">{{project_name}}</option>
 					{% endfor %}
 				</select>
 			</th>
 			<th>
-				<input type="text" name="description" class="frequency_line_description form-control" autocomplete="false">
+				<input type="text" name="description" class="frequency_line_description form-control" autocomplete="false" value="{{data.description}}">
 			</th>
 			<th class="line-date-control">
-				<input class="line_start_date form-control" type="date" name="start" value="{{data.first_entry_date}}"/>
+				<input class="line_start_date form-control" type="date" name="start" value="{{data.start}}"/>
 			</th>
 			<th class="line-date-control">
 				<input class="line_end_date form-control" type="date" name="end" value="{{data.today_date}}"/>
 			</th>
 			<th>
-				<input type="text" name="label" class="frequency_line_label form-control">
+				<input type="text" name="label" class="frequency_line_label form-control" value="{{data.label}}">
 			</th>
 			<th>
-				<input type="color" name="color" value="#000000" class="frequency_line_color form-control">
+				<input type="color" name="color" value="{{data.color}}" class="frequency_line_color form-control">
 			</th>
+			<th><span class="frequency_control_button duplicate-line-button">&#9863;</span></th>
 			<th><span class="frequency_control_button frequency_control_remove">&Cross;</span></th>
 		</tr>
 	</table>

@@ -150,19 +150,49 @@ $('#graph_line_controllers').on('change', '.frequency_project_selector', functio
 })
 
 $('.new_frequency_line_button').on('click', function() {
+	create_new_line_controls()
+})
+
+// Duplicate line
+$('body').on('click', '.duplicate-line-button', function() {
+	var $line = $(this).closest(".frequency_line_control")
+	
+	var description = $line.find("input[name='description']").val()
+	var label = $line.find("input[name='label']").val()
+	var start = $line.find("input[name='start']").val()
+	var end = $line.find("input[name='end']").val()
+	var color = $line.find("input[name='color']").val()
+	var projects = $line.find(".frequency_project_selector")[0].selectize.getValue()
+
+	var data = {
+		'projects': projects,
+		'start': start,
+		'label': label,
+		'description': description,
+		'end': end,
+		'color': color
+	}
+	create_new_line_controls(data)
+})
+
+function create_new_line_controls(data={}) {
 	$.ajax({
 		"type": "POST",
 		"url": "/frequency/new_frequency_line",
 		"contentType": "application/json",
 		"dataType": "json",
+		"data": JSON.stringify(data),
 		success: function(response) {
-			$('#graph_line_controllers').append(response)
+			$('#graph_line_controllers').append(response.html)
 
-			$('.frequency_project_selector').last().selectize()
+			var project_selector = $('.frequency_project_selector').last().selectize();
+			var selectize = project_selector[0].selectize;
+			selectize.setValue(response.active_projects, true)
+
 			hide_show_minutes_scope()
 		}
 	})
-})
+}
 
 $('#frequency_graph_submit').on('click', function() {
 	

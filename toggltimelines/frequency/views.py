@@ -46,6 +46,11 @@ def index():
 
 @bp.route('/frequency/new_frequency_line', methods=['POST'])
 def new_frequency_line():
+	data = request.json
+
+	print(data)
+
+
 	unsorted_projects = helpers.get_project_data()
 
 	project_names_sorted = sorted(unsorted_projects.keys(), key=lambda x:x.lower())
@@ -55,13 +60,32 @@ def new_frequency_line():
 	for project_name in project_names_sorted:
 		sorted_project_data[project_name] = unsorted_projects[project_name]
 
+
+	description = data['description'] if 'description' in data.keys() else ''
+	label = data['label'] if 'label' in data.keys() else ''
+	start = data['start'] if 'start' in data.keys() else get_first_entry_date()
+	end = data['end'] if 'end' in data.keys() else ''
+	color = data['color'] if 'color' in data.keys() else '#000000'
+	projects = data['projects'] if 'projects' in data.keys() else {}
+	
+	print(projects)
+
+
 	page_data = {
-		'projects': sorted_project_data,
+		'all_projects': sorted_project_data,
 		'today_date': date.today(),
-		'first_entry_date': get_first_entry_date()
+		'first_entry_date': get_first_entry_date(),
+		'description': description,
+		'label': label,
+		'start': start,
+		'color': color
+		# 'active_projects': projects
 	}
 
-	return jsonify(render_template('frequency/frequency_line_controls.html', data=page_data))
+	return jsonify(
+		html = render_template('frequency/frequency_line_controls.html', data=page_data),
+		active_projects = projects
+	)
 
 date_formats = {
 	'minutes': '%Y-%m-%d %H:%M',
