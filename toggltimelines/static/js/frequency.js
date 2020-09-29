@@ -196,6 +196,7 @@ $('#frequency_graph_submit').on('click', function() {
 		serialized_object['scope_type'] = $("input[type='radio'][name='scope_type']:checked").val()
 		serialized_object['graph_type'] = $("input[type='radio'][name='graph_type']:checked").val()
 		serialized_object['graph_style'] = $("input[type='radio'][name='graph_style']:checked").val()
+		// serialized_object['scale_from_zero'] = $('#scale-from-zero').is(":checked");
 
 		graph_type = get_graph_type()
 		if (graph_type == 'normal') {
@@ -255,6 +256,10 @@ function get_show_current_time_value() {
 
 function get_y_axis_type() {
 	return $('#y_axis_type').val()
+}
+
+function get_scale_from_zero() {
+	return $('#scale-from-zero').is(":checked")
 }
 
 function get_x_tick_values(data, width=false) {
@@ -373,9 +378,13 @@ function create_graph(data, graph_style) {
 		return d3.max(array['values']);
 	});
 
-	var min_frequency = d3.min(data, function(array) {
-		return d3.min(array['values']);
-	});
+	if (get_scale_from_zero()) {
+		var min_frequency = 0
+	} else {
+		var min_frequency = d3.min(data, function(array) {
+			return d3.min(array['values']);
+		});
+	}
 
 	var y = d3.scaleLinear()
 		.domain([min_frequency, max_frequency])
