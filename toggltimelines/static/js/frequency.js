@@ -304,6 +304,11 @@ function get_scale_from_zero() {
 	return $('#scale-from-zero').is(":checked")
 }
 
+function get_display_trend_line() {
+	// TODO!!!
+	return true
+}
+
 function get_x_tick_values(data, width=false) {
 	if (graph_type == 'frequency' && scope_type == 'minutes') {
 		hours = []
@@ -477,6 +482,8 @@ function get_y_axis_label() {
 function create_graph(data, graph_style) {
 	console.log(data)
 	reset_graph_view()
+
+	var decimalFormat = d3.format("0.2f");
 
 	var margin = {top: 10, right: 30, bottom: 70, left: 90};
 
@@ -697,6 +704,52 @@ function create_graph(data, graph_style) {
       		.on('mouseout', tip.hide)
 	}
 
+	
+	// Draw trend line.
+	if (get_display_trend_line() && ['line', 'scatter'].includes(graph_style)) {
+
+		var trend_line_slopes = []
+
+		for (var i = data.length - 1; i >= 0; i--) {
+			var x_values = Object.keys(data[i]['keys']).map(function(x) {
+				return parseInt(x, 10);
+			});
+			var y_values = data[i]['values'];
+
+			
+			var least_square = LeastSquares(x_values, y_values)
+
+			var x1 = 0
+			var x2 = x_values.length - 1
+
+			var y1 = least_square['b']
+			var y2 = y1 + x2*least_square['m']
+
+			console.log(least_square)
+
+			var trend_data = [[x1, y1, x2, y2]]
+
+			console.log(trend_data)
+
+			
+			var trend_line = svg.selectAll(".trendline")
+				.data(trend_data);
+				
+			trend_line.enter()
+				.append("line")
+				.attr("class", "trendline")
+				.attr("x1", function(d) { return x(d[0]); })
+				.attr("y1", function(d) { return y(d[1]); })
+				.attr("x2", function(d) { return x(d[2]); })
+				.attr("y2", function(d) { return y(d[3]); })
+				.attr("stroke", data[i]['line_data']['color'])
+				.style("stroke-dasharray", ("3, 3"))
+				.attr("stroke-width", 3);
+
+			trend_line_slopes.push(least_square['m'])
+		}
+	}
+
 	var number_of_ticks = d3.min([width/60, data[0]['keys'].length])
 
 	svg.append('g')
@@ -734,14 +787,13 @@ function create_graph(data, graph_style) {
 		.data(data)
 		.enter()
 			.append('rect')
-			.attr('x', width - 150)
+			.attr('x', width - 150 - 100)
 			.attr('y', function(d, i) {
 				return i * 20;
 			})
 			.attr('width', 12)
 			.attr('height', 12)
 			.style('fill', function(d) {
-				console.log(d)
 				return d['line_data']['color']
 			});
 
@@ -749,12 +801,20 @@ function create_graph(data, graph_style) {
 		.data(data)
 		.enter()
 			.append('text')
-			.attr('x', width - 135)
+			.attr('x', width - 135 - 100)
 			.attr('y', function(d, i) {
 				return (i*20) + 11;
 			})
 			.text(function(d, i) {
-				return d['line_data']['label']
+				var label = d['line_data']['label']
+
+				if (!get_display_trend_line()) {
+					return label;
+				}
+
+				var slope = decimalFormat(trend_line_slopes[i])
+
+				return label + ' (slope: ' + slope + ')'
 			});
 
 	// x-axis label
@@ -776,6 +836,96 @@ function create_graph(data, graph_style) {
 
 
 }
+
+function LeastSquares(values_x, values_y) {
+    var sum_x = 0;
+    var sum_y = 0;
+    var sum_xy = 0;
+    var sum_xx = 0;
+    var count = 0;
+
+    /*
+     * We'll use those variables for faster read/write access.
+     */
+    var x = 0;
+    var y = 0;
+    var values_length = values_x.length;
+
+    if (values_length != values_y.length) {
+        throw new Error('The parameters values_x and values_y need to have same size!');
+    }
+
+    /*
+     * Nothing to do.
+     */
+    if (values_length === 0) {
+        return [ [], [] ];
+    }
+
+    /*
+     * Calculate the sum for each of the parts necessary.
+     */
+    for (var v = 0; v < values_length; v++) {
+        x = values_x[v];
+        y = values_y[v];
+        sum_x += x;
+        sum_y += y;
+        sum_xx += x*x;
+        sum_xy += x*y;
+        count++;
+    }
+
+    /*
+     * Calculate m and b for the formular:
+     * y = x * m + b
+     */
+    var m = (count*sum_xy - sum_x*sum_y) / (count*sum_xx - sum_x*sum_x);
+    var b = (sum_y/count) - (m*sum_x)/count;
+
+
+    return {'b': b, 'm': m};
+}
+
+
+// // From http://bl.ocks.org/benvandyke/8459843
+// // returns slope, intercept and r-square of the line
+// function leastSquares(xSeries, ySeries) {
+// 	var reduceSumFunc = function(prev, cur) { return prev + cur; };
+
+// 	var xBar = xSeries.reduce(reduceSumFunc) * 1.0 / xSeries.length;
+// 	var yBar = ySeries.reduce(reduceSumFunc) * 1.0 / ySeries.length;
+
+// 	var ssXX = xSeries.map(function(d) { return Math.pow(d - xBar, 2); })
+// 		.reduce(reduceSumFunc);
+
+// 	var ssYY = ySeries.map(function(d) { return Math.pow(d - yBar, 2); })
+// 		.reduce(reduceSumFunc);
+		
+// 	var ssXY = xSeries.map(function(d, i) { return (d - xBar) * (ySeries[i] - yBar); })
+// 		.reduce(reduceSumFunc);
+		
+// 	var slope = ssXY / ssXX;
+// 	var yIntercept = yBar - (xBar * slope);
+// 	var rSquare = Math.pow(ssXY, 2) / (ssXX * ssYY);
+
+// 	console.log('bar')
+// 	console.log(yBar)
+// 	console.log(xBar)
+
+
+
+// 	//var xIntercept = xBar - (yIntercept / slope)
+
+
+// 	console.log('yIntercept')
+// 	console.log(yIntercept)
+
+// 	console.log('slope')
+// 	console.log(slope)
+
+
+// 	return [slope, yIntercept, rSquare];
+// }
 
 function is_day_view() {
 	if (get_graph_type() == 'frequency' && get_scope_type() == 'minutes') {

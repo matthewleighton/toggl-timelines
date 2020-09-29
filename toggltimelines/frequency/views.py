@@ -150,7 +150,8 @@ def frequency_data():
 			time_block_occurances = get_time_block_occurances(start_datetime, end_datetime, scope_type)
 			pp.pprint(time_block_occurances)
 			for key, value in line_data_container.items():
-				line_data_container[key] = round(line_data_container[key] / time_block_occurances[key], 0)
+				divide_by = time_block_occurances[key] if time_block_occurances[key] > 0 else 1
+				line_data_container[key] = round(line_data_container[key] / divide_by, 0)
 		elif y_axis_type == 'percentage_occurance':
 			# Note: this only makes sense for Frequency-Minute graphs
 			days = (end_datetime - start_datetime).days
