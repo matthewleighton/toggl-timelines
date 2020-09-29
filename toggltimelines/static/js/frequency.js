@@ -226,7 +226,6 @@ $('#frequency_graph_submit').on('click', function() {
 		serialized_object['scope_type'] = $("input[type='radio'][name='scope_type']:checked").val()
 		serialized_object['graph_type'] = $("input[type='radio'][name='graph_type']:checked").val()
 		serialized_object['graph_style'] = $("input[type='radio'][name='graph_style']:checked").val()
-		// serialized_object['scale_from_zero'] = $('#scale-from-zero').is(":checked");
 
 		graph_type = get_graph_type()
 		if (graph_type == 'normal') {
@@ -340,17 +339,27 @@ function format_y_value(value) {
 	var y_axis_type = get_y_axis_type()
 
 	if (['absolute', 'average'].includes(y_axis_type)) {
-		var total_minutes = value;
-		var hours = Math.floor(total_minutes / 60);
-		var minutes = total_minutes % 60
-
-		return hours.toString() + 'h, ' + minutes.toString() + 'm';
-
+		return format_minutes(value)
 	} else if (['percentage_tracked', 'percentage_occurance'].includes(y_axis_type)) {
 		return value + '%'
 	}
 
 	return value
+}
+
+function format_minutes(total_minutes, clock=false) {
+	var hours = Math.floor(total_minutes / 60).toString()
+	var minutes = (total_minutes % 60).toString()
+
+	if (clock) {
+		if (minutes.length == 1) {
+			minutes = '0' + minutes
+		}
+
+		return hours + ':' + minutes
+	}
+
+	return hours.toString() + 'h, ' + minutes.toString() + 'm';
 }
 
 function make_y_gridlines(y) {
@@ -537,9 +546,6 @@ function create_graph(data, graph_style) {
 				return formatted_data
 			})
 
-	console.log('height')
-	console.log(height)
-
 	var tip = d3.tip()
 		.attr('class', 'd3-tip')
 		.offset([-10, 0])
@@ -548,6 +554,10 @@ function create_graph(data, graph_style) {
 			label = data[line_number]['line_data']['label']
 			x_value = data[line_number]['keys'][i]
 			y_value = format_y_value(d['value'])
+
+			if (graph_type == 'frequency' && scope_type == 'minutes') {
+				x_value = format_minutes(x_value, true)
+			}
 
 			return "<div class='tooltip-title'><span>" + label + "</span></div><div>" + x_value + "</div><div>" + y_value + "</div>"
 		})

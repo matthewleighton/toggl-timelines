@@ -50,7 +50,6 @@ def new_frequency_line():
 
 	print(data)
 
-
 	unsorted_projects = helpers.get_project_data()
 
 	project_names_sorted = sorted(unsorted_projects.keys(), key=lambda x:x.lower())
@@ -60,31 +59,27 @@ def new_frequency_line():
 	for project_name in project_names_sorted:
 		sorted_project_data[project_name] = unsorted_projects[project_name]
 
-
 	description = data['description'] if 'description' in data.keys() else ''
 	label = data['label'] if 'label' in data.keys() else ''
 	start = data['start'] if 'start' in data.keys() else get_first_entry_date()
-	end = data['end'] if 'end' in data.keys() else ''
+	end = data['end'] if 'end' in data.keys() else date.today()
 	color = data['color'] if 'color' in data.keys() else '#000000'
-	projects = data['projects'] if 'projects' in data.keys() else {}
-	
-	print(projects)
+	active_projects = data['projects'] if 'projects' in data.keys() else {}
 
 
 	page_data = {
 		'all_projects': sorted_project_data,
 		'today_date': date.today(),
-		'first_entry_date': get_first_entry_date(),
 		'description': description,
 		'label': label,
 		'start': start,
+		'end': end,
 		'color': color
-		# 'active_projects': projects
 	}
 
 	return jsonify(
 		html = render_template('frequency/frequency_line_controls.html', data=page_data),
-		active_projects = projects
+		active_projects = active_projects
 	)
 
 date_formats = {
