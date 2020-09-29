@@ -392,15 +392,74 @@ function reset_graph_view() {
 	$('svg').remove()
 }
 
+function get_x_axis_label() {
+	var graph_type = get_graph_type()
+	var scope_type = get_scope_type()
+
+	var labels = {
+		'normal': {
+			'days': 'Date',
+			'weeks': 'Week of Year',
+			'months': 'Month'
+		},
+		'frequency': {
+			'minutes': 'Hour of day',
+			'days': 'Weekday',
+			'weeks': 'Week Number',
+			'months': 'Month'
+		}
+	}
+
+	return labels[graph_type][scope_type]
+}
+
+function get_y_axis_label() {
+	var graph_type = get_graph_type()
+	var y_axis_type = get_y_axis_type()
+	var scope_type = get_scope_type()
+
+	var labels = {
+		'normal': {
+			'absolute': {
+				'days': 'Hours per day',
+				'weeks': 'Hours per week',
+				'months': 'Hours per month'
+			}
+		},
+		'frequency': {
+			'absolute': {
+				'minutes': 'Total time per minute',
+				'days': 'Total time per weekday',
+				'weeks': 'Total time per week',
+				'months': 'Total time per month'
+			},
+			'average': {
+				'days': 'Average time per weekday',
+				'weeks': 'Average time per week',
+				'months': 'Average time per month'
+			},
+			'percentage_tracked': {
+				'days': 'Percentage of total activity time',
+				'weeks': 'Percentage of total activity time',
+				'months': 'Percentage of total activity time'
+			},
+			'percentage_occurance': {
+				'minutes': 'Percentage of days in which activity occurs at time'
+			}
+		}
+	}
+
+	return labels[graph_type][y_axis_type][scope_type]
+}
+
 function create_graph(data, graph_style) {
 	console.log(data)
 	reset_graph_view()
 
-	var margin = {top: 10, right: 30, bottom: 50, left: 60};
+	var margin = {top: 10, right: 30, bottom: 70, left: 90};
 
 	var width = $('#frequency_graph_container').width() - margin.left - margin.right;
 	var height = $(window).height() - margin.top - margin.bottom
-
 	var min_x = 0
 	var max_x = data[0]['values'].length
 
@@ -655,6 +714,24 @@ function create_graph(data, graph_style) {
 			.text(function(d, i) {
 				return d['line_data']['label']
 			});
+
+	// x-axis label
+	svg.append("text")             
+		.attr("transform",
+			"translate(" + (width/2) + " ," + 
+				(height + margin.top + 30) + ")")
+		.style("text-anchor", "middle")
+		.text(get_x_axis_label());
+
+	// y-axis label
+	svg.append("text")
+		.attr("transform", "rotate(-90)")
+		.attr("y", 10 - margin.left)
+		.attr("x",0 - (height / 2))
+		.attr("dy", "1em")
+		.style("text-anchor", "middle")
+		.text(get_y_axis_label());
+
 
 }
 
