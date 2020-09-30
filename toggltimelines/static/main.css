@@ -578,12 +578,16 @@ body.hide-line-date-controls .line-date-control {
   float: right;
 }
 
-.readthrough-fields .track-btn {
-  border-radius: 100px;
+.readthrough-fields .btn {
   cursor: pointer;
   display: inline-block;
   float: right;
   margin-right: 10px;
+  color: white;
+}
+
+.readthrough-fields .track-btn {
+  border-radius: 100px;
 }
 
 #new-readthrough-container {

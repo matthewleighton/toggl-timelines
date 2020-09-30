@@ -630,14 +630,24 @@ function create_graph(data, graph_style) {
 
 		var animation_duration = data[0]['keys'].length * 350
 		var max_duration = 20000
-		if (graph_type == 'frequency' && scope_type == 'minutes') {
-			max_duration = 500*24
-		} else if (graph_type == 'normal' && scope_type == 'days') {
-			max_duration = (data[0]['keys']/30) * 500
-		}
-		animation_duration = d3.min([animation_duration, max_duration])
-		animate = get_animate_value()
 
+
+		animation_durations = {
+			'frequency': {
+				'minutes': 500*24,
+				'days': 500*12,
+				'weeks': 200*53,
+				'months': 500*12
+			},
+			'normal': {
+				'days': 7000,
+				'weeks': 5000,
+				'months': 5000
+			}
+		}
+
+		duration = animation_durations[graph_type][scope_type]
+		animate = get_animate_value()
 
 		// TODO: This probably isn't really how it should be done in d3, but I couldn't get the proper way to work.
 		for (var i = 0; i <= data.length - 1; i++) {
@@ -656,7 +666,7 @@ function create_graph(data, graph_style) {
 					.transition()
 						.duration(animation_duration)
 						.ease(d3.easeLinear)
-						.attr("stroke-dashoffset", 0);	
+						.attr("stroke-dashoffset", 0)
 			}
 			
 		}
@@ -893,47 +903,6 @@ function LeastSquares(values_x, values_y) {
 
     return {'b': b, 'm': m};
 }
-
-
-// // From http://bl.ocks.org/benvandyke/8459843
-// // returns slope, intercept and r-square of the line
-// function leastSquares(xSeries, ySeries) {
-// 	var reduceSumFunc = function(prev, cur) { return prev + cur; };
-
-// 	var xBar = xSeries.reduce(reduceSumFunc) * 1.0 / xSeries.length;
-// 	var yBar = ySeries.reduce(reduceSumFunc) * 1.0 / ySeries.length;
-
-// 	var ssXX = xSeries.map(function(d) { return Math.pow(d - xBar, 2); })
-// 		.reduce(reduceSumFunc);
-
-// 	var ssYY = ySeries.map(function(d) { return Math.pow(d - yBar, 2); })
-// 		.reduce(reduceSumFunc);
-		
-// 	var ssXY = xSeries.map(function(d, i) { return (d - xBar) * (ySeries[i] - yBar); })
-// 		.reduce(reduceSumFunc);
-		
-// 	var slope = ssXY / ssXX;
-// 	var yIntercept = yBar - (xBar * slope);
-// 	var rSquare = Math.pow(ssXY, 2) / (ssXX * ssYY);
-
-// 	console.log('bar')
-// 	console.log(yBar)
-// 	console.log(xBar)
-
-
-
-// 	//var xIntercept = xBar - (yIntercept / slope)
-
-
-// 	console.log('yIntercept')
-// 	console.log(yIntercept)
-
-// 	console.log('slope')
-// 	console.log(slope)
-
-
-// 	return [slope, yIntercept, rSquare];
-// }
 
 function is_day_view() {
 	if (get_graph_type() == 'frequency' && get_scope_type() == 'minutes') {

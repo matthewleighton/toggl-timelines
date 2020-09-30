@@ -39,7 +39,8 @@ def reading_home():
 
 	page_data = {
 		'active_readthroughs': active_readthroughs,
-		'books': books
+		'books': books,
+		'base_url': request.url_root
 	}
 
 	response = make_response(render_template('reading/index.html', data=page_data))
@@ -251,6 +252,39 @@ def stop_track():
 	#TODO: Return something sensible.
 
 	return jsonify('test')
+
+@bp.route("/reading/graph", methods=['GET'])
+def graph():
+	readthrough_id =  request.args.get('readthrough_id')
+	readthrough = Readthrough.query.get(readthrough_id)
+
+	base_url = request.url_root
+
+	if not readthrough:
+		return requests.get(base_url + 'reading').text
+
+	project = 'Reading'
+	description = readthrough.book.title
+	start = readthrough.start_date
+	end = readthrough.end_date if readthrough.end_date else datetime.today()
+
+	graph_line = {
+		'projects': [project],
+		'description': description,
+	}
+
+	graph_data = {
+		'lines': [graph_line],
+		'type': 'normal',
+		'start': start.strftime('%Y-%m-%d'),
+		'end': end.strftime('%Y-%m-%d')
+	}
+
+	
+	response = requests.post(base_url + 'frequency', json=graph_data).text
+
+	return response
+
 
 def get_all_books():
 	query = Book.query

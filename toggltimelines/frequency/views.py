@@ -28,16 +28,24 @@ months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'Augus
 
 bp = Blueprint("frequency", __name__)
 
-@bp.route("/frequency")
+@bp.route("/frequency", methods=['GET', 'POST'])
 def index():
-	helpers.toggl_sync(days=2)
+
+	print('This is the frequency page.')
+
+	request_data = request.json
+	print('request_data')
+	print(request_data)
+
+	#helpers.toggl_sync(days=2)
 
 	projects = helpers.get_project_data()
 
 	page_data = {
 		'projects': projects,
 		'today_date': date.today(),
-		'first_entry_date': get_first_entry_date()
+		'first_entry_date': get_first_entry_date(),
+		'existing_lines': request_data
 	}
 
 	response = make_response(render_template('frequency/index.html', data=page_data))
