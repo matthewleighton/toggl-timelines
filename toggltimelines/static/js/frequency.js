@@ -716,8 +716,13 @@ function create_graph(data, graph_style) {
 			});
 			var y_values = data[i]['values'];
 
+			var last_x = x_values[x_values.length-1]
+
 			
 			var least_square = LeastSquares(x_values, y_values)
+			var slope = least_square['m']
+			var y_intercept = least_square['b']
+			var x_intercept = -y_intercept / slope
 
 			var x1 = 0
 			var x2 = x_values.length - 1
@@ -725,12 +730,19 @@ function create_graph(data, graph_style) {
 			var y1 = least_square['b']
 			var y2 = y1 + x2*least_square['m']
 
-			console.log(least_square)
+			
+
+			if (slope > 0 && x_intercept > 0) {
+				x1 = x_intercept
+				y1 = 0
+
+			} else if (slope < 0 && x_intercept < x2) {
+				console.log('Line goes below axis.')
+				x2 = x_intercept
+				y2 = 0
+			}
 
 			var trend_data = [[x1, y1, x2, y2]]
-
-			console.log(trend_data)
-
 			
 			var trend_line = svg.selectAll(".trendline")
 				.data(trend_data);
