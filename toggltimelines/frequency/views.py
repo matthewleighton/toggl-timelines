@@ -96,9 +96,11 @@ def frequency_data():
 	scope_type = submission_data[0]['scope_type']
 	graph_type = submission_data[0]['graph_type']
 
+	user_timezone = helpers.get_current_timezone()
+
 	for line in submission_data:
-		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
-		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d').replace(hour=23, minute=59, second=59)
+		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d').replace(tzinfo=pytz.utc).astimezone(tz=user_timezone)
+		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d').replace(hour=23, minute=59, second=59, tzinfo=pytz.utc).astimezone(tz=user_timezone)
 
 		line_data_container = get_line_data_container(graph_type, scope_type, start_datetime, end_datetime)
 
@@ -130,8 +132,11 @@ def frequency_data():
 		
 			target_moment = entry.get_local_start_time()
 
+
+
 			while target_moment <= entry.get_local_end_time():
 				moment_label = get_moment_label(target_moment, graph_type, scope_type)
+				# print(line_data_container)
 				line_data_container[moment_label] += 1
 
 				target_moment += timedelta(minutes=1)
@@ -275,8 +280,8 @@ def get_line_data_container(graph_type, scope_type, start_datetime, end_datetime
 
 		date_format = date_formats[scope_type]
 			
-		while target <= end_datetime:
-			
+		while target.date() <= end_datetime.date():
+
 			if scope_type == 'weeks': # For weeks we're doing this inside of the loop,
 									  # since we need to remove the leading 0s from week number
 				week_number = int(target.strftime('%W'))

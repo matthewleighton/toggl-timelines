@@ -405,8 +405,8 @@ svg {
 
 /* Frequency Page */
 
-#frequency_settings_container {
-	/*display: none;*/
+.checkbox-container label {
+	margin-right: 20px;
 }
 
 #frequency_graph_container {
@@ -483,10 +483,6 @@ body.hide-line-date-controls .line-date-control {
 
 #graph_controls .line-graph-checkboxes {
   margin-left: 10px;
-}
-
-.line-graph-checkboxes label {
-  margin-right: 20px;
 }
 
 .colorpick-eyedropper-input-trigger {

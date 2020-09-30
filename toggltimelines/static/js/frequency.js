@@ -305,8 +305,7 @@ function get_scale_from_zero() {
 }
 
 function get_display_trend_line() {
-	// TODO!!!
-	return true
+	return $('#trend-line-checkbox').is(":checked")
 }
 
 function get_x_tick_values(data, width=false) {
@@ -730,14 +729,11 @@ function create_graph(data, graph_style) {
 			var y1 = least_square['b']
 			var y2 = y1 + x2*least_square['m']
 
-			
-
 			if (slope > 0 && x_intercept > 0) {
 				x1 = x_intercept
 				y1 = 0
 
 			} else if (slope < 0 && x_intercept < x2) {
-				console.log('Line goes below axis.')
 				x2 = x_intercept
 				y2 = 0
 			}
