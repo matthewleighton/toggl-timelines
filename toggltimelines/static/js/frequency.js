@@ -1,8 +1,19 @@
 
 $(document).ready(function() {
-	$('.new_frequency_line_button').click()
+	assign_default_settings()
+
+
+	//$('.new_frequency_line_button').click()
 	toggle_line_date_display()
+
+	console.log('three')
 	toggle_y_axis_type()
+
+	console.log(existing_lines)
+
+	// if (existing_lines.length > 0) {
+	// 	submit_graph_request()
+	// }
 })
 
 // On change of graph type...
@@ -20,10 +31,30 @@ $('body').on('change', 'input[type=radio][name=scope_type]', function() {
 	toggle_current_minute_checkbox()
 })
 
+// On change of graph style...
 $('body').on('change', 'input[type=radio][name=graph_style]', function() {
 	hide_show_line_graph_checkboxes()
 	toggle_current_minute_checkbox()
 })
+
+function assign_default_settings() {
+	$("input[type='radio'][value='" + graph_type +"']").parent().click()
+	$("input[type='radio'][value='" + scope_type +"']").parent().click()
+	$("input[type='radio'][value='" + graph_style +"']").parent().click()
+
+	var number_of_lines = existing_lines.length
+
+	for (var i = existing_lines.length - 1; i >= 0; i--) {
+		console.log(existing_lines[i])
+		create_new_line_controls(existing_lines[i], i)
+	}
+
+	// if (existing_lines.length > 0) {
+	// 	console.log('click!')
+
+	// 	submit_graph_request()
+	// }
+}
 
 function toggle_current_minute_checkbox() {
 	checkbox_container = $('.day-view-live-line')
@@ -69,12 +100,15 @@ function hide_show_minutes_scope() {
 }
 
 function toggle_y_axis_type() {
-	graph_type = get_graph_type()
-	scope_type = get_scope_type()
+	
+	var graph_type = get_graph_type()
+	var scope_type = get_scope_type()
 
 	var select_element = $('#y_axis_type')
 
 	var initially_selected = select_element.val()
+
+
 
 	select_element.empty()
 
@@ -86,7 +120,9 @@ function toggle_y_axis_type() {
 	select_element.append(absolute)
 	var valid_options = ['absolute']
 
+
 	if (graph_type == 'normal') return;
+
 
 	if (scope_type == 'minutes') {
 		select_element.append(percentage_occurance)
@@ -188,7 +224,7 @@ $('body').on('click', '.duplicate-line-button', function() {
 	create_new_line_controls(data)
 })
 
-function create_new_line_controls(data={}) {
+function create_new_line_controls(data={}, line_number=false) {
 	$.ajax({
 		"type": "POST",
 		"url": "/frequency/new_frequency_line",
@@ -203,13 +239,24 @@ function create_new_line_controls(data={}) {
 			selectize.setValue(response.active_projects, true)
 
 			hide_show_minutes_scope()
+
+			if (line_number >= existing_lines.length-1) {
+				submit_graph_request()
+			}
+
 		}
 	})
 }
 
 $('#frequency_graph_submit').on('click', function() {
-	
+	submit_graph_request()
+})
+
+function submit_graph_request() {
 	submission_data = []
+	console.log('submit_graph_request')
+
+	console.log($('.frequency_line_control'))
 
 	$('.frequency_line_control').each(function() {
 		serialized_data = $(this).serializeArray();
@@ -270,7 +317,7 @@ $('#frequency_graph_submit').on('click', function() {
 			create_graph(response, graph_style)
 		}
 	})
-})
+}
 
 function get_scope_type() {
 	return $("input[name='scope_type']:checked").val()

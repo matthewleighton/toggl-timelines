@@ -33,9 +33,19 @@ def index():
 
 	print('This is the frequency page.')
 
-	request_data = request.json
+	request_data = request.json if request.json else {}
 	print('request_data')
-	print(request_data)
+	pp.pprint(request_data)
+
+	graph_type = request_data['graph_type'] if 'graph_type' in request_data.keys() else 'normal'
+	scope_type = request_data['scope_type'] if 'scope_type' in request_data.keys() else 'days'
+	graph_style = request_data['graph_style'] if 'graph_style' in request_data.keys() else 'line'
+	lines = request_data['lines'] if 'graph_style' in request_data.keys() else []
+
+	start = request_data['start'] if 'start' in request_data.keys() else get_first_entry_date()
+	end = request_data['end'] if 'end' in request_data.keys() else date.today()
+
+
 
 	#helpers.toggl_sync(days=2)
 
@@ -43,10 +53,15 @@ def index():
 
 	page_data = {
 		'projects': projects,
-		'today_date': date.today(),
-		'first_entry_date': get_first_entry_date(),
-		'existing_lines': request_data
+		'start': start,
+		'end': end,
+		'graph_type': graph_type,
+		'scope_type': scope_type,
+		'graph_style': graph_style,
+		'lines': lines
 	}
+
+	#pp.pprint(page_data)
 
 	response = make_response(render_template('frequency/index.html', data=page_data))
 
@@ -65,10 +80,13 @@ def new_frequency_line():
 
 	description = data['description'] if 'description' in data.keys() else ''
 	label = data['label'] if 'label' in data.keys() else ''
+	label = data['label'] if 'label' in data.keys() else ''
 	start = data['start'] if 'start' in data.keys() else get_first_entry_date()
 	end = data['end'] if 'end' in data.keys() else date.today()
 	color = data['color'] if 'color' in data.keys() else '#000000'
 	active_projects = data['projects'] if 'projects' in data.keys() else {}
+
+	print(data)
 
 	page_data = {
 		'all_projects': sorted_project_data,
@@ -97,7 +115,8 @@ date_formats = {
 def frequency_data():
 	submission_data = request.json
 
-	print(submission_data)
+	print('Submission data!')
+	pp.pprint(submission_data)
 
 	data = []
 

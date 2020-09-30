@@ -3,10 +3,11 @@
 {% block body %}
 	<script type="text/javascript">
 		projects = {{data.projects|tojson}}
+		scope_type = "{{data.scope_type}}";
+		graph_type = "{{data.graph_type}}";
+		graph_style = "{{data.graph_style}}";
+		existing_lines = {{data.lines|tojson}}
 	</script>
-
-
-
 
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/js/standalone/selectize.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.6/css/selectize.css"/>
@@ -14,15 +15,12 @@
 
 	<div id="frequency_settings_container">
 		<form id="graph_controls" class="form-horizontal">
-			{% if data.existing_lines %}
-				<h1>Existing lines!</h1>
-			{% endif %}
 			<div id="graph_line_controllers"></div>
 
 				<div class="form-inline">
 					<div class="btn-group btn-group-toggle graph_type" data-toggle="buttons">
 						<label class="btn btn-secondary active">
-							<input type="radio" name="graph_type" id="normal" autocomplete="off" value="normal" checked> Normal
+							<input type="radio" name="graph_type" id="normal" autocomplete="off" value="normal"> Normal
 						</label>
 						<label class="btn btn-secondary">
 							<input type="radio" name="graph_type" id="frequency" autocomplete="off" value="frequency"> Frequency
@@ -34,7 +32,7 @@
 							<input type="radio" name="scope_type" autocomplete="off" value="minutes"> Minutes
 						</label>
 						<label class="btn btn-secondary" id="frequency-days">
-							<input type="radio" name="scope_type" autocomplete="off" value="days" checked> Days
+							<input type="radio" name="scope_type" autocomplete="off" value="days"> Days
 						</label>
 						<label class="btn btn-secondary">
 							<input type="radio" name="scope_type" autocomplete="off" value="weeks"> Weeks
@@ -45,7 +43,7 @@
 					</div>
 					<div class="btn-group btn-group-toggle graph_style" data-toggle="buttons">
 						<label class="btn btn-secondary active">
-							<input type="radio" name="graph_style" id="line" autocomplete="off" value="line" checked> Line Graph
+							<input type="radio" name="graph_style" id="line" autocomplete="off" value="line"> Line Graph
 						</label>
 						<label class="btn btn-secondary">
 							<input type="radio" name="graph_style" id="bar" autocomplete="off" value="bar"> Bar Graph
@@ -84,8 +82,8 @@
 				<div class="form-inline">
 					<strong>y axis type: </strong><select name="y_axis_type" id="y_axis_type" class="form-control"></select>
 					<div id="global-graph-dates">
-						From <input type="date" class="global-start-date form-control" value="{{data.first_entry_date}}">
-						To <input type="date" class="global-end-date form-control" value="{{data.today_date}}">
+						From <input type="date" class="global-start-date form-control" value="{{data.start}}">
+						To <input type="date" class="global-end-date form-control" value="{{data.end}}">
 					</div>
 				</div>
 

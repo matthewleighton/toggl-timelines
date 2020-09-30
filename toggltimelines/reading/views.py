@@ -24,6 +24,7 @@ from pprint import pprint
 
 from toggltimelines import db
 from toggltimelines.reading.models import Book, Readthrough
+from toggltimelines.timelines.models import Project
 from toggltimelines import helpers
 
 
@@ -39,8 +40,7 @@ def reading_home():
 
 	page_data = {
 		'active_readthroughs': active_readthroughs,
-		'books': books,
-		'base_url': request.url_root
+		'books': books
 	}
 
 	response = make_response(render_template('reading/index.html', data=page_data))
@@ -268,14 +268,20 @@ def graph():
 	start = readthrough.start_date
 	end = readthrough.end_date if readthrough.end_date else datetime.today()
 
+	color = Project.query.filter(Project.project_name >= project).first().project_hex_color
+
 	graph_line = {
 		'projects': [project],
 		'description': description,
+		'label': description,
+		'color': color
 	}
 
 	graph_data = {
 		'lines': [graph_line],
-		'type': 'normal',
+		'graph_type': 'normal',
+		'scope_type': 'days',
+		'graph_style': 'bar',
 		'start': start.strftime('%Y-%m-%d'),
 		'end': end.strftime('%Y-%m-%d')
 	}
