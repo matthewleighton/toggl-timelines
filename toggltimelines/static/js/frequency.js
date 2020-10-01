@@ -24,7 +24,19 @@ $('body').on('change', 'input[type=radio][name=scope_type]', function() {
 $('body').on('change', 'input[type=radio][name=graph_style]', function() {
 	hide_show_line_graph_checkboxes()
 	toggle_current_minute_checkbox()
+	toggle_trend_checkbox()
 })
+
+function toggle_trend_checkbox() {
+	var graph_style = get_graph_style()
+	var container = $('.trend-line-checkbox-container')
+
+	if (graph_style == 'bar') {
+		container.hide()
+	} else {
+		container.show()
+	}
+}
 
 function assign_default_settings() {
 	if (existing_lines.length == 0) {
@@ -532,11 +544,14 @@ function create_graph(data, graph_style) {
 		var min_frequency = 0
 	} else {
 		var min_frequency = d3.min(data, function(array) {
-			return d3.min(array['values']) - 20;
+			return d3.min(array['values']);
 		});
 
 		var min_frequency = d3.max([0, min_frequency])
 	}
+
+	console.log('min_frequency')
+	console.log(min_frequency)
 
 	var y = d3.scaleLinear()
 		.domain([min_frequency, max_frequency])
