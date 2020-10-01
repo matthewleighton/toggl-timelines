@@ -1,20 +1,9 @@
 
 $(document).ready(function() {
 	assign_default_settings()
-
-
-	//$('.new_frequency_line_button').click()
 	toggle_line_date_display()
-
-	console.log('three')
 	toggle_y_axis_type()
-
-	console.log(existing_lines)
-
-	// if (existing_lines.length > 0) {
-	// 	submit_graph_request()
-	// }
-})
+});
 
 // On change of graph type...
 $('body').on('change', 'input[type=radio][name=graph_type]', function() {
@@ -38,22 +27,20 @@ $('body').on('change', 'input[type=radio][name=graph_style]', function() {
 })
 
 function assign_default_settings() {
+	if (existing_lines.length == 0) {
+		$('.new_frequency_line_button').click()
+	}
+
 	$("input[type='radio'][value='" + graph_type +"']").parent().click()
 	$("input[type='radio'][value='" + scope_type +"']").parent().click()
 	$("input[type='radio'][value='" + graph_style +"']").parent().click()
 
 	var number_of_lines = existing_lines.length
 
+
 	for (var i = existing_lines.length - 1; i >= 0; i--) {
-		console.log(existing_lines[i])
 		create_new_line_controls(existing_lines[i], i)
 	}
-
-	// if (existing_lines.length > 0) {
-	// 	console.log('click!')
-
-	// 	submit_graph_request()
-	// }
 }
 
 function toggle_current_minute_checkbox() {
@@ -240,7 +227,7 @@ function create_new_line_controls(data={}, line_number=false) {
 
 			hide_show_minutes_scope()
 
-			if (line_number >= existing_lines.length-1) {
+			if (line_number !== false && line_number >= existing_lines.length-1) {
 				submit_graph_request()
 			}
 
