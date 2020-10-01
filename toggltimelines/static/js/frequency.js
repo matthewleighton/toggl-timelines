@@ -475,7 +475,8 @@ function get_x_axis_label() {
 		},
 		'frequency': {
 			'minutes': 'Hour of day',
-			'days': 'Weekday',
+			'weekday': 'Weekday',
+			'days': 'Day',
 			'weeks': 'Week Number',
 			'months': 'Month'
 		}
@@ -500,16 +501,19 @@ function get_y_axis_label() {
 		'frequency': {
 			'absolute': {
 				'minutes': 'Total time per minute',
-				'days': 'Total time per weekday',
+				'weekday': 'Total time per weekday',
+				'days': 'Total time per day',
 				'weeks': 'Total time per week',
 				'months': 'Total time per month'
 			},
 			'average': {
-				'days': 'Average time per weekday',
+				'weekday': 'Average time per weekday',
+				'days': 'Average time per day',
 				'weeks': 'Average time per week',
 				'months': 'Average time per month'
 			},
 			'percentage_tracked': {
+				'weekday': 'Percentage of total activity time',
 				'days': 'Percentage of total activity time',
 				'weeks': 'Percentage of total activity time',
 				'months': 'Percentage of total activity time'
