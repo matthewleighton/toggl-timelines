@@ -67,23 +67,24 @@ function hide_show_minutes_scope() {
 	var graph_type = get_graph_type();
 	var scope_type = get_scope_type();
 
-	var minutes_button = $('#frequency-minutes')
-	var days_button = $('#frequency-days')
+	var minutes_button = $('#frequency-minutes');
+	var days_button = $('#frequency-days');
+	var weekday_button = $('#frequency-weekday');
 
 	if (graph_type == 'frequency') {
 		minutes_button.show()
-		days_button.css('cssText', 'border-radius: 0 !important');
+		weekday_button.show()
 		return
 	}
 
 	minutes_button.hide()
+	weekday_button.hide()
+	days_button.css('cssText', 'border-radius: 2px 0 0 2px !important');
 
-	if (scope_type == 'minutes') {
+	if (['minutes', 'weekday'].includes(scope_type)) {
 		minutes_button.removeClass('active')
 		days_button.trigger('click')
-		days_button.css('cssText', 'border-radius: 2px 0 0 2px !important');
 	}
-
 }
 
 function toggle_y_axis_type() {

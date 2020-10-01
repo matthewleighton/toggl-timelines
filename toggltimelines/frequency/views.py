@@ -180,7 +180,6 @@ def frequency_data():
 		
 		elif y_axis_type == 'average':
 			time_block_occurances = get_time_block_occurances(start_datetime, end_datetime, scope_type)
-			pp.pprint(time_block_occurances)
 			for key, value in line_data_container.items():
 				divide_by = time_block_occurances[key] if time_block_occurances[key] > 0 else 1
 				line_data_container[key] = round(line_data_container[key] / divide_by, 0)
@@ -196,9 +195,6 @@ def frequency_data():
 		keys = list(line_data_container.keys())
 
 
-		
-
-
 		data.append({
 			'line_data': line,
 			'entry_data': line_data_container,
@@ -211,8 +207,10 @@ def frequency_data():
 
 # Get how many times a certain time block (week/month) occurs between two dates.
 def get_time_block_occurances(start_datetime, end_datetime, scope_type):
-	if scope_type == 'days':
+	if scope_type == 'weekday':
 		return get_weekday_occurances(start_datetime, end_datetime)
+	elif scope_type == 'days':
+			return get_day_occurances(start_datetime, end_datetime)
 	elif scope_type == 'weeks':
 		return get_week_occurances(start_datetime, end_datetime)
 	elif scope_type == 'months':
@@ -241,6 +239,21 @@ def get_weekday_occurances(start_datetime, end_datetime):
 		return_value[day] = weekday_occurances[i]
 
 	return return_value
+
+def get_day_occurances(start_datetime, end_datetime):
+	day_occurances = get_line_data_container('frequency', 'days')
+
+	target_datetime = start_datetime
+	current_day = target_datetime.strftime('%d %b')
+	day_occurances[current_day] += 1
+
+	while target_datetime <= end_datetime:
+		target_datetime += timedelta(days=1)
+		current_day = target_datetime.strftime('%d %b')
+		day_occurances[current_day] += 1
+
+	return day_occurances
+
 
 def get_week_occurances(start_datetime, end_datetime):
 	week_occurances = [0] * 54
@@ -286,12 +299,14 @@ def get_month_occurances(start_datetime, end_datetime):
 	return return_value
 
 # Generate the main container which will hold the data for our line. 
-def get_line_data_container(graph_type, scope_type, start_datetime, end_datetime):
+def get_line_data_container(graph_type, scope_type, start_datetime=None, end_datetime=None):
 	if graph_type == 'frequency':
 		if scope_type == 'minutes':
 			 line_data_container = { i : 0 for i in list(range(0,1440)) }
-		elif scope_type == 'days':
+		elif scope_type == 'weekday':
 			line_data_container = {i : 0 for i in weekdays}
+		elif scope_type == 'days':
+			line_data_container = get_frequency_days_data_container()
 		elif scope_type == 'weeks':
 			line_data_container = {i: 0 for i in range(0, 54)}
 		elif scope_type == 'months':
@@ -323,6 +338,14 @@ def get_line_data_container(graph_type, scope_type, start_datetime, end_datetime
 
 	return line_data_container
 
+def get_frequency_days_data_container():
+	start = datetime(2020, 1, 1) # Using 2020, since it is a leap year.
+	number_of_days = 366
+	date_list = [start + timedelta(days=x) for x in range(number_of_days)]
+	container = {d.strftime('%d %b'): 0 for d in date_list}
+
+	return container
+
 # Get a label describing the given moment.
 # i.e. date string or month name, etc.
 def get_moment_label(moment_datetime,graph_type, scope_type):
@@ -338,9 +361,12 @@ def get_moment_label(moment_datetime,graph_type, scope_type):
 	else:
 		if scope_type == 'minutes':
 			label = moment_datetime.hour * 60 + moment_datetime.minute
-		elif scope_type == 'days':
+		elif scope_type == 'weekday':
 			day_number = moment_datetime.weekday()
 			label = weekdays[day_number]
+		elif scope_type == 'days':
+			#label = get_day_number_of_year(moment_datetime)
+			label = moment_datetime.strftime('%d %b')
 		elif scope_type == 'weeks':
 			label = int(moment_datetime.strftime('%W'))
 		elif scope_type == 'months':
