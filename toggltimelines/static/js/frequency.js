@@ -349,8 +349,17 @@ function get_scale_from_zero() {
 	return $('#scale-from-zero').is(":checked")
 }
 
+// Return true if the trend line should be displayed.
 function get_display_trend_line() {
-	return $('#trend-line-checkbox').is(":checked")
+	if (!$('#trend-line-checkbox').is(":checked")) {
+		return false;
+	}
+
+	if (['line', 'scatter'].includes(graph_style)) {
+		return true
+	}
+
+	return false
 }
 
 function get_x_tick_values(data, width=false) {
@@ -539,7 +548,13 @@ function get_legend_x_offset(data){
 		}
 	}
 
-	return 6 * longest_label_length;	
+	var offset = 6 * longest_label_length;
+
+	if (get_display_trend_line()) {
+		offset += 100
+	}
+
+	return offset
 }
 	
 
@@ -785,7 +800,7 @@ function create_graph(data, graph_style) {
 
 	
 	// Draw trend line.
-	if (get_display_trend_line() && ['line', 'scatter'].includes(graph_style)) {
+	if (get_display_trend_line() /*&& ['line', 'scatter'].includes(graph_style)*/) {
 
 		var trend_line_slopes = []
 
@@ -897,7 +912,8 @@ function create_graph(data, graph_style) {
 				
 				var label = d['line_data']['label']
 
-				if (!get_display_trend_line() || !['scatter', 'line'].includes(graph_style)) {
+				//if (!get_display_trend_line() || !['scatter', 'line'].includes(graph_style)) {
+				if (!get_display_trend_line()){
 					return label;
 				}
 
