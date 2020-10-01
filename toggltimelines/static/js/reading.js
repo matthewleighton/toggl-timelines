@@ -118,11 +118,12 @@ $('body').on('click', '.create-readthrough-btn', function() {
 		validation_error = true;
 	}
 
-	if (data['start_date'] && data['end_date'] && data['start_date'] > data['end_date']) {
+	if (data['readthrough_complete'] && data['start_date'] && data['end_date'] && data['start_date'] > data['end_date']) {
 		var $start_date_input = $parent_container.find('input[name="start_date"]');
 		var $end_date_input = $parent_container.find('input[name="end_date"]');
 		$start_date_input.addClass('error-field');
 		$end_date_input.addClass('error-field');
+		validation_error = true
 	}
 
 	if (validation_error) {

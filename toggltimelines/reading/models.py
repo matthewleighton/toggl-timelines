@@ -562,6 +562,9 @@ class Readthrough(db.Model):
 
 	def get_estimated_total_days(self, raw=False):
 		estimated_completion_date = self.get_estimated_completion_date(raw=True)
+
+		if not estimated_completion_date:
+			return False if raw else '∞'
 		
 		days = (estimated_completion_date - self.start_date).days + 1
 
