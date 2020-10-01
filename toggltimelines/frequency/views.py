@@ -153,21 +153,27 @@ def frequency_data():
 			description=line['description']
 		)
 
+		print('retreived entries------------------')
+
 		target_date = start_datetime
 
 		for entry in entries:
 		
 			target_moment = entry.get_local_start_time()
 
+			if scope_type == 'minutes': # If out buckets are individual minutes, we can't simply sum the total durations.
+				while target_moment <= entry.get_local_end_time():
+					moment_label = get_moment_label(target_moment, graph_type, scope_type)
+					line_data_container[moment_label] += 1
 
-
-			while target_moment <= entry.get_local_end_time():
+					target_moment += timedelta(minutes=1)
+			else:
 				moment_label = get_moment_label(target_moment, graph_type, scope_type)
-				# print(line_data_container)
-				line_data_container[moment_label] += 1
+				duration_minutes = entry.dur / (1000 * 60)
+				line_data_container[moment_label] += duration_minutes
 
-				target_moment += timedelta(minutes=1)
-
+		# Round minute values to nearest integer.
+		line_data_container = {k: round(v, 0) for k, v in line_data_container.items()}
 
 		y_axis_type = submission_data[0]['y_axis_type']
 		values = list(line_data_container.values())
