@@ -254,8 +254,6 @@ function submit_graph_request() {
 	submission_data = []
 	console.log('submit_graph_request')
 
-	console.log($('.frequency_line_control'))
-
 	$('.frequency_line_control').each(function() {
 		serialized_data = $(this).serializeArray();
 
@@ -587,9 +585,6 @@ function create_graph(data, graph_style) {
 		var min_frequency = d3.max([0, min_frequency])
 	}
 
-	console.log('min_frequency')
-	console.log(min_frequency)
-
 	var y = d3.scaleLinear()
 		.domain([min_frequency, max_frequency])
 		.range([height, 0])
@@ -621,8 +616,7 @@ function create_graph(data, graph_style) {
 
 		var x = d3.scaleLinear()
 			.domain([min_x, max_x])
-			.range([0, width])
-			.nice();
+			.range([0, width]);
 	}
 
 	var svg = d3.select('#frequency_graph_container').append('svg')
