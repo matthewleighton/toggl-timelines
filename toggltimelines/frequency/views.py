@@ -126,8 +126,8 @@ def frequency_data():
 	user_timezone = helpers.get_current_timezone()
 
 	for line in submission_data:
-		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d').replace(tzinfo=pytz.utc).astimezone(tz=user_timezone)
-		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d').replace(hour=23, minute=59, second=59, tzinfo=pytz.utc).astimezone(tz=user_timezone)
+		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
+		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d').replace(hour=23, minute=59, second=59)
 
 		line_data_container = get_line_data_container(graph_type, scope_type, start_datetime, end_datetime)
 
@@ -142,18 +142,16 @@ def frequency_data():
 		if isinstance(line['projects'], str):
 			line['projects'] = [line['projects']]
 
-		# TODO: Need to consider the timezones here.
-		# The request will be made purely in UTC, but it should be first converted from the user's timezone?
-		print(start_datetime)
-		print(end_datetime)
+		# TODO: To be precise, these timezones should be based on where the user was at the time. Not where they are now.
+		database_request_start = helpers.to_utc(start_datetime, user_timezone)
+		database_request_end = helpers.to_utc(end_datetime, user_timezone) 
+
 		entries = helpers.get_db_entries(
-			start_datetime,
-			end_datetime,
+			database_request_start,
+			database_request_end,
 			projects=line['projects'],
 			description=line['description']
 		)
-
-		print('retreived entries------------------')
 
 		target_date = start_datetime
 

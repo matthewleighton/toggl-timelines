@@ -560,3 +560,7 @@ def stop_tracking(current_tracking_id=False):
 		return current_app.toggl.stopTimeEntry(current_tracking_id)
 
 	return False
+
+# Convert a datetime object from tz to UTC.
+def to_utc(dt, tz):
+	return tz.normalize(tz.localize(dt)).astimezone(pytz.utc)

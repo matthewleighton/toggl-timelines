@@ -96,8 +96,6 @@ function toggle_y_axis_type() {
 
 	var initially_selected = select_element.val()
 
-
-
 	select_element.empty()
 
 	var absolute = "<option value='absolute'>Absolute</option>"
@@ -859,15 +857,16 @@ function create_graph(data, graph_style) {
 				return (i*20) + 11;
 			})
 			.text(function(d, i) {
+				
 				var label = d['line_data']['label']
 
-				if (!get_display_trend_line()) {
+				if (!get_display_trend_line() || !['scatter', 'line'].includes(graph_style)) {
 					return label;
 				}
 
 				var slope = decimalFormat(trend_line_slopes[i])
 
-				return label + ' (slope: ' + slope + ')'
+				return label + ' (slope: ' + slope + ')';
 			});
 
 	// x-axis label
