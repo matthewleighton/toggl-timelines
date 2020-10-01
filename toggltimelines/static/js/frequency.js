@@ -784,7 +784,7 @@ function create_graph(data, graph_style) {
 
 			var trend_data = [[x1, y1, x2, y2]]
 			
-			var trend_line = svg.selectAll(".trendline")
+			var trend_line = svg.selectAll(".trendline" + i)
 				.data(trend_data);
 				
 			trend_line.enter()
@@ -798,7 +798,7 @@ function create_graph(data, graph_style) {
 				.style("stroke-dasharray", ("3, 3"))
 				.attr("stroke-width", 3);
 
-			trend_line_slopes.push(least_square['m'])
+			trend_line_slopes.unshift(least_square['m'])
 		}
 	}
 
