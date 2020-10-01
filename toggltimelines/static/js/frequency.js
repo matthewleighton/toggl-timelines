@@ -527,9 +527,27 @@ function get_y_axis_label() {
 	return labels[graph_type][y_axis_type][scope_type]
 }
 
+// Calcualte an offset for the legend, based on how long the labels are.
+function get_legend_x_offset(data){
+	var longest_label_length = 0;
+	for (var i = data.length - 1; i >= 0; i--) {
+		var label = data[i]['line_data']['label'];
+		var length = label.length;
+
+		if (length > longest_label_length) {
+			longest_label_length = length;
+		}
+	}
+
+	return 6 * longest_label_length;	
+}
+	
+
 function create_graph(data, graph_style) {
 	console.log(data)
 	reset_graph_view()
+
+	var legend_x_offset = get_legend_x_offset(data)
 
 	var decimalFormat = d3.format("0.2f");
 
@@ -857,7 +875,7 @@ function create_graph(data, graph_style) {
 		.data(data)
 		.enter()
 			.append('rect')
-			.attr('x', width - 150 - 100)
+			.attr('x', width - 150 - legend_x_offset)
 			.attr('y', function(d, i) {
 				return i * 20;
 			})
@@ -871,7 +889,7 @@ function create_graph(data, graph_style) {
 		.data(data)
 		.enter()
 			.append('text')
-			.attr('x', width - 135 - 100)
+			.attr('x', width - 135 - legend_x_offset)
 			.attr('y', function(d, i) {
 				return (i*20) + 11;
 			})
