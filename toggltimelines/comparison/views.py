@@ -172,12 +172,11 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 				duration = entry.dur/1000
 
 			if not historic and view_type == 'goals':
-				# TODO!!!!: Tags are not yet implemented.
-				# tags = entry.tags
-				# if tags:
-				# 	for tag in tags:
-				# 		if tag.tag_name in categories:
-				# 			categories[tag.tag_name]['current_tracked'] += duration
+				tags = entry.tags
+				if tags:
+					for tag in tags:
+						if tag.tag_name in categories:
+							categories[tag.tag_name]['current_tracked'] += duration
 
 
 				client = entry.get_client()
