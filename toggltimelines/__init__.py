@@ -87,6 +87,10 @@ def create_app(test_config=None):
 	app.register_blueprint(reading.bp)
 	app.add_url_rule("/reading", endpoint="reading")
 
+	from toggltimelines import sync
+	app.register_blueprint(sync.bp)
+	app.add_url_rule("/sync", endpoint="sync")
+
 
 	app.failed_image_api_search = False
 

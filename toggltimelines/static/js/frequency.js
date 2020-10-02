@@ -564,7 +564,7 @@ function create_graph(data, graph_style) {
 
 	var decimalFormat = d3.format("0.2f");
 
-	var margin = {top: 10, right: 30, bottom: 70, left: 90};
+	var margin = {top: 10, right: 30, bottom: 100, left: 90};
 
 	var width = $('#frequency_graph_container').width() - margin.left - margin.right;
 	var height = $(window).height() - margin.top - margin.bottom

@@ -31,6 +31,37 @@ body {
 
 /* End of Home Page */
 
+
+/* Header */
+
+#site-header {
+  background-color: #2B2B2B;
+  color: #ABABAB;
+  padding: 2px 40px;
+  margin-bottom: 10px;
+}
+
+#site-header a {
+  color: #ABABAB;
+  margin-right: 30px;
+}
+
+#site-header div {
+  display: inline-block;
+}
+
+#site-header-left {
+  
+}
+
+#site-header-right {
+  float: right;
+}
+
+/* End of Header */
+
+
+
 .login-form {
 	width: 340px;
 	margin: 50px auto;
@@ -62,7 +93,7 @@ body {
 }
 
 .main_container {
-	padding-top: 40px;
+	/*padding-top: 40px;*/
 	max-width: 95%;
 	position: relative;
   margin-bottom: 40px;
@@ -78,13 +109,18 @@ body {
 .time_marker_container {
 	background-color: #f5f5f5;
 	margin-bottom: 20px;
-	margin: 0 auto;
-	max-width: 95%;
+	/*margin: auto;*/
+  position: relative;
+	/*width: 100%;*/
+  position: sticky;
+  top: 0px;
+  z-index: 10000;
 }
 
 .time_marker {
 	width: 4.166666666666667%;
 	right: 3px;
+  position: relative;
 }
 
 .track_block {
