@@ -746,3 +746,32 @@ body.hide-line-date-controls .line-date-control {
   cursor: pointer;
   margin-left: 5px;
 }
+
+/* End of Reading Page */
+
+
+/* ---------- Sync Page --------------- */
+
+#sync-form {
+  margin-top: 20px;
+}
+
+#sync-form label {
+  margin-right: 10px;
+  width: 80px;
+}
+
+#sync-form input {
+  margin-right: 10px;
+}
+
+#sync-form-fields {
+  margin-bottom: 20px;
+}
+
+#sync-complete-message {
+  font-size: 22px;
+}
+
+
+/* End of Sync Page */

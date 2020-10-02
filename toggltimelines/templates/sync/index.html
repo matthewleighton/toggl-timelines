@@ -1,5 +1,25 @@
 {% extends 'base.html' %}
 
 {% block body %}
-	This is the sync page!
+	<form id="sync-form">
+		<div class="form-inline d-flex justify-content-center" id="sync-form-fields">
+			<label for="sync-start">Sync Start: </label>
+			<input type="date" name="sync-start" class="form-control" value="{{data.start}}" required />
+		
+
+			<label for="sync-end">Sync End: </label>
+			<input type="date" name="sync-end" class="form-control" value="{{data.end}}" required />
+		</div>
+
+		<div class="form-inline d-flex justify-content-center">
+			<button type="submit" class="btn btn-primary" id="sync-start-btn">Start Sync</button>
+			<div id='loading_div'>
+	    		{% include "timelines/loading.html" %}
+	    	</div>
+	    	<div id="sync-complete-message"></div>
+		</div>
+
+	</form>
+
+	<script src="{{ url_for('static', filename='js/sync.js') }}"></script>
 {% endblock %}
