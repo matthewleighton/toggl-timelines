@@ -136,7 +136,7 @@ def toggl_sync_all():
 
 
 from toggltimelines.reading.models import Book, Readthrough
-from toggltimelines.timelines.models import Entry, Project
+from toggltimelines.timelines.models import Entry, Project, Tag, Client
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)

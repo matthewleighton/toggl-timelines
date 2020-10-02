@@ -6,6 +6,11 @@ import csv
 import pytz
 from datetime import datetime, timedelta
 
+tags = db.Table('tags',
+		db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True),
+		db.Column('entry_id', db.Integer, db.ForeignKey('entry.id'), primary_key=True)
+	)
+
 class Entry(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	description = db.Column(db.String(200))
@@ -17,6 +22,8 @@ class Entry(db.Model):
 	#tags = db.relationship('Tag', secondary=tags, backref=db.backref('entries', lazy=True), lazy='select')
 	user_id = db.Column(db.Integer)
 	location = db.Column(db.String(50))
+	tags = db.relationship('Tag', secondary=tags, lazy='subquery',
+        backref=db.backref('entries', lazy=True))
 
 	def __repr__(self):
 		return "<Entry (Description: " + self.description + ") (Start: " + str(self.start) + ") (End: " + str(self.end) + ") (Duration: " + str(self.dur) + ") (ID: " + str(self.id) + ")"
@@ -134,3 +141,10 @@ class Client(db.Model):
 	client_name = db.Column(db.String(50))
 	client_hex_color = db.Column(db.String(7))
 	projects = db.relationship('Project', backref='client')
+
+class Tag(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	tag_name = db.Column(db.String(50))
+
+	def __repr__(self):
+		return f"<id: {self.id} tag_name: {self.tag_name}>"

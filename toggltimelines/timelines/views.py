@@ -12,12 +12,15 @@ from werkzeug.exceptions import abort
 
 import pytz
 from datetime import datetime, timedelta
+import pprint
 
 from toggltimelines import db
 
 from toggltimelines.timelines.models import Entry
 
 from toggltimelines import helpers
+
+pp = pprint.PrettyPrinter(indent=4)
 
 bp = Blueprint("timelines", __name__)
 

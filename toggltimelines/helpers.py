@@ -12,6 +12,7 @@ pp = pprint.PrettyPrinter(indent=4)
 from toggltimelines.timelines.models import Entry
 from toggltimelines.timelines.models import Project
 from toggltimelines.timelines.models import Client
+from toggltimelines.timelines.models import Tag
 from toggltimelines import db
 
 
@@ -37,12 +38,13 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 	#Only get the current entry if we're getting today's entries.
 	if start_date <= datetime.now().replace(tzinfo=timezone) <= end_date:
 		current_entry = get_current_toggl_entry()
+		#pp.pprint(current_entry)
 		if current_entry:
 			entries.append(current_entry)
 
 	entries = split_entries_over_midnight(entries)
 
-	local_projects = get_all_projects_from_database()
+	# local_projects = get_all_projects_from_database()
 
 	# Remove database entries which already exist in the sync window.
 	existing_db_entries = get_db_entries(start_date, end_date)
@@ -54,8 +56,9 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 
 	for entry in entries:
 		project_id = entry['pid'] if 'pid' in entry.keys() else None
-
 		db_project = get_or_create_project(project_id)
+
+		db_tags = get_or_create_tags(entry['tags'])
 
 		start_datetime = timestamp_to_datetime(entry['start'])
 		end_datetime = timestamp_to_datetime(entry['end'])
@@ -72,7 +75,8 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 			'dur': 		   entry['dur'],
 			'location':	   location,
 			'user_id': 	   entry['uid'],
-			'db_project':  db_project
+			'db_project':  db_project,
+			'tags':		   db_tags
 		})
 
 	check_project_client_integrity()
@@ -150,6 +154,28 @@ def get_or_create_project(project_id):
 		get_or_create_client(client_id)
 
 	return db_project
+
+# Given a list of tag names, return the database versions, creating them if they don't exist.
+def get_or_create_tags(toggl_tags):
+	db_tags = []
+
+	for tag_name in toggl_tags:
+		db_tag = Tag.query.filter(Tag.tag_name == tag_name).first()
+
+		if db_tag:
+			db_tags.append(db_tag)
+			continue
+
+		db_tag = Tag(
+			# id 		 = t['project_id'],
+			tag_name = tag_name,
+		)
+
+		db.session.add(db_tag)
+
+		db_tags.append(db_tag)
+
+	return db_tags
 
 def get_or_create_client(client_id):
 	db_client = Client.query.get(client_id)
@@ -314,7 +340,8 @@ def create_entry(entry_data):
 		dur 			  = entry_data['dur'],
 		#client 			  = entry_data['client'],
 		location 		  = entry_data['location'],
-		user_id 		  = entry_data['user_id']
+		user_id 		  = entry_data['user_id'],
+		tags 			  = entry_data['tags']
 	)
 
 	if entry_data['db_project']:
@@ -384,7 +411,6 @@ def get_current_toggl_entry():
 	if not current_entry:
 		return False
 
-
 	start_datetime = timestamp_to_datetime(current_entry['start'])
 
 	utc_now = datetime.utcnow().replace(tzinfo=pytz.utc)
@@ -395,6 +421,9 @@ def get_current_toggl_entry():
 
 	current_entry['dur'] = time_since_entry_start.seconds * 1000 # Duration is in milliseconds
 	current_entry['end'] = datetime_to_timestamp(end_datetime)
+
+	if 'tags' not in current_entry.keys():
+		current_entry['tags'] = []
 
 	return current_entry
 
