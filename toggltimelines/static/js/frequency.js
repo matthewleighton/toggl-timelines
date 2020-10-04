@@ -1,3 +1,4 @@
+var line_number = 1;
 
 $(document).ready(function() {
 	assign_default_settings()
@@ -233,8 +234,12 @@ function create_new_line_controls(data={}, line_number=false) {
 			$('#graph_line_controllers').append(response.html)
 
 			var project_selector = $('.frequency_project_selector').last().selectize();
-			var selectize = project_selector[0].selectize;
-			selectize.setValue(response.active_projects, true)
+			var project_selectize = project_selector[0].selectize;
+			project_selectize.setValue(response.active_projects, true)
+
+			var tag_selector = $('.frequency_tag_selector').last().selectize();
+			var tag_selectize = tag_selector[0].selectize;
+			tag_selectize.setValue(response.active_tags, true)
 
 			hide_show_minutes_scope()
 

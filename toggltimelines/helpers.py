@@ -55,6 +55,9 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 						# Project wasn't correctly updating if changed to NULL.
 
 	for entry in entries:
+
+		pp.pprint(entry)
+
 		project_id = entry['pid'] if 'pid' in entry.keys() else None
 		db_project = get_or_create_project(project_id)
 
@@ -94,9 +97,14 @@ def check_project_client_integrity():
 
 	db_projects = Project.query.all()
 
+
+
 	for db_project in db_projects:
+		print(db_project.id)
 		project_id = db_project.id
 		toggl_project = get_toggl_project(project_id)
+
+		pp.pprint(toggl_project)
 
 		toggl_client_id = toggl_project['cid'] if 'cid' in toggl_project.keys() else None
 		db_client_id = db_project.client_id
@@ -131,6 +139,9 @@ def get_toggl_client(client_id):
 
 # Get a project from the datbase if it exists, or create it otherwise.
 def get_or_create_project(project_id):
+	if not project_id:
+		return None
+
 	db_project = Project.query.get(project_id)
 
 	if db_project:
@@ -263,7 +274,7 @@ def get_entry_location(entry_datetime):
 
 	return location
 
-def get_db_entries(start=False, end=False, projects=False, clients=False, description=False):
+def get_db_entries(start=False, end=False, projects=False, clients=False, description=False, tags=False, tags_mode='OR'):
 	query = Entry.query
 
 	if start:
@@ -283,6 +294,14 @@ def get_db_entries(start=False, end=False, projects=False, clients=False, descri
 
 	if description:
 		query = query.filter(func.lower(Entry.description).contains(description.lower()))
+
+	if tags:
+
+		if tags_mode.upper() == 'OR':
+			query = query.filter(Entry.tags.any(Tag.id.in_(tags)))
+		else:
+			for tag in tags:
+				query = query.filter(Entry.tags.any(Tag.id == tag))
 
 	entries = query.order_by(Entry.start).all()
 
@@ -527,6 +546,11 @@ def get_project_data(comparison_mode = False):
 			project_data[project_name]['average'] = 0
 
 	return project_data
+
+def get_tag_data():
+	tags = Tag.query.all()
+
+	return tags
 
 def format_milliseconds(milliseconds, days=True, include_seconds=False):
 	# If we're not including seconds, round the milliseconds up/down to the nearest minute

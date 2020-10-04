@@ -13,6 +13,11 @@ import requests
 
 #from toggl.TogglPy import Toggl
 
+import sys
+print("Python version")
+print (sys.version)
+print("Version info.")
+print (sys.version_info)
 
 
 __version__ = (1, 0, 0, "dev")

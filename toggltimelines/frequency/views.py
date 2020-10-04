@@ -30,12 +30,7 @@ bp = Blueprint("frequency", __name__)
 
 @bp.route("/frequency", methods=['GET', 'POST'])
 def index():
-
-	print('This is the frequency page.')
-
 	request_data = request.json if request.json else {}
-	print('request_data')
-	pp.pprint(request_data)
 
 	graph_type = request_data['graph_type'] if 'graph_type' in request_data.keys() else 'normal'
 	scope_type = request_data['scope_type'] if 'scope_type' in request_data.keys() else 'days'
@@ -45,11 +40,8 @@ def index():
 	start = request_data['start'] if 'start' in request_data.keys() else get_first_entry_date()
 	end = request_data['end'] if 'end' in request_data.keys() else date.today()
 
-
-
-	#helpers.toggl_sync(days=2)
-
 	projects = helpers.get_project_data()
+	tags = helpers.get_tag_data()
 
 	page_data = {
 		'projects': projects,
@@ -58,10 +50,9 @@ def index():
 		'graph_type': graph_type,
 		'scope_type': scope_type,
 		'graph_style': graph_style,
-		'lines': lines
+		'lines': lines,
+		'tags': tags
 	}
-
-	#pp.pprint(page_data)
 
 	response = make_response(render_template('frequency/index.html', data=page_data))
 
@@ -76,6 +67,9 @@ def new_frequency_line():
 	for project_name in project_names_sorted:
 		sorted_project_data[project_name] = unsorted_projects[project_name]
 
+
+	all_tags = helpers.get_tag_data()
+
 	data = request.json
 
 	description = data['description'] if 'description' in data.keys() else ''
@@ -85,11 +79,11 @@ def new_frequency_line():
 	end = data['end'] if 'end' in data.keys() else date.today()
 	color = data['color'] if 'color' in data.keys() else '#000000'
 	active_projects = data['projects'] if 'projects' in data.keys() else {}
-
-	print(data)
+	active_tags = data['tags'] if 'tags' in data.keys() else {}
 
 	page_data = {
 		'all_projects': sorted_project_data,
+		'all_tags': all_tags,
 		'today_date': date.today(),
 		'description': description,
 		'label': label,
@@ -100,7 +94,8 @@ def new_frequency_line():
 
 	return jsonify(
 		html = render_template('frequency/frequency_line_controls.html', data=page_data),
-		active_projects = active_projects
+		active_projects = active_projects,
+		active_tags = active_tags
 	)
 
 date_formats = {
@@ -142,6 +137,17 @@ def frequency_data():
 		if isinstance(line['projects'], str):
 			line['projects'] = [line['projects']]
 
+		if not 'tags' in line.keys():
+			line['tags'] = []
+
+		if isinstance(line['tags'], str):
+			line['tags'] = [line['tags']]
+
+		if not 'tags_or' in line.keys():
+			line['tags_or'] =  False
+
+		tags_mode = 'OR' if line['tags_or'] else 'AND'
+
 		# TODO: To be precise, these timezones should be based on where the user was at the time. Not where they are now.
 		database_request_start = helpers.to_utc(start_datetime, user_timezone)
 		database_request_end = helpers.to_utc(end_datetime, user_timezone) 
@@ -150,7 +156,9 @@ def frequency_data():
 			database_request_start,
 			database_request_end,
 			projects=line['projects'],
-			description=line['description']
+			description=line['description'],
+			tags=line['tags'],
+			tags_mode=tags_mode
 		)
 
 		target_date = start_datetime
