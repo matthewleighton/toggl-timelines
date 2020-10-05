@@ -55,9 +55,6 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 						# Project wasn't correctly updating if changed to NULL.
 
 	for entry in entries:
-
-		pp.pprint(entry)
-
 		project_id = entry['pid'] if 'pid' in entry.keys() else None
 		db_project = get_or_create_project(project_id)
 
@@ -487,6 +484,13 @@ def get_current_timezone():
 
 	location = get_entry_location(now)
 
+	timezone = pytz.timezone(location)
+
+	return timezone
+
+def get_user_timezone_at_date(dt):
+	dt = dt.replace(tzinfo=pytz.utc)
+	location = get_entry_location(dt)
 	timezone = pytz.timezone(location)
 
 	return timezone

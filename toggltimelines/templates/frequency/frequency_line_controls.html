@@ -4,12 +4,14 @@
 		<tr>
 			<th>Projects</th>
 			<th>Description</th>
+			<th class="tags-th">
+				Tags
+				<div class="tags_and_or">
+					<label class="switch"><input type="checkbox" name="tags_or" checked><div class="slider round"></div></label>
+				</div>
+			</th>
 			<th class="line-date-control">Start <span class="frequency_date_reuse_icon">&#9842;</span></th>
 			<th class="line-date-control">End <span class="frequency_date_reuse_icon">&#9842;</span></th>
-			<th>
-				Tags
-				<label class="switch"><input type="checkbox" name="tags_or" checked><div class="slider round"></div></label>
-			</th>
 			<th>Label</th>
 			<th class="color-th">&nbsp;</th>
 			<th>&nbsp;</th>
@@ -26,12 +28,6 @@
 			<th>
 				<input type="text" name="description" class="frequency_line_description form-control" autocomplete="false" value="{{data.description}}">
 			</th>
-			<th class="line-date-control">
-				<input class="line_start_date form-control" type="date" name="start" value="{{data.start}}"/>
-			</th>
-			<th class="line-date-control">
-				<input class="line_end_date form-control" type="date" name="end" value="{{data.end}}"/>
-			</th>
 			<th>
 				<select name="tags" multiple class="frequency_tag_selector">
 					{% for tag in data.all_tags %}
@@ -39,6 +35,12 @@
 						}
 					{% endfor %}
 				</select>
+			</th>
+			<th class="line-date-control">
+				<input class="line_start_date form-control" type="date" name="start" value="{{data.start}}"/>
+			</th>
+			<th class="line-date-control">
+				<input class="line_end_date form-control" type="date" name="end" value="{{data.end}}"/>
 			</th>
 			<th>
 				<input type="text" name="label" class="frequency_line_label form-control" value="{{data.label}}">

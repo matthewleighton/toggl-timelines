@@ -52,7 +52,6 @@ def timelines_page():
 
 @bp.route("/timelines/load_more", methods=['GET', 'POST'])
 def load_more():
-	#return render_template("index.html")
 	reloading = request.json.get('reload')
 
 	start_days_ago = request.json.get('start_days_ago')
@@ -64,20 +63,23 @@ def load_more():
 	if reloading:
 		helpers.toggl_sync(days=0)
 
-		start = datetime.now().replace(hour=0, minute=0, second=0)
+		start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 		end = False
 
 	else:
 		
 		if start_days_ago:
-			start = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=start_days_ago)
+			start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=start_days_ago)
 		else:
 			start = False			
 
-		end = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=end_days_ago)
+		end = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=end_days_ago, microseconds=1)
 
-	print(f"Start datetime: {start}")
-	print(f"End datetime: {end}")
+	start_tz = helpers.get_user_timezone_at_date(start)
+	end_tz = helpers.get_user_timezone_at_date(end)
+
+	start = helpers.to_utc(start, start_tz)
+	end = helpers.to_utc(end, end_tz)
 
 	db_entries = helpers.get_db_entries(start, end)
 

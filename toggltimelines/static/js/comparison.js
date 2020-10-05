@@ -395,7 +395,6 @@ function create_graph(data, sort_type) {
 	var lower_x_domain_bound = get_lower_x_domain_bound(data, sort_type)
 	var upper_x_domain_bound = get_upper_x_domain_bound(data, sort_type)
 
-
 	var width = $('#graph_container').width()
 	var half_width = width/2
 	var margin = ({top: 30, right: 60, bottom: 10, left: 60})
