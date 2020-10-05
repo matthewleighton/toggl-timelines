@@ -148,9 +148,12 @@ def frequency_data():
 
 		tags_mode = 'OR' if line['tags_or'] else 'AND'
 
+		start_tz = helpers.get_user_timezone_at_date(start_datetime)
+		end_tz = helpers.get_user_timezone_at_date(end_datetime)
+
 		# TODO: To be precise, these timezones should be based on where the user was at the time. Not where they are now.
-		database_request_start = helpers.to_utc(start_datetime, user_timezone)
-		database_request_end = helpers.to_utc(end_datetime, user_timezone) 
+		database_request_start = helpers.to_utc(start_datetime, start_tz)
+		database_request_end = helpers.to_utc(end_datetime, end_tz) 
 
 		entries = helpers.get_db_entries(
 			database_request_start,
