@@ -118,8 +118,6 @@ def frequency_data():
 	scope_type = submission_data[0]['scope_type']
 	graph_type = submission_data[0]['graph_type']
 
-	user_timezone = helpers.get_current_timezone()
-
 	for line in submission_data:
 		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
 		end_datetime = datetime.strptime(line['end'], '%Y-%m-%d').replace(hour=23, minute=59, second=59)
@@ -151,7 +149,6 @@ def frequency_data():
 		start_tz = helpers.get_user_timezone_at_date(start_datetime)
 		end_tz = helpers.get_user_timezone_at_date(end_datetime)
 
-		# TODO: To be precise, these timezones should be based on where the user was at the time. Not where they are now.
 		database_request_start = helpers.to_utc(start_datetime, start_tz)
 		database_request_end = helpers.to_utc(end_datetime, end_tz) 
 

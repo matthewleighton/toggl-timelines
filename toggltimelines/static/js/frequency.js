@@ -176,6 +176,55 @@ $('#graph_line_controllers').on('click', '.frequency_date_reuse_icon', function(
 	})
 })
 
+$('body').on('change', '.frequency_line_label', function() {
+	update_date_inputs_on_label_change(this)
+})
+
+// If the given label is a year, update the start/end inputs to fill the year. (Frequency mode only).
+function update_date_inputs_on_label_change(label_input) {
+	var label_value = $(label_input).val()
+
+	if (!check_string_is_year(label_value) || get_graph_type() != 'frequency') {
+		return false;
+	}
+	var year_start = label_value + '-01-01'
+
+	var line_container = $(label_input).parents('form').first()
+	var start_input = line_container.find('.line_start_date')
+	var end_input = line_container.find('.line_end_date')
+
+	start_input.val(year_start)
+
+	var today = new Date();
+	var current_year = today.getFullYear();
+	var current_month = String(today.getMonth() + 1).padStart(2, '0');
+	var current_day = String(today.getDate()).padStart(2, '0');
+
+	if (label_value == current_year) {
+		end_input.val(label_value + '-' + current_month + '-' + current_day)
+	} else {
+		end_input.val(label_value + '-12-31')
+	}
+
+	return true;
+}
+
+function check_string_is_year(str) {
+	if (str.length != 4) {
+		return false
+	}
+
+	var text = /^[0-9]+$/;
+
+	if (!text.test(str)) {
+		return false
+	}
+
+	return true
+
+
+}
+
 
 $('#graph_line_controllers').on('change', '.frequency_project_selector', function() {
 	
