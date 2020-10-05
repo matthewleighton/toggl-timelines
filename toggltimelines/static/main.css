@@ -532,8 +532,7 @@ body.hide-line-date-controls .line-date-control {
 
 .selectize-input {
   min-height: 38px;
-  position: relative;
-  top: 3px;
+  vertical-align: middle;
 }
 
 .color-th {
@@ -846,6 +845,11 @@ input:checked + .slider:before {
 input:checked + .slider:after
 {  
   content:'OR';
+}
+
+
+.tags-th div {
+  display: inline-block;
 }
 
 
