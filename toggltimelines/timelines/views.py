@@ -75,11 +75,13 @@ def load_more():
 
 		end = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=end_days_ago, microseconds=1)
 
-	start_tz = helpers.get_user_timezone_at_date(start)
-	end_tz = helpers.get_user_timezone_at_date(end)
+	if start:
+		start_tz = helpers.get_user_timezone_at_date(start)
+		start = helpers.to_utc(start, start_tz)
 
-	start = helpers.to_utc(start, start_tz)
-	end = helpers.to_utc(end, end_tz)
+	if end:
+		end_tz = helpers.get_user_timezone_at_date(end)
+		end = helpers.to_utc(end, end_tz)
 
 	db_entries = helpers.get_db_entries(start, end)
 
