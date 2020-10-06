@@ -214,6 +214,8 @@ def frequency_data():
 			'keys': keys
 		})
 
+	pp.pprint(data)
+
 	return jsonify(data)
 
 

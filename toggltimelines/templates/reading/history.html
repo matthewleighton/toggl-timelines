@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block body %}
+	
+	<div class='container main_container'>
+		
+		<form id="history-type-selector">
+			<div class="btn-group btn-group-toggle" data-toggle="buttons">
+				<label class="btn btn-secondary">
+					<input type="radio" name="history_type" autocomplete="off" value="details" checked> Year Details
+				</label>
+				<label class="btn btn-secondary">
+					<input type="radio" name="history_type" autocomplete="off" value="books_completed"> Books Completed Graph
+				</label>
+				<label class="btn btn-secondary">
+					<input type="radio" name="history_type" autocomplete="off" value="reading_time"> Reading Time Graph
+				</label>
+			</div>
+		</form>
+
+		<div id="reading-history-details">
+			<label for="reading-year">Year: </label>
+
+			<select name="reading-year" id="reading-year">
+				<option value="0">All</option>
+				{% for year in data.years %}
+					<option value="{{year}}">{{year}}</option>
+				{% endfor %}
+			</select>
+
+			<div id="history-year-container"></div>
+		</div>
+
+		<div id="history_graph_container"></div>
+
+
+	</div>
+
+	
+
+<script src="https://d3js.org/d3.v5.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.7.1/d3-tip.min.js"></script>
+<script src="{{ url_for('static', filename='js/reading-history.js') }}"></script>
+{% endblock %}

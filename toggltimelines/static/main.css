@@ -583,6 +583,11 @@ body.hide-line-date-controls .line-date-control {
 
 /* Reading Page */
 
+#reading-history-button {
+  float: left;
+  color: white;
+}
+
 .error-field {
   border: 1px solid red;
 }
@@ -785,6 +790,15 @@ body.hide-line-date-controls .line-date-control {
 }
 
 /* End of Reading Page */
+
+/* ---------- Reading History Page */
+
+#history-type-selector {
+  margin-top: 20px;
+  text-align: center;
+}
+
+/* End of Reading History Page */
 
 
 /* ---------- Sync Page --------------- */

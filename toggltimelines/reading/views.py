@@ -27,6 +27,9 @@ from toggltimelines.reading.models import Book, Readthrough
 from toggltimelines.timelines.models import Project
 from toggltimelines import helpers
 
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
+
 
 bp = Blueprint("reading", __name__)
 
@@ -291,6 +294,183 @@ def graph():
 
 	return response
 
+@bp.route("/reading/history", methods=['GET'])
+def history():
+
+	first_year = get_readthroughs(year=False)[-1].start_date.year
+	current_year = datetime.now().year
+
+	years = list(range(first_year, current_year+1))
+	years.reverse()
+
+	# books_graph_data = get_books_graph_data(years)
+
+	data = {
+		'years': years
+
+	}
+
+	response = make_response(render_template('reading/history.html', data=data))
+
+	return response
+
+@bp.route('/reading/books_completed_graph_data', methods=['POST'])
+def books_completed_graph_data():
+	data = []
+
+	years = get_all_reading_years()
+
+	for year in years:
+		completed_books = 0
+		dates = {}
+
+		readthroughs = get_readthroughs(year=year)
+		readthroughs.reverse()
+
+		date_of_readthrough_completion = readthroughs[0].end_date.date()
+
+		target_date = date(year, 1, 1)
+
+		while target_date.year == year:
+			if target_date == date_of_readthrough_completion:
+				completed_books += 1
+				readthroughs.pop(0)
+				date_of_readthrough_completion = readthroughs[0].end_date.date() if len(readthroughs) else False
+				continue
+
+			date_label = target_date.strftime('%d %b')
+			dates[date_label] = completed_books
+
+			target_date += timedelta(days=1)
+
+		data.append({
+			'year': year,
+			'dates': list(dates.keys()),
+			'values': list(dates.values())
+		});
+
+	#pp.pprint(data)
+
+	return jsonify(data)
+
+@bp.route("/reading/reading_time_graph_data", methods=['POST'])
+def reading_time_graph_data():
+	years = get_all_reading_years()
+
+	data = []
+
+	dates = {}
+
+	for year in years:
+		reading_time = 0
+
+		book_titles = []
+		readthroughs = get_readthroughs(year=year)
+
+		for readthrough in readthroughs:
+			print(readthrough.book.title)
+			book_titles.append(readthrough.book.title)
+
+		print('')
+
+		entries = helpers.get_db_entries(
+			start = datetime(year, 1, 1), # TODO: These should be in the correct timezones for where the user was at the time.
+			end = datetime(year, 12, 31, 23, 59, 59),
+			description = book_titles
+		)
+
+		# pp.pprint(entries)
+
+		target_date = date(year, 1, 1)
+
+		while target_date.year == year:
+
+			i = 0
+
+			for entry in entries:
+				if entry.start.date() == target_date:
+					reading_time += entry.dur
+					i += 1
+				else:
+					break
+
+			date_label = target_date.strftime('%d %b')
+			dates[date_label] = reading_time
+
+			target_date += timedelta(days=1)
+
+			entries = entries[i:]
+
+			i = 0
+
+		data.append({
+			'year': year,
+			'dates': list(dates.keys()),
+			'values': list(dates.values())
+		});
+
+	return jsonify(data)
+
+
+
+def get_all_reading_years():
+	first_year = get_readthroughs(year=False)[-1].start_date.year
+	current_year = datetime.now().year
+
+	years = list(range(first_year, current_year+1))
+	years.reverse()
+
+	return years
+
+@bp.route("/reading/history_year_data", methods=['POST'])
+def history_year_data():
+	year = int(request.json['year'])
+
+	if not int(year):
+		year = False
+	
+	readthroughs = get_readthroughs(year=year)
+	number_of_books = len(readthroughs)
+
+	if year:
+		current_year = datetime.now().year
+
+		if year == current_year:
+			days = datetime.now().timetuple().tm_yday
+		else:
+			days = 366 if calendar.isleap(year) else 365
+
+	else:
+		start_of_first_readthrough = readthroughs[-1].start_date
+		days = (datetime.today() - start_of_first_readthrough).days
+	
+
+	average_days_per_book = str(round(days / number_of_books)) + ' days'
+
+	total_reading_time = 0
+
+	for readthrough in readthroughs:
+		total_reading_time += readthrough.get_current_reading_time(raw=True)
+
+	average_time_per_book = helpers.format_milliseconds(round(total_reading_time / number_of_books), days=True)
+
+	print(total_reading_time)
+
+	total_reading_time = helpers.format_milliseconds(total_reading_time, days=True)
+
+
+	data = {
+		'year': year,
+		'number_of_books': number_of_books,
+		'average_days_per_book': average_days_per_book,
+		'average_time_per_book': average_time_per_book,
+		'total_reading_time': total_reading_time
+	}
+
+	return jsonify(
+		html = render_template('reading/history_year.html', data=data)
+	)
+	
 
 def get_all_books():
 	query = Book.query
@@ -299,7 +479,7 @@ def get_all_books():
 	return books
 
 # Use a status of 'active' to only get currently read books. Or a status of 'complete' for finished books.
-def get_readthroughs(status='all', title=False):
+def get_readthroughs(status='all', title=False, year=False):
 	query = Readthrough.query
 	
 	if status == 'active':
@@ -309,6 +489,11 @@ def get_readthroughs(status='all', title=False):
 
 	if title:
 		query = query.join(Book).filter(func.lower(Book.title).contains(title.lower()))
+
+	if year:
+		year_start = datetime(year, 1, 1)
+		year_end = datetime(year, 12, 31)
+		query = query.filter(Readthrough.end_date >= year_start).filter(Readthrough.end_date <= year_end)
 
 	query = query.order_by(Readthrough.start_date.desc())
 

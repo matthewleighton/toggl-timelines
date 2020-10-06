@@ -7,6 +7,7 @@ import csv
 import sys
 import copy
 import pprint
+import math
 pp = pprint.PrettyPrinter(indent=4)
 
 from toggltimelines.timelines.models import Entry
@@ -290,7 +291,11 @@ def get_db_entries(start=False, end=False, projects=False, clients=False, descri
 		query = query.filter(Entry.client.in_(clients))
 
 	if description:
-		query = query.filter(func.lower(Entry.description).contains(description.lower()))
+
+		if (isinstance(description, str)):
+			query = query.filter(func.lower(Entry.description).contains(description.lower()))
+		else:
+			query = query.filter(func.lower(Entry.description).in_([x.lower() for x in description]))
 
 	if tags:
 
@@ -568,8 +573,12 @@ def format_milliseconds(milliseconds, days=True, include_seconds=False):
 	minutes = int(minutes)
 	hours=(milliseconds/(1000*60*60))
 
-	if days:
-		hours = hours%24
+	if days and hours >= 24:
+		days = math.floor(hours / 24)
+		hours = hours % 24
+		days_string = f"{days} {'days' if days > 1 else 'day'}, "
+	else:
+		days_string = ''
 
 	hours_string = ("%d hour, " % (hours)) if hours >=1 else ''
 	if hours_string and hours >= 2:
@@ -588,7 +597,7 @@ def format_milliseconds(milliseconds, days=True, include_seconds=False):
 		seconds_string = seconds_string.replace('seconds', 'second')		
 
 
-	formatted_string = hours_string + minutes_string
+	formatted_string = days_string + hours_string + minutes_string
 
 	if include_seconds:
 		formatted_string += seconds_string
