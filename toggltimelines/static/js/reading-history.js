@@ -10,18 +10,34 @@ $('input[type=radio][name=history_type]').change(function() {
 	var value = $(this).val();
 
 	if (value == 'details') {
-		$('#reading-history-details').show()
-		$('#history_graph_container').empty()
+		$('#reading-history-details').show();
+		$('#reading-graph-year-toggles').hide();
+		$('#history_graph_container').empty();
 
-	} else if (value == 'books_completed') {
-		$('#reading-history-details').hide()
-		request_books_completed_graph()
-
-	} else if (value == 'reading_time') {
-		$('#reading-history-details').hide()
-		request_reading_time_graph()
+	} else {
+		$('#reading-history-details').hide();
+		request_graph_data(value);
 	}
 })
+
+$('.reading-graph-checkbox').change(function() {
+	var checkbox_name = $(this).attr('name');
+	var checkbox_value = $(this).is(':checked');
+
+	if (checkbox_name == 'all') {
+		$('.reading-graph-checkbox').each(function() {
+			$checkbox = $(this)
+			if ($checkbox.attr('name') != 'all' && $checkbox.is(':checked') != checkbox_value) {
+				$(this).click()
+			}
+		})
+
+		return;
+	}
+
+	var display_value = checkbox_value ? 'inline' : 'none';
+	$('head').append('<style>.line-' + checkbox_name + '{display: ' + display_value + ';}</style>')
+});
 
 function update_details_div() {
 	var year = $("#reading-year").val()
@@ -45,29 +61,16 @@ function update_details_div() {
 	})
 }
 
-function request_books_completed_graph() {
+function request_graph_data(graph_type) {
 	$.ajax({
 		"type": "POST",
-		"url": "/reading/books_completed_graph_data",
+		"url": "/reading/" + graph_type + "_graph_data",
 		"contentType": "application/json",
 		"dataType": "json",
 		"data": JSON.stringify(data),
 		success: function(response) {
-			create_graph(response, 'books_completed')
-		}
-	});
-}
-
-function request_reading_time_graph() {
-	$.ajax({
-		"type": "POST",
-		"url": "/reading/reading_time_graph_data",
-		"contentType": "application/json",
-		"dataType": "json",
-		"data": JSON.stringify(data),
-		success: function(response) {
-			create_graph(response, 'reading_time')
-			console.log(response)
+			create_graph(response, graph_type);
+			$('#reading-graph-year-toggles').show();
 		}
 	});
 }
@@ -79,7 +82,7 @@ function create_graph(data, graph_type) {
 
 	$('svg').remove()
 
-	var margin = {top: 10, right: 30, bottom: 150, left: 90};
+	var margin = {top: 10, right: 30, bottom: 170, left: 90};
 	var width = $('.main_container').width() - margin.left - margin.right;
 	var height = $(window).height() - margin.top - margin.bottom
 	
@@ -138,13 +141,15 @@ function create_graph(data, graph_type) {
 				.curve(d3.curveMonotoneX)
 
 	for (var i = data.length-1; i >= 0; i--) {
+		var year = data[i]['year'];
+
 		var path = svg.append('path')
 			.data([data[i]['values']])
 			.attr('class', 'line')
-			.attr('class', 'graph_line')
-			.attr('id', data[i]['year'] + '-line')
+			.attr('class', 'graph_line line-' + year)
+			//.attr('id', 'line-' + data[i]['year'])
 			.attr('d', line)
-			.attr('stroke', line_colors[i])
+			.attr('stroke', line_colors[i]);
 
 			if (graph_type == 'books_completed') {
 				var completion_info = data[i]['completion_info']
@@ -167,6 +172,7 @@ function create_graph(data, graph_type) {
 						.attr('cy', y(completion_number))
 						.attr('r', 4.5)
 						.attr('fill', line_colors[i])
+						.attr('class', 'line-' + year)
 						.on('mouseover', tip.show)
 						.on('mouseout', tip.hide);
 
@@ -193,7 +199,8 @@ function create_graph(data, graph_type) {
 			.attr("y2", y2)
 			.attr("stroke", line_colors[0])
 			.style("stroke-dasharray", ("3, 3"))
-			.attr("stroke-width", 2);
+			.attr("stroke-width", 2)
+			.attr('class', 'line-' + data[0]['year']);
 	}
 
 
@@ -232,6 +239,9 @@ function create_graph(data, graph_type) {
 			})
 			.attr('width', 12)
 			.attr('height', 12)
+			.attr('class', function(d, i) {
+				return 'line-' + d['year'];
+			})
 			.style('fill', function(d, i) {
 				return line_colors[i]
 			});
@@ -243,6 +253,9 @@ function create_graph(data, graph_type) {
 			.attr('x', 40)
 			.attr('y', function(d, i) {
 				return (i*20) + 11;
+			})
+			.attr('class', function(d, i) {
+				return 'line-' + d['year'];
 			})
 			.text(function(d, i) {
 				return d['year']

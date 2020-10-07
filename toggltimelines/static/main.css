@@ -798,6 +798,16 @@ body.hide-line-date-controls .line-date-control {
   text-align: center;
 }
 
+#reading-graph-year-toggles {
+  display: none;
+  position: relative;
+  top: 55px;
+}
+
+#reading-graph-year-toggles label {
+  margin-right: 20px;
+}
+
 /* End of Reading History Page */
 
 

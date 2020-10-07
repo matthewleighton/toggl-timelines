@@ -345,11 +345,6 @@ def books_completed_graph_data():
 					'day_number': i
 				})
 
-				
-
-
-
-
 				readthroughs.pop(0)
 				date_of_readthrough_completion = readthroughs[0].end_date.date() if len(readthroughs) else False
 				continue
@@ -373,8 +368,6 @@ def books_completed_graph_data():
 			'values': list(dates.values()),
 			'completion_info': completion_info
 		});
-
-	#pp.pprint(data)
 
 	return jsonify(data)
 

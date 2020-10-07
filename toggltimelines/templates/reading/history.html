@@ -33,6 +33,13 @@
 
 		<div id="history_graph_container"></div>
 
+		<div id="reading-graph-year-toggles">
+			<label><input type="checkbox" name="all" class="reading-graph-checkbox" checked> All</label>
+			{% for year in data.years %}
+				<label><input type="checkbox" name="{{year}}" class="reading-graph-checkbox" checked> {{year}}</label>
+			{% endfor %}
+		</div>
+
 
 	</div>
 
