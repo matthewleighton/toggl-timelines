@@ -126,6 +126,8 @@ function create_graph(data, graph_type) {
 				return formatted_data
 			})
 
+
+
 	var line = d3.line()
 				.x(function(d, i){
 					return x(i)
@@ -143,7 +145,36 @@ function create_graph(data, graph_type) {
 			.attr('id', data[i]['year'] + '-line')
 			.attr('d', line)
 			.attr('stroke', line_colors[i])
+
+			if (graph_type == 'books_completed') {
+				var completion_info = data[i]['completion_info']
+				var completion_number = 0
+				for (var j = 0; j <= completion_info.length-1; j++) {
+					completion_number++;
+
+					var tooltip_text = "<strong>" + completion_info[j]['title'] + "</strong><br/>Completed: " + completion_info[j]['date'];
+
+					var tip = d3.tip()
+						.attr('class', 'd3-tip')
+						.offset([-8, 0])
+						.html(tooltip_text);
+
+					svg.call(tip)
+
+					var dot = svg.append('circle')
+						//.data(completion_info[j])
+						.attr('cx', x(completion_info[j]['day_number']) + 5)
+						.attr('cy', y(completion_number))
+						.attr('r', 4.5)
+						.attr('fill', line_colors[i])
+						.on('mouseover', tip.show)
+						.on('mouseout', tip.hide);
+
+				}
+			}
+
 	}
+
 
 	// Add dotted line to continue past present day.
 	var recent_year_length = data[0]['values'].length

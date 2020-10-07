@@ -324,6 +324,8 @@ def books_completed_graph_data():
 		completed_books = 0
 		dates = {}
 
+		completion_info = []
+
 		readthroughs = get_readthroughs(year=year, status='complete')
 		readthroughs.reverse()
 
@@ -331,9 +333,23 @@ def books_completed_graph_data():
 
 		target_date = date(year, 1, 1)
 
+		i = 0
+
 		while target_date.year == year:
 			if target_date == date_of_readthrough_completion:
 				completed_books += 1
+
+				completion_info.append({
+					'title': readthroughs[0].book.title,
+					'date': target_date.strftime('%d %B %Y'),
+					'day_number': i
+				})
+
+				
+
+
+
+
 				readthroughs.pop(0)
 				date_of_readthrough_completion = readthroughs[0].end_date.date() if len(readthroughs) else False
 				continue
@@ -349,11 +365,13 @@ def books_completed_graph_data():
 				dates['29 Feb'] = completed_books
 
 			target_date += timedelta(days=1)
+			i += 1
 
 		data.append({
 			'year': year,
 			'dates': list(dates.keys()),
-			'values': list(dates.values())
+			'values': list(dates.values()),
+			'completion_info': completion_info
 		});
 
 	#pp.pprint(data)
