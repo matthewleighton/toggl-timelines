@@ -324,10 +324,15 @@ def books_completed_graph_data():
 		completed_books = 0
 		dates = {}
 
-		readthroughs = get_readthroughs(year=year)
+		readthroughs = get_readthroughs(year=year, status='complete')
 		readthroughs.reverse()
 
-		date_of_readthrough_completion = readthroughs[0].end_date.date()
+		for readthrough in readthroughs:
+			print(readthrough.book.title)
+
+		print('')
+
+		date_of_readthrough_completion = readthroughs[0].end_date.date() if len(readthroughs) else False
 
 		target_date = date(year, 1, 1)
 
@@ -475,7 +480,6 @@ def history_year_data():
 def get_all_books():
 	query = Book.query
 	books = query.all()
-
 	return books
 
 # Use a status of 'active' to only get currently read books. Or a status of 'complete' for finished books.
@@ -493,14 +497,15 @@ def get_readthroughs(status='all', title=False, year=False):
 	if year:
 		year_start = datetime(year, 1, 1)
 		year_end = datetime(year, 12, 31)
-		query = query.filter(Readthrough.end_date >= year_start).filter(Readthrough.end_date <= year_end)
+
+		query = query.filter((Readthrough.end_date >= year_start) | (Readthrough.end_date == None))
+		query = query.filter((Readthrough.end_date <= year_end) | (Readthrough.end_date == None))
 
 	query = query.order_by(Readthrough.start_date.desc())
 
-	active_readthroughs = query.all() # TODO: Actually filter to only get active readthroughs.
+	readthroughs = query.all()
 
-
-	return active_readthroughs
+	return readthroughs
 
 def populate_books():
 	db_reading_entries = helpers.get_db_entries(projects=['Reading'])

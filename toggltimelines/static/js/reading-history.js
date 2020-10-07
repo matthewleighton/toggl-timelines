@@ -53,7 +53,7 @@ function request_books_completed_graph() {
 		"dataType": "json",
 		"data": JSON.stringify(data),
 		success: function(response) {
-			create_graph(response)
+			create_graph(response, 'books_completed')
 		}
 	});
 }
@@ -66,7 +66,7 @@ function request_reading_time_graph() {
 		"dataType": "json",
 		"data": JSON.stringify(data),
 		success: function(response) {
-			create_graph(response)
+			create_graph(response, 'reading_time')
 			console.log(response)
 		}
 	});
@@ -74,7 +74,7 @@ function request_reading_time_graph() {
 
 var line_colors = ['red', 'blue', 'green', 'yellow']
 
-function create_graph(data) {
+function create_graph(data, graph_type) {
 	console.log(data)
 
 	$('svg').remove()
@@ -159,7 +159,13 @@ function create_graph(data) {
 	svg.append('g')
 		.call(
 			d3.axisLeft(y)
-			//.tickFormat(d => format_y_value(d))
+			.tickFormat(function(d, i) {
+				if (graph_type == 'books_completed') {
+					return d;
+				} else if (graph_type == 'reading_time') {
+					return msToTime(d);
+				}
+			})
 		);
 
 
@@ -200,10 +206,39 @@ function create_graph(data) {
 	// y-axis label
 	svg.append("text")
 		.attr("transform", "rotate(-90)")
-		.attr("y", 30 - margin.left)
+		.attr("y", 0 - margin.left)
 		.attr("x",0 - (height / 2))
 		.attr("dy", "1em")
 		.style("text-anchor", "middle")
-		.text('Books Completed');
+		.text(function() {
+			if (graph_type == 'reading_time') {
+				return 'Reading Time'
+			} else if (graph_type == 'books_completed') {
+				return 'Books Completed'
+			}
+		});
 
+}
+
+function msToTime(duration) {
+  var milliseconds = parseInt((duration % 1000) / 100),
+    seconds = Math.floor((duration / 1000) % 60),
+    minutes = Math.floor((duration / (1000 * 60)) % 60),
+    hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+    days = Math.floor((duration / (1000 * 60 * 60 * 24)))
+
+
+    // days = (days == 1) ? days + 'day' : days + 'days';
+    // hours = (hours == 1) ? hours + 'hour' : hours + 'hours';
+
+    return days + 'd ' + hours + 'h';
+
+  // days = (days < 10) ? "0" + days : days;
+  // hours = (hours < 10) ? "0" + hours : hours;
+  // minutes = (minutes < 10) ? "0" + minutes : minutes;
+  // seconds = (seconds < 10) ? "0" + seconds : seconds;
+
+  return days + ', ' + hours;
+
+  // return days + ":" + hours + ":" + minutes + ":" + seconds + "." + milliseconds;
 }
