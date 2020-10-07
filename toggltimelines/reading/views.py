@@ -326,7 +326,7 @@ def books_completed_graph_data():
 
 		completion_info = []
 
-		readthroughs = get_readthroughs(year=year, status='complete')
+		readthroughs = get_readthroughs(year=year, status='complete', order_by='end')
 		readthroughs.reverse()
 
 		date_of_readthrough_completion = readthroughs[0].end_date.date() if len(readthroughs) else False
