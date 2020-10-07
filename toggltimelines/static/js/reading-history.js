@@ -221,24 +221,8 @@ function create_graph(data, graph_type) {
 }
 
 function msToTime(duration) {
-  var milliseconds = parseInt((duration % 1000) / 100),
-    seconds = Math.floor((duration / 1000) % 60),
-    minutes = Math.floor((duration / (1000 * 60)) % 60),
-    hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
-    days = Math.floor((duration / (1000 * 60 * 60 * 24)))
-
-
-    // days = (days == 1) ? days + 'day' : days + 'days';
-    // hours = (hours == 1) ? hours + 'hour' : hours + 'hours';
+    var hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
+    var days = Math.floor((duration / (1000 * 60 * 60 * 24)))
 
     return days + 'd ' + hours + 'h';
-
-  // days = (days < 10) ? "0" + days : days;
-  // hours = (hours < 10) ? "0" + hours : hours;
-  // minutes = (minutes < 10) ? "0" + minutes : minutes;
-  // seconds = (seconds < 10) ? "0" + seconds : seconds;
-
-  return days + ', ' + hours;
-
-  // return days + ":" + hours + ":" + minutes + ":" + seconds + "." + milliseconds;
 }
