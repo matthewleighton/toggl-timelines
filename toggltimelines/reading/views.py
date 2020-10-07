@@ -330,8 +330,6 @@ def books_completed_graph_data():
 		for readthrough in readthroughs:
 			print(readthrough.book.title)
 
-		print('')
-
 		date_of_readthrough_completion = readthroughs[0].end_date.date() if len(readthroughs) else False
 
 		target_date = date(year, 1, 1)
@@ -345,6 +343,10 @@ def books_completed_graph_data():
 
 			date_label = target_date.strftime('%d %b')
 			dates[date_label] = completed_books
+
+			# For non-leap years, we say that February 29th has the same value as February 28th
+			if (date_label == '28 Feb' and not calendar.isleap(year)):
+				dates['29 Feb'] = completed_books
 
 			target_date += timedelta(days=1)
 
@@ -364,9 +366,8 @@ def reading_time_graph_data():
 
 	data = []
 
-	dates = {}
-
 	for year in years:
+		dates = {}
 		reading_time = 0
 
 		book_titles = []
@@ -402,17 +403,27 @@ def reading_time_graph_data():
 			date_label = target_date.strftime('%d %b')
 			dates[date_label] = reading_time
 
+			# For non-leap years, we say that February 29th has the same value as February 28th
+			if (date_label == '28 Feb' and not calendar.isleap(year)):
+				dates['29 Feb'] = reading_time
+
+			print(date_label)
+
 			target_date += timedelta(days=1)
 
 			entries = entries[i:]
 
 			i = 0
 
+		print('')
+
 		data.append({
 			'year': year,
 			'dates': list(dates.keys()),
 			'values': list(dates.values())
 		});
+
+	# pp.pprint(data)
 
 	return jsonify(data)
 
