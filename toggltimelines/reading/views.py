@@ -382,7 +382,7 @@ def reading_time_graph_data():
 		reading_time = 0
 
 		book_titles = []
-		readthroughs = get_readthroughs(year=year, )
+		readthroughs = get_readthroughs(year=year, status='complete', order_by='end')
 
 		for readthrough in readthroughs:
 			book_titles.append(readthrough.book.title)
@@ -477,10 +477,6 @@ def history_year_data():
 
 	days = (period_end - period_start).days + 1
 
-	print(period_start)
-	print(period_end)
-	print(days)
-	print('')
 	
 
 	average_days_per_book = str(round(days / number_of_books)) + ' days'
@@ -519,7 +515,7 @@ def get_all_books():
 	return books
 
 # Use a status of 'active' to only get currently read books. Or a status of 'complete' for finished books.
-def get_readthroughs(status='all', title=False, year=False, include_readthroughs_completed_in_next_year=True):
+def get_readthroughs(status='all', title=False, year=False, include_readthroughs_completed_in_next_year=True, order_by='start'):
 	query = Readthrough.query
 	
 	if status == 'active':
@@ -541,7 +537,12 @@ def get_readthroughs(status='all', title=False, year=False, include_readthroughs
 		else:
 			query = query.filter((Readthrough.end_date <= year_end) | (Readthrough.end_date == None))
 
-	query = query.order_by(Readthrough.start_date.desc())
+	if (order_by == 'start'):
+		query = query.order_by(Readthrough.start_date.desc())
+	else:
+		query = query.order_by(Readthrough.end_date.desc())
+
+	
 
 	readthroughs = query.all()
 
