@@ -135,15 +135,37 @@ function create_graph(data, graph_type) {
 				})
 				.curve(d3.curveMonotoneX)
 
-	for (var i = 0; i <= data.length - 1; i++) {
-			var path = svg.append('path')
-				.data([data[i]['values']])
-				.attr('class', 'line')
-				.attr('class', 'graph_line')
-				.attr('id', data[i]['year'] + '-line')
-				.attr('d', line)
-				.attr('stroke', line_colors[i])
+	for (var i = data.length-1; i >= 0; i--) {
+		var path = svg.append('path')
+			.data([data[i]['values']])
+			.attr('class', 'line')
+			.attr('class', 'graph_line')
+			.attr('id', data[i]['year'] + '-line')
+			.attr('d', line)
+			.attr('stroke', line_colors[i])
 	}
+
+	// Add dotted line to continue past present day.
+	var recent_year_length = data[0]['values'].length
+	if (recent_year_length < 366) {
+
+		var x1 = x(recent_year_length - 1)
+		var x2 = x(366)
+
+		var y1 = y(data[0]['values'][recent_year_length-1]);
+		var y2 = y1
+
+		var line = svg.append('line')
+			.attr("x1", x1)
+			.attr("y1", y1)
+			.attr("x2", x2)
+			.attr("y2", y2)
+			.attr("stroke", line_colors[0])
+			.style("stroke-dasharray", ("3, 3"))
+			.attr("stroke-width", 2);
+	}
+
+
 
 	svg.append('g')
 		.attr('transform', 'translate(0,' + height + ')')

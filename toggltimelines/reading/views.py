@@ -341,6 +341,9 @@ def books_completed_graph_data():
 			date_label = target_date.strftime('%d %b')
 			dates[date_label] = completed_books
 
+			if target_date >= date.today():
+				break
+
 			# For non-leap years, we say that February 29th has the same value as February 28th
 			if (date_label == '28 Feb' and not calendar.isleap(year)):
 				dates['29 Feb'] = completed_books
@@ -379,8 +382,6 @@ def reading_time_graph_data():
 			description = book_titles
 		)
 
-		# pp.pprint(entries)
-
 		target_date = date(year, 1, 1)
 
 		while target_date.year == year:
@@ -396,6 +397,9 @@ def reading_time_graph_data():
 
 			date_label = target_date.strftime('%d %b')
 			dates[date_label] = reading_time
+
+			if target_date >= date.today():
+				break
 
 			# For non-leap years, we say that February 29th has the same value as February 28th
 			if (date_label == '28 Feb' and not calendar.isleap(year)):
