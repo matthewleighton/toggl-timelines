@@ -19,10 +19,10 @@
 		</form>
 
 		<div id="reading-history-details">
-			<label for="reading-year">Year: </label>
+			<label for="reading-year"><strong>Books completed in: </strong></label>
 
 			<select name="reading-year" id="reading-year">
-				<option value="0">All</option>
+				<option value="0">All years</option>
 				{% for year in data.years %}
 					<option value="{{year}}">{{year}}</option>
 				{% endfor %}

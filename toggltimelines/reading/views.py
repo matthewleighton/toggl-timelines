@@ -454,20 +454,33 @@ def history_year_data():
 	if not int(year):
 		year = False
 	
-	readthroughs = get_readthroughs(year=year)
+	readthroughs = get_readthroughs(year=year, status='complete')
 	number_of_books = len(readthroughs)
 
-	if year:
-		current_year = datetime.now().year
+	# pp.pprint(readthroughs)
 
-		if year == current_year:
-			days = datetime.now().timetuple().tm_yday
-		else:
-			days = 366 if calendar.isleap(year) else 365
+	start_of_first_readthrough = readthroughs[-1].start_date
+	
+	if not year:
+		period_start = start_of_first_readthrough
+		period_end = datetime.today()
 
 	else:
-		start_of_first_readthrough = readthroughs[-1].start_date
-		days = (datetime.today() - start_of_first_readthrough).days
+		start_of_year = datetime(year, 1, 1, 0, 0)
+
+		if start_of_first_readthrough > start_of_year:
+			period_start = start_of_year
+		else:
+			period_start = start_of_first_readthrough
+
+		period_end = min([datetime(year, 12, 31, 23, 59), datetime.today()])
+
+	days = (period_end - period_start).days + 1
+
+	print(period_start)
+	print(period_end)
+	print(days)
+	print('')
 	
 
 	average_days_per_book = str(round(days / number_of_books)) + ' days'
@@ -479,9 +492,11 @@ def history_year_data():
 
 	average_time_per_book = helpers.format_milliseconds(round(total_reading_time / number_of_books), days=True)
 
-	print(total_reading_time)
+	average_daily_reading_time = helpers.format_milliseconds(round(total_reading_time / days), days=False)
 
 	total_reading_time = helpers.format_milliseconds(total_reading_time, days=True)
+
+	
 
 
 	data = {
@@ -489,7 +504,8 @@ def history_year_data():
 		'number_of_books': number_of_books,
 		'average_days_per_book': average_days_per_book,
 		'average_time_per_book': average_time_per_book,
-		'total_reading_time': total_reading_time
+		'total_reading_time': total_reading_time,
+		'average_daily_reading_time': average_daily_reading_time
 	}
 
 	return jsonify(

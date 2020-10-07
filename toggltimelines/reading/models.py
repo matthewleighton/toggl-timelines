@@ -15,6 +15,8 @@ class Book(db.Model):
 	readthroughs = db.relationship('Readthrough', backref='book')
 	image_url = db.Column(db.String(200))
 
+
+
 	def get_cover(self):
 		if self.image_url:
 			return self.image_url
@@ -54,6 +56,9 @@ class Readthrough(db.Model):
 	end_date = db.Column(db.DateTime(timezone=True))
 	target_end_date = db.Column(db.DateTime(timezone=True))
 	daily_reading_goal = db.Column(db.Integer)
+
+	def __repr__(self):
+		return "<Readthrough (Book: " + self.book.title + ") (Start: " + str(self.start_date) + ") (End: " + str(self.end_date) + ")>"
 
 	def format_date(self, dt):
 		date_format = '%a %-d %b %Y'
