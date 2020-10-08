@@ -399,7 +399,11 @@ def reading_time_graph_data():
 		reading_time = 0
 
 		book_titles = []
-		readthroughs = get_readthroughs(year=year, status='complete', order_by='end')
+		readthroughs = get_readthroughs(year=year,
+										status='complete',
+										order_by='end', 
+										include_readthroughs_completed_in_next_year=False
+									)
 
 		for readthrough in readthroughs:
 			book_titles.append(readthrough.book.title)
@@ -433,15 +437,11 @@ def reading_time_graph_data():
 			if (date_label == '28 Feb' and not calendar.isleap(year)):
 				dates['29 Feb'] = reading_time
 
-			print(date_label)
-
 			target_date += timedelta(days=1)
 
 			entries = entries[i:]
 
 			i = 0
-
-		print('')
 
 		data.append({
 			'year': year,
@@ -525,19 +525,9 @@ def history_year_data():
 	years = get_all_reading_years()
 
 	for year in years:
-
-
-	# year = int(request.json['year'])
-
-	# if not int(year):
-	# 	year = False
 	
 		readthroughs = get_readthroughs(year=year, status='complete', include_readthroughs_completed_in_next_year=False)
 		number_of_books = len(readthroughs)
-
-		print(year)
-		pp.pprint(readthroughs)
-		print('')
 
 		start_of_first_readthrough = readthroughs[-1].start_date
 		
@@ -555,9 +545,7 @@ def history_year_data():
 
 			period_end = min([datetime(year, 12, 31, 23, 59), datetime.today()])
 
-		days = (period_end - period_start).days + 1
-
-		
+		days = (period_end - period_start).days + 1	
 
 		average_days_per_book = str(round(days / number_of_books)) + ' days'
 
@@ -580,18 +568,6 @@ def history_year_data():
 			'total_reading_time': total_reading_time,
 			'average_daily_reading_time': average_daily_reading_time
 		})
-
-	
-
-
-	# data = {
-	# 	'year': year,
-	# 	'number_of_books': number_of_books,
-	# 	'average_days_per_book': average_days_per_book,
-	# 	'average_time_per_book': average_time_per_book,
-	# 	'total_reading_time': total_reading_time,
-	# 	'average_daily_reading_time': average_daily_reading_time
-	# }
 
 	return jsonify(
 		html = render_template('reading/history_year.html', data=data)
@@ -631,8 +607,6 @@ def get_readthroughs(status='all', title=False, year=False, include_readthroughs
 	else:
 		query = query.order_by(Readthrough.end_date.desc())
 
-	
-
 	readthroughs = query.all()
 
 	return readthroughs
@@ -664,43 +638,6 @@ def create_book(title):
 	db.session.add(db_book)
 
 	return db_book
-
-# --------- This has been moved to a command, instead of running when each book is imported.
-# def get_book_cover_url(title):
-# 	cover_placeholder = '/static/img/cover_placeholder.png'
-
-
-# 	if current_app.failed_image_api_search:
-# 		return cover_placeholder
-
-# 	# Make image API request to Bing to find book covers.
-# 	subscription_key = current_app.config['BING_API_KEY']
-# 	search_url = "https://api.cognitive.microsoft.com/bing/v7.0/images/search"
-# 	headers = {"Ocp-Apim-Subscription-Key" : subscription_key}
-	
-# 	params  = {"q": title + ' book cover'}
-
-# 	response = requests.get(search_url, headers=headers, params=params)
-
-# 	if response.status_code != 200:
-# 		current_app.failed_image_api_search = True
-# 		return cover_placeholder
-
-# 	search_results = response.json()
-# 	cover_url = False
-
-# 	if not len(search_results['value']):
-# 		return cover_placeholder
-
-# 	for result in search_results['value']:
-# 		if result['height'] > result['width']: # Check that the image is taller than it is wide.
-# 			cover_url = result['contentUrl']
-# 			break
-
-# 	if not cover_url:
-# 		cover_url = search_results['value'][0]['contentUrl']
-
-# 	return cover_url
 
 def create_readthrough(data):
 	book = Book.query.get(data['book_id'])
