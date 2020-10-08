@@ -53,7 +53,6 @@ function update_details_div() {
 		"dataType": "json",
 		"data": JSON.stringify(data),
 		success: function(response) {
-			console.log(response)
 			$container = $('#history-year-container')
 			$container.empty()
 			$container.html(response['html'])
@@ -76,6 +75,7 @@ function request_graph_data(graph_type) {
 }
 
 var line_colors = ['red', 'blue', 'green', 'yellow']
+var active_node = false
 
 d3.selection.prototype.moveToBack = function() {  
         return this.each(function() { 
@@ -111,7 +111,6 @@ function create_graph(data, graph_type) {
 		.domain([min_y, max_y])
 		.range([height, 0])
 		.nice();
-
 
 	var svg = d3.select('#history_graph_container').append('svg')
 				.attr('width', width)
@@ -195,6 +194,14 @@ function create_graph(data, graph_type) {
 							
 							var readthrough_id = $(this).data('id')
 
+
+							if (active_node) {
+								d3.select(active_node).style("r", 4.5);
+								d3.select(active_node).style("stroke", "none");
+								d3.select(active_node).style("stroke-width", 0);
+							}
+							active_node = this
+
 							data = {
 								'readthrough_id': readthrough_id
 							}
@@ -206,8 +213,6 @@ function create_graph(data, graph_type) {
 								"dataType": "json",
 								"data": JSON.stringify(data),
 								success: function(response) {
-									console.log(response)
-
 									svg.selectAll("foreignObject").remove();
 
 									var fo = svg.append('foreignObject')
@@ -218,6 +223,10 @@ function create_graph(data, graph_type) {
 										.html(response)
 
 									d3.select('foreignObject').moveToBack();
+
+									d3.select(active_node).style("r", 10);
+									d3.select(active_node).style("stroke", "black");
+									d3.select(active_node).style("stroke-width", 4);
 								}
 							})
 
@@ -256,7 +265,6 @@ function create_graph(data, graph_type) {
 		.call(
 			d3.axisBottom(x)
 			.ticks(12)
-			// .tickValues(get_x_tick_values(data, width))
 			.tickFormat(function(d, i) {
 				return data[1]['dates'][d]
 			})
@@ -332,6 +340,11 @@ function create_graph(data, graph_type) {
 
 	svg.on('click', function() {
 		svg.selectAll("foreignObject").remove();
+		if (active_node) {
+			d3.select(active_node).style("r", 4.5);
+			d3.select(active_node).style("stroke", "none");
+			d3.select(active_node).style("stroke-width", 0);
+		}
 	})
 
 }
