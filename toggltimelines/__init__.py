@@ -99,6 +99,8 @@ def create_app(test_config=None):
 
 	app.failed_image_api_search = False
 
+	app.covers_directory = os.path.dirname(os.path.realpath(__file__)) + '/static/img/covers/'
+
 	return app
 
 def init_db():

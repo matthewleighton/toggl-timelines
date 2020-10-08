@@ -3,6 +3,9 @@ from sqlalchemy import func
 
 import math, pytz
 from datetime import datetime, timedelta
+import os.path
+import urllib.request
+import time
 
 from toggltimelines.timelines.models import Entry
 from toggltimelines import db
@@ -15,13 +18,49 @@ class Book(db.Model):
 	readthroughs = db.relationship('Readthrough', backref='book')
 	image_url = db.Column(db.String(200))
 
-
-
 	def get_cover(self):
+		file_location = self.get_cover_location()
+
+		if os.path.isfile(file_location):
+			return self.get_cover_url()
+
 		if self.image_url:
-			return self.image_url
+
+			if self.update_cover(self.image_url):
+				return file_location
+			else:
+				return self.image_url
 
 		return '/static/img/cover_placeholder.png'
+
+	def update_cover(self, url):
+		
+		self.image_url = url
+		db.session.commit()
+
+		file_location = self.get_cover_location()
+
+		try:
+			urllib.request.urlretrieve(url, file_location)
+		except:
+			return False
+
+		return True
+
+	def get_cover_location(self):
+		covers_directory = current_app.covers_directory
+		filepath = covers_directory + self.get_cover_filename()
+
+		return filepath
+
+	def get_cover_url(self):
+		return '/static/img/covers/' + self.get_cover_filename()
+
+	def get_cover_filename(self):
+		filename = "".join([c for c in self.title if c.isalpha() or c.isdigit() or c==' ']).rstrip() + '.jpg'
+		filename = filename.replace(' ', '-')
+
+		return filename
 
 	# Return the date for either the first or last entry of a book.
 	def get_default_readthrough_date(self, start_or_end, dt=False):

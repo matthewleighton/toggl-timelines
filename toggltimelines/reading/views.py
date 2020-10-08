@@ -17,6 +17,7 @@ import csv
 import pytz
 import math
 from datetime import date, datetime, timedelta
+import os
 
 import json
 import requests
@@ -36,10 +37,15 @@ bp = Blueprint("reading", __name__)
 @bp.route("/reading")
 def reading_home():
 
+	if not os.path.exists(current_app.covers_directory):
+		os.makedirs(current_app.covers_directory)
+
 	populate_books()
 
 	active_readthroughs = get_readthroughs('active')
 	books = get_all_books()
+
+	verify_covers(active_readthroughs)
 
 	page_data = {
 		'active_readthroughs': active_readthroughs,
@@ -161,7 +167,10 @@ def search_books():
 
 	books = Book.query.filter(func.lower(Book.title).contains(title)).all()
 
-	print(books)
+	# Save the covers if they don't already exist locally.
+	for book in books:
+		book.get_cover()
+
 
 	return jsonify(render_template('reading/books_list.html', books=books))
 
@@ -186,6 +195,8 @@ def load_past_readthroughs():
 
 	readthroughs_to_return = all_past_readthroughs[target_start_number : target_end_number]
 
+	verify_covers(readthroughs_to_return)
+
 	none_remaining = True if target_end_number >= len(all_past_readthroughs) else False
 
 	return jsonify(
@@ -198,6 +209,8 @@ def load_past_readthroughs():
 def search_readthroughs():
 	title = request.json['title']
 	readthroughs = get_readthroughs(status='complete', title=title)
+
+	verify_covers(readthroughs)
 
 
 	if readthroughs:
@@ -212,9 +225,10 @@ def update_cover():
 	book_id = request.json['book_id']
 	readthrough_id = request.json['readthrough_id']
 
+	print(cover_url)
 	book = Book.query.get(book_id)
-	book.image_url = cover_url
-	db.session.commit()
+
+	book.save_cover_locally(cover_url)
 
 	readthrough = Readthrough.query.get(readthrough_id)
 
@@ -671,3 +685,10 @@ def get_book(title):
 	book = query.all()
 
 	return book
+
+# Check that the cover for each readthrough exists.
+# If not, we'll acquire the cover now, so it will be ready before the page loads.
+def verify_covers(readthroughs):
+	for readthrough in readthroughs:
+
+		readthrough.book.get_cover()
