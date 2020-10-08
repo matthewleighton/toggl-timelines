@@ -677,16 +677,13 @@ body.hide-line-date-controls .line-date-control {
   max-width: 120px;
 }
 
-
-
 .active-readthroughs {
   clear: both;
 }
 
-.readthrough-control {
+.main_container .readthrough-control {
   border-bottom: 1px solid black;
   margin-bottom: 5px;
-  /*margin: 30px;*/
   padding: 30px;
   min-height: 300px;
 }
@@ -791,7 +788,7 @@ body.hide-line-date-controls .line-date-control {
 
 /* End of Reading Page */
 
-/* ---------- Reading History Page */
+/* ---------- Reading History Page --------------*/
 
 #reading-history-details {
   margin-top: 30px;
@@ -822,6 +819,16 @@ body.hide-line-date-controls .line-date-control {
 #reading-graph-year-toggles label {
   margin-right: 20px;
 }
+
+.readthrough-data-point {
+  cursor: pointer;
+}
+
+foreignObject .readthrough-control {
+  border-style: none !important;
+}
+
+
 
 /* End of Reading History Page */
 

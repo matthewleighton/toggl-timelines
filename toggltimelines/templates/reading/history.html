@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
-	
+
 	<div class='container main_container'>
 		
 		<form id="history-type-selector">
@@ -42,22 +42,13 @@
 				{% endfor %}
 			</table>
 
-
-			<!-- <label for="reading-year"><strong>Books completed in: </strong></label>
-
-			<select name="reading-year" id="reading-year">
-				<option value="0">All years</option>
-				{% for year in data.years %}
-					<option value="{{year}}">{{year}}</option>
-				{% endfor %}
-			</select>
-
-			<div id="history-year-container"></div> -->
-
-
 		</div>
 
+		<div id="history-readthrough-details"></div>
+
 		<div id="history_graph_container"></div>
+
+
 
 		<div id="reading-graph-year-toggles">
 			<label><input type="checkbox" name="all" class="reading-graph-checkbox" checked> All</label>

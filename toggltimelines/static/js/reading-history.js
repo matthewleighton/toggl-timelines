@@ -77,6 +77,15 @@ function request_graph_data(graph_type) {
 
 var line_colors = ['red', 'blue', 'green', 'yellow']
 
+d3.selection.prototype.moveToBack = function() {  
+        return this.each(function() { 
+            var firstChild = this.parentNode.firstChild; 
+            if (firstChild) { 
+                this.parentNode.insertBefore(this, firstChild); 
+            } 
+        });
+    };
+
 function create_graph(data, graph_type) {
 	console.log(data)
 
@@ -109,6 +118,12 @@ function create_graph(data, graph_type) {
 				.attr('height', height)
 			.append('g')
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
+
+	// var background = svg.append("rect")
+	// 	.attr('class', 'svg-background')
+	//     .attr("width", "100%")
+	//     .attr("height", "100%")
+	//     .attr("fill", "#f5f5f5");
 
 	var graph_elements = svg.selectAll('g')
 		.data(data)
@@ -172,10 +187,41 @@ function create_graph(data, graph_type) {
 						.attr('cy', y(completion_number))
 						.attr('r', 4.5)
 						.attr('fill', line_colors[i])
-						.attr('class', 'line-' + year)
+						.attr('class', 'readthrough-data-point line-' + year)
+						.attr('data-id', completion_info[j]['readthrough_id'])
 						.on('mouseover', tip.show)
-						.on('mouseout', tip.hide);
+						.on('mouseout', tip.hide)
+						.on('click', function(d, i) {
+							
+							var readthrough_id = $(this).data('id')
 
+							data = {
+								'readthrough_id': readthrough_id
+							}
+
+							$.ajax({
+								"type": "POST",
+								"url": "/reading/load_single_readthrough",
+								"contentType": "application/json",
+								"dataType": "json",
+								"data": JSON.stringify(data),
+								success: function(response) {
+									console.log(response)
+
+									svg.selectAll("foreignObject").remove();
+
+									var fo = svg.append('foreignObject')
+										.attr('x', 70)
+										.attr('y', 0)
+										.attr('width', '100%')
+										.attr('height', '100%')
+										.html(response)
+
+									d3.select('foreignObject').moveToBack();
+								}
+							})
+
+						});
 				}
 			}
 
@@ -283,6 +329,10 @@ function create_graph(data, graph_type) {
 				return 'Books Completed'
 			}
 		});
+
+	svg.on('click', function() {
+		svg.selectAll("foreignObject").remove();
+	})
 
 }
 

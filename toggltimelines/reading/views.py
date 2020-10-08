@@ -220,6 +220,16 @@ def update_cover():
 
 	return jsonify(render_template('reading/readthrough.html', readthrough=readthrough))
 
+@bp.route("/reading/load_single_readthrough", methods=['POST'])
+def load_single_readthrough():
+	readthrough_id = request.json['readthrough_id']
+	readthrough = Readthrough.query.get(readthrough_id)
+
+	return jsonify(render_template('reading/readthrough.html',
+		readthrough = readthrough,
+		hide_readthrough_buttons = True
+	))
+
 @bp.route("/reading/toggl_sync", methods=['POST'])
 def toggl_sync():
 	sync_start = datetime.now() - timedelta(days=1)
@@ -347,6 +357,7 @@ def books_completed_graph_data():
 
 				completion_info.append({
 					'title': readthroughs[0].book.title,
+					'readthrough_id': readthroughs[0].id,
 					'date': target_date.strftime('%d %B %Y'),
 					'day_number': i
 				})
