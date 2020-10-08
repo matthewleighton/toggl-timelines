@@ -1,10 +1,35 @@
+var current_node = false
+var max_node_number = 1
+
 $(document).ready(function() {
 	update_details_div();
+
+	$('body').keydown(function(e) {
+		var keyCode = e.originalEvent.keyCode
+
+		if (current_node && (keyCode == 37 || keyCode == 39)) {
+
+			var load_new = false;
+
+			if (keyCode == 37 && current_node > 1) { // Left
+				current_node--;
+				load_new = true;
+			} else if (keyCode == 39 && current_node < max_node_number) { // Right
+				current_node++;
+				load_new = true;
+			}
+
+			if (load_new) {
+				document.getElementById('node-' + current_node).dispatchEvent(new Event('click'));
+			}
+		} else if (keyCode == 27) {
+			document.getElementsByClassName('graph-readthrough-close')[0].dispatchEvent(new Event('click'));
+		}
+
+	})
 })
 
-$('body').keypress(function(e) {
-	alert('press!')
-})
+
 
 $('#reading-year').change(function() {
 	update_details_div()
@@ -149,8 +174,6 @@ function create_graph(data, graph_type) {
 				return formatted_data
 			})
 
-
-
 	var line = d3.line()
 				.x(function(d, i){
 					return x(i)
@@ -160,6 +183,7 @@ function create_graph(data, graph_type) {
 				})
 				.curve(d3.curveMonotoneX)
 
+	var node_number = 0
 	for (var i = data.length-1; i >= 0; i--) {
 		var year = data[i]['year'];
 
@@ -186,22 +210,25 @@ function create_graph(data, graph_type) {
 
 					svg.call(tip)
 
+					node_number++;
 					var dot = svg.append('circle')
-						//.data(completion_info[j])
 						.attr('cx', x(completion_info[j]['day_number']) + 5)
 						.attr('cy', y(completion_number))
 						.attr('r', 4.5)
 						.attr('fill', line_colors[i])
 						.attr('class', 'readthrough-data-point line-' + year)
+						.attr('id', 'node-' + node_number)
 						.attr('data-id', completion_info[j]['readthrough_id'])
+						.attr('data-node-number', node_number)
 						.on('mouseover', tip.show)
 						.on('mouseout', tip.hide)
 						.on('click', function(d, i) {
-							
-							var readthrough_id = $(this).data('id')
+
 							close_readthrough_details(svg, active_node)
 
-
+							window.current_node = $(this).data('node-number')
+							var readthrough_id = $(this).data('id')
+							
 							if (active_node) {
 								d3.select(active_node).style("r", 4.5);
 								d3.select(active_node).style("stroke", "none");
@@ -220,7 +247,6 @@ function create_graph(data, graph_type) {
 								"dataType": "json",
 								"data": JSON.stringify(data),
 								success: function(response) {
-									//svg.selectAll("foreignObject").remove();
 
 									var title_length = response['book_title'].length;
 									var safe_title_length = 30;
@@ -252,13 +278,10 @@ function create_graph(data, graph_type) {
 										.attr('y', y + 15)
 										.attr('class', 'graph-readthrough-close')
 										.on('click', function() {
-
 											close_readthrough_details(svg, active_node)
-
 										})
 
 									//d3.select('foreignObject').moveToBack();
-
 									d3.select(active_node).style("r", 10);
 									d3.select(active_node).style("stroke", "black");
 									d3.select(active_node).style("stroke-width", 4);
@@ -269,6 +292,7 @@ function create_graph(data, graph_type) {
 				}
 			}
 	}
+	window.max_node_number = node_number
 
 	// Add dotted line to continue past present day.
 	var recent_year_length = data[0]['values'].length
@@ -374,6 +398,7 @@ function close_readthrough_details(svg, active_node) {
 	svg.selectAll("foreignObject").remove();
 	svg.selectAll(".readthrough-background").remove();
 	svg.selectAll(".graph-readthrough-close").remove();
+	window.current_node = false;
 
 	if (active_node) {
 		d3.select(active_node).style("r", 4.5);
