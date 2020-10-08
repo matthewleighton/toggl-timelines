@@ -2,6 +2,10 @@ $(document).ready(function() {
 	update_details_div();
 })
 
+$('body').keypress(function(e) {
+	alert('press!')
+})
+
 $('#reading-year').change(function() {
 	update_details_div()
 });
