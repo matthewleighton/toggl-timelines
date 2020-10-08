@@ -93,6 +93,8 @@ d3.selection.prototype.moveToBack = function() {
 function create_graph(data, graph_type) {
 	console.log(data)
 
+	var close_button;
+
 	$('svg').remove()
 
 	var margin = {top: 10, right: 30, bottom: 170, left: 90};
@@ -197,6 +199,7 @@ function create_graph(data, graph_type) {
 						.on('click', function(d, i) {
 							
 							var readthrough_id = $(this).data('id')
+							close_readthrough_details(svg, active_node)
 
 
 							if (active_node) {
@@ -217,16 +220,44 @@ function create_graph(data, graph_type) {
 								"dataType": "json",
 								"data": JSON.stringify(data),
 								success: function(response) {
-									svg.selectAll("foreignObject").remove();
+									//svg.selectAll("foreignObject").remove();
+
+									var title_length = response['book_title'].length;
+									var safe_title_length = 30;
+									var title_overlength = d3.max([title_length - safe_title_length, 0]) * 3
+
+									var x = 90
+									var y = 0
+									var width = 650 + title_overlength
+									var height = 340
+
+									var background = svg.append('rect')
+										.attr('x', x-2)
+										.attr('y', y-2)
+										.attr('width', width+4)
+										.attr('height', height+4)
+										.attr('fill', 'black')
+										.attr('class', 'readthrough-background');
 
 									var fo = svg.append('foreignObject')
-										.attr('x', 70)
-										.attr('y', 0)
-										.attr('width', '100%')
-										.attr('height', '100%')
-										.html(response)
+										.attr('x', x)
+										.attr('y', y)
+										.attr('width', width)
+										.attr('height', height)
+										.html(response['html'])
 
-									d3.select('foreignObject').moveToBack();
+									var close_button = svg.append('text')
+										.html('&#x2715;')
+										.attr('x', x + width - 20)
+										.attr('y', y + 15)
+										.attr('class', 'graph-readthrough-close')
+										.on('click', function() {
+
+											close_readthrough_details(svg, active_node)
+
+										})
+
+									//d3.select('foreignObject').moveToBack();
 
 									d3.select(active_node).style("r", 10);
 									d3.select(active_node).style("stroke", "black");
@@ -237,9 +268,7 @@ function create_graph(data, graph_type) {
 						});
 				}
 			}
-
 	}
-
 
 	// Add dotted line to continue past present day.
 	var recent_year_length = data[0]['values'].length
@@ -261,8 +290,6 @@ function create_graph(data, graph_type) {
 			.attr("stroke-width", 2)
 			.attr('class', 'line-' + data[0]['year']);
 	}
-
-
 
 	svg.append('g')
 		.attr('transform', 'translate(0,' + height + ')')
@@ -341,16 +368,18 @@ function create_graph(data, graph_type) {
 				return 'Books Completed'
 			}
 		});
+}
 
-	svg.on('click', function() {
-		svg.selectAll("foreignObject").remove();
-		if (active_node) {
-			d3.select(active_node).style("r", 4.5);
-			d3.select(active_node).style("stroke", "none");
-			d3.select(active_node).style("stroke-width", 0);
-		}
-	})
+function close_readthrough_details(svg, active_node) {
+	svg.selectAll("foreignObject").remove();
+	svg.selectAll(".readthrough-background").remove();
+	svg.selectAll(".graph-readthrough-close").remove();
 
+	if (active_node) {
+		d3.select(active_node).style("r", 4.5);
+		d3.select(active_node).style("stroke", "none");
+		d3.select(active_node).style("stroke-width", 0);
+	}
 }
 
 function msToTime(duration) {

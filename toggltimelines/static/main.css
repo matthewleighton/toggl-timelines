@@ -825,9 +825,15 @@ body.hide-line-date-controls .line-date-control {
 }
 
 foreignObject .readthrough-control {
-  border-style: none !important;
+  border-style: 1px sold black !important;
+  background-color: #f5f5f5;
+  padding: 10px !important;
+  height: 100% !important;
 }
 
+.graph-readthrough-close {
+  cursor: pointer;
+}
 
 
 /* End of Reading History Page */

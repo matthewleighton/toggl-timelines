@@ -239,10 +239,12 @@ def load_single_readthrough():
 	readthrough_id = request.json['readthrough_id']
 	readthrough = Readthrough.query.get(readthrough_id)
 
-	return jsonify(render_template('reading/readthrough.html',
-		readthrough = readthrough,
-		hide_readthrough_buttons = True
-	))
+	return jsonify(
+		html = render_template('reading/readthrough.html',
+				readthrough = readthrough,
+				hide_readthrough_buttons = True),
+		book_title = readthrough.book.title
+		)
 
 @bp.route("/reading/toggl_sync", methods=['POST'])
 def toggl_sync():
