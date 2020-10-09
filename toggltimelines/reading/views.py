@@ -331,10 +331,6 @@ def history():
 
 	yearly_stats = get_history_year_data()
 
-	print('yearly stats')
-	pp.pprint(yearly_stats)
-
-	# books_graph_data = get_books_graph_data(years)
 
 	data = {
 		'years': years,
@@ -419,10 +415,14 @@ def reading_time_graph_data():
 										status='all',
 										order_by='end', 
 										include_readthroughs_completed_in_next_year=False
+				
 									)
-
+		print(year)
 		for readthrough in readthroughs:
+			print(readthrough.book.title)
 			book_titles.append(readthrough.book.title)
+
+		print('')
 
 		entries = helpers.get_db_entries(
 			start = datetime(year, 1, 1), # TODO: These should be in the correct timezones for where the user was at the time.
@@ -495,7 +495,17 @@ def get_history_year_data():
 
 	for year in years:
 	
-		readthroughs = get_readthroughs(year=year, status='complete', include_readthroughs_completed_in_next_year=False)
+		readthroughs = get_readthroughs(year=year,
+										status='complete',
+										include_readthroughs_completed_in_next_year=False
+									)
+		print(year)
+		print(len(readthroughs))
+		for readthrough in readthroughs:
+			print(readthrough.book.title)
+
+		print('')
+
 		number_of_books = len(readthroughs)
 
 		# pp.pprint(readthroughs)
