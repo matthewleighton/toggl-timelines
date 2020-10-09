@@ -157,13 +157,35 @@ function create_graph(data, graph_type) {
 
 	function mouseover() {
 		svg.selectAll('.focus_circle')
-			.style('opacity', 1)
+			.style('opacity', 1);
 
 		svg.selectAll('.focus_text')
-			.style('opacity', 1)
+			.style('opacity', 1);
+
+		svg.selectAll('.focus_line')
+			.style('opacity', 1);		
 	}
 
+	// The highest y value for any given x value.
+	var max_y_values = []
+	for (var i = 0; i < 365; i++) {
+		var max = 0
+		for (var j = data.length - 1; j >= 0; j--) {
+			var value = data[j]['values'][i]
 
+			if (!value) {
+				value = max_y_values[max_y_values.length - 1]
+			}
+
+			if (value > max) {
+				max = value
+			}
+		}
+
+		max_y_values.push(max)
+	}
+
+	console.log(max_y_values)
 
 	function mousemove() {
 		var mouse = this
@@ -184,8 +206,32 @@ function create_graph(data, graph_type) {
 				return msToTime(find_y_value(d, mouse));
 			})
 
+		var x1 = x(x0)
+		var x2 = x(x0)
+
+		var y1 = y(max_y_values[Math.floor(x0)]) + 5
+		var y2 = y(0)
+
+		svg.selectAll('.focus_line')
+			.attr('x1', x1)
+			.attr('x2', x2)
+			.attr('y1', y1)
+			.attr('y2', y2)
+
 
 	}
+
+	function mouseout() {
+		svg.selectAll('.focus_circle')
+			.style('opacity', 0);
+
+		svg.selectAll('.focus_text')
+			.style('opacity', 0);
+
+		svg.selectAll('.focus_line')
+			.style('opacity', 0)
+	}
+
 
 	function find_y_value(d, mouse) {
 		var x0 = x.invert(d3.mouse(mouse)[0]);
@@ -200,16 +246,6 @@ function create_graph(data, graph_type) {
 
 		return y0;
 	}
-
-	function mouseout() {
-		svg.selectAll('.focus_circle')
-			.style('opacity', 0);
-
-		svg.selectAll('.focus_text')
-			.style('opacity', 0)
-	}
-
-
 	
 
 
@@ -452,6 +488,34 @@ function create_graph(data, graph_type) {
 		});
 
 
+	var focus = svg.selectAll('focus_circle')
+		.data(data)
+		.enter()
+		.append('circle')
+			.style('fill', function(d, i) {
+				return line_colors[i]
+
+			})
+			.attr('class', 'focus_circle')
+			.attr('r', 5)
+			.style('opacity', 0);
+
+	var focus_text = svg.selectAll('focus_text')
+		.data(data)
+		.enter()
+		.append('text')
+			.attr('class', 'focus_text')
+			.style('opacity', 0);
+
+	var focus_line = svg.selectAll('focus_line')
+		.data(data)
+		.enter()
+		.append('line')
+			.attr('class', 'focus_line')
+			.style('opacity', 0)
+			.style('stroke', 'black')
+			.style('stroke-width', 2);
+
 	if (graph_type == 'reading_time') {
 		svg.append('rect')
 			.style("fill", "none")
@@ -463,24 +527,7 @@ function create_graph(data, graph_type) {
 			.on('mouseout', mouseout);
 	}
 
-		var focus = svg.selectAll('focus_circle')
-			.data(data)
-			.enter()
-			.append('circle')
-				.style('fill', function(d, i) {
-					return line_colors[i]
 
-				})
-				.attr('class', 'focus_circle')
-				.attr('r', 5)
-				.style('opacity', 0);
-
-		var focus_text = svg.selectAll('focus_text')
-			.data(data)
-			.enter()
-			.append('text')
-				.attr('class', 'focus_text')
-				.style('opacity', 0);
 }
 
 function close_readthrough_details(svg, active_node) {
