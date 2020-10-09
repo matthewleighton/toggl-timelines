@@ -155,6 +155,9 @@ function create_graph(data, graph_type) {
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
 
 
+	var max_y_values = get_max_y_values(data)
+
+
 	function mouseover() {
 		svg.selectAll('.focus_circle')
 			.style('opacity', 1);
@@ -163,29 +166,11 @@ function create_graph(data, graph_type) {
 			.style('opacity', 1);
 
 		svg.selectAll('.focus_line')
+			.style('opacity', 1);
+
+		svg.selectAll('.focus_date')
 			.style('opacity', 1);		
 	}
-
-	// The highest y value for any given x value.
-	var max_y_values = []
-	for (var i = 0; i < 365; i++) {
-		var max = 0
-		for (var j = data.length - 1; j >= 0; j--) {
-			var value = data[j]['values'][i]
-
-			if (!value) {
-				value = max_y_values[max_y_values.length - 1]
-			}
-
-			if (value > max) {
-				max = value
-			}
-		}
-
-		max_y_values.push(max)
-	}
-
-	console.log(max_y_values)
 
 	function mousemove() {
 		var mouse = this
@@ -194,17 +179,9 @@ function create_graph(data, graph_type) {
 		svg.selectAll('.focus_circle')
 			.attr('cx', x(x0))
 			.attr('cy', function(d) {
-				return y(find_y_value(d, mouse));
+				return y(find_y_value(d, mouse, 'values'));
 			})
 
-		svg.selectAll('.focus_text')
-			.attr('x', x(x0 + 2))
-			.attr('y', function(d) {
-				return y(find_y_value(d, mouse)) - 4;
-			})
-			.text(function(d) {
-				return msToTime(find_y_value(d, mouse));
-			})
 
 		var x1 = x(x0)
 		var x2 = x(x0)
@@ -219,6 +196,37 @@ function create_graph(data, graph_type) {
 			.attr('y2', y2)
 
 
+		svg.selectAll('.focus_text')
+			.attr('x', x(x0 + 2))
+			.attr('y', function(d) {
+				return y(find_y_value(d, mouse, 'values')) - 4;
+			})
+			.text(function(d) {
+				return msToTime(find_y_value(d, mouse, 'values'));
+			})
+
+
+		svg.selectAll('.focus_date').filter(function(d, i) { return i == 0; })
+			.attr('x', x(x0) - 20)
+			.attr('y', y(0) + 30)
+			.text(function(d) {
+				var x0 = x.invert(d3.mouse(mouse)[0]);
+				var day_number = Math.floor(x0);
+
+				var first_day = new Date()
+				first_day.setFullYear(2020) // We use 2020 since it is a leap year.
+				first_day.setMonth(0)
+				first_day.setDate(1)
+
+				var target_date = first_day;
+				target_date.setDate(first_day.getDate() + day_number);
+
+				var date_parts = target_date.toString().split(" ")
+
+				return date_parts[2] + ' ' + date_parts[1];
+			});
+
+
 	}
 
 	function mouseout() {
@@ -230,18 +238,21 @@ function create_graph(data, graph_type) {
 
 		svg.selectAll('.focus_line')
 			.style('opacity', 0)
+
+		svg.selectAll('.focus_date')
+			.style('opacity', 0);
 	}
 
 
-	function find_y_value(d, mouse) {
+	function find_y_value(d, mouse, name) {
 		var x0 = x.invert(d3.mouse(mouse)[0]);
 		var i = Math.floor(x0);
-		var values = d['values'];
-		var y0 = d['values'][i]
+		var values = d[name];
+		var y0 = d[name][i]
 
 		if (typeof y0 == 'undefined') {
-			var length = d['values'].length
-			y0 = d['values'][length-1]
+			var length = d[name].length
+			y0 = d[name][length-1]
 		}
 
 		return y0;
@@ -516,6 +527,13 @@ function create_graph(data, graph_type) {
 			.style('stroke', 'black')
 			.style('stroke-width', 2);
 
+	var focus_date = svg.selectAll('focus_date')
+		.data(data)
+		.enter()
+		.append('text')
+			.attr('class', 'focus_date')
+			.style('opacity', 0);
+
 	if (graph_type == 'reading_time') {
 		svg.append('rect')
 			.style("fill", "none")
@@ -541,6 +559,29 @@ function close_readthrough_details(svg, active_node) {
 		d3.select(active_node).style("stroke", "none");
 		d3.select(active_node).style("stroke-width", 0);
 	}
+}
+
+// Get the highest y value for any given x value.
+function get_max_y_values(data) {
+	var max_y_values = []
+	for (var i = 0; i < 365; i++) {
+		var max = 0
+		for (var j = data.length - 1; j >= 0; j--) {
+			var value = data[j]['values'][i]
+
+			if (!value) {
+				value = max_y_values[max_y_values.length - 1]
+			}
+
+			if (value > max) {
+				max = value
+			}
+		}
+
+		max_y_values.push(max)
+	}
+	
+	return max_y_values;	
 }
 
 function msToTime(duration) {
