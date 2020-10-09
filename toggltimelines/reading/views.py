@@ -416,7 +416,7 @@ def reading_time_graph_data():
 
 		book_titles = []
 		readthroughs = get_readthroughs(year=year,
-										status='complete',
+										status='all',
 										order_by='end', 
 										include_readthroughs_completed_in_next_year=False
 									)

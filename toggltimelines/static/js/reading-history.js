@@ -149,8 +149,6 @@ function create_graph(data, graph_type) {
 	var svg = d3.select('#history_graph_container').append('svg')
 				.attr('width', width)
 				.attr('height', height)
-				// .on('mousemove', svg_mousemove)
-				// .on('mouseout', svg_mouseout)
 			.append('g')
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
 
@@ -210,7 +208,7 @@ function create_graph(data, graph_type) {
 			.attr('y', y(0) + 30)
 			.text(function(d) {
 				var x0 = x.invert(d3.mouse(mouse)[0]);
-				var day_number = Math.floor(x0);
+				var day_number = Math.round(x0);
 
 				var first_day = new Date()
 				first_day.setFullYear(2020) // We use 2020 since it is a leap year.
@@ -245,7 +243,7 @@ function create_graph(data, graph_type) {
 
 	function find_y_value(d, mouse, name) {
 		var x0 = x.invert(d3.mouse(mouse)[0]);
-		var i = Math.floor(x0);
+		var i = Math.round(x0);
 		var values = d[name];
 		var y0 = d[name][i]
 
