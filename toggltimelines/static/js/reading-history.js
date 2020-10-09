@@ -149,14 +149,69 @@ function create_graph(data, graph_type) {
 	var svg = d3.select('#history_graph_container').append('svg')
 				.attr('width', width)
 				.attr('height', height)
+				// .on('mousemove', svg_mousemove)
+				// .on('mouseout', svg_mouseout)
 			.append('g')
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
 
-	// var background = svg.append("rect")
-	// 	.attr('class', 'svg-background')
-	//     .attr("width", "100%")
-	//     .attr("height", "100%")
-	//     .attr("fill", "#f5f5f5");
+
+	function mouseover() {
+		svg.selectAll('.focus_circle')
+			.style('opacity', 1)
+
+		svg.selectAll('.focus_text')
+			.style('opacity', 1)
+	}
+
+
+
+	function mousemove() {
+		var mouse = this
+		var x0 = x.invert(d3.mouse(this)[0]);
+
+		svg.selectAll('.focus_circle')
+			.attr('cx', x(x0))
+			.attr('cy', function(d) {
+				return y(find_y_value(d, mouse));
+			})
+
+		svg.selectAll('.focus_text')
+			.attr('x', x(x0 + 2))
+			.attr('y', function(d) {
+				return y(find_y_value(d, mouse)) - 4;
+			})
+			.text(function(d) {
+				return msToTime(find_y_value(d, mouse));
+			})
+
+
+	}
+
+	function find_y_value(d, mouse) {
+		var x0 = x.invert(d3.mouse(mouse)[0]);
+		var i = Math.floor(x0);
+		var values = d['values'];
+		var y0 = d['values'][i]
+
+		if (typeof y0 == 'undefined') {
+			var length = d['values'].length
+			y0 = d['values'][length-1]
+		}
+
+		return y0;
+	}
+
+	function mouseout() {
+		svg.selectAll('.focus_circle')
+			.style('opacity', 0);
+
+		svg.selectAll('.focus_text')
+			.style('opacity', 0)
+	}
+
+
+	
+
 
 	var graph_elements = svg.selectAll('g')
 		.data(data)
@@ -395,6 +450,37 @@ function create_graph(data, graph_type) {
 				return 'Books Completed'
 			}
 		});
+
+
+	if (graph_type == 'reading_time') {
+		svg.append('rect')
+			.style("fill", "none")
+			.style("pointer-events", "all")
+			.attr('width', width)
+			.attr('height', height)
+			.on('mouseover', mouseover)
+			.on('mousemove', mousemove)
+			.on('mouseout', mouseout);
+	}
+
+		var focus = svg.selectAll('focus_circle')
+			.data(data)
+			.enter()
+			.append('circle')
+				.style('fill', function(d, i) {
+					return line_colors[i]
+
+				})
+				.attr('class', 'focus_circle')
+				.attr('r', 5)
+				.style('opacity', 0);
+
+		var focus_text = svg.selectAll('focus_text')
+			.data(data)
+			.enter()
+			.append('text')
+				.attr('class', 'focus_text')
+				.style('opacity', 0);
 }
 
 function close_readthrough_details(svg, active_node) {
