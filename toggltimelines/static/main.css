@@ -794,13 +794,19 @@ body.hide-line-date-controls .line-date-control {
   margin-top: 30px;
 }
 
+#reading-history-details table {
+  margin: 0 auto;
+}
+
 #reading-history-details th {
-  padding-right: 20px;
+  padding-right: 15px;
+  padding-left: 15px;
   text-align: center;
 }
 
 #reading-history-details tr {
-  padding-right: 20px;
+  padding-right: 15px;
+  padding-right: 15px;
   text-align: center;
 }
 
