@@ -810,6 +810,18 @@ body.hide-line-date-controls .line-date-control {
   text-align: center;
 }
 
+.history-table-averages {
+  border-top: 1px solid grey;
+}
+
+.history-table-averages td {
+  padding-top: 5px;
+}
+
+.history-table-final-year td {
+  padding-bottom: 5px;
+}
+
 
 #history-type-selector {
   margin-top: 20px;

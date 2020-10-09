@@ -2,6 +2,9 @@ var current_node = false
 var max_node_number = 1
 
 $(document).ready(function() {
+	$('tr').last().addClass('history-table-averages')
+	$('tr').last().prev().addClass('history-table-final-year')
+
 	update_details_div();
 
 	$('body').keydown(function(e) {
