@@ -157,7 +157,6 @@ function create_graph(data, graph_type) {
 
 	var max_y_values = get_max_y_values(data)
 
-
 	function mouseover() {
 		svg.selectAll('.focus_circle')
 			.style('opacity', 1);
@@ -186,7 +185,7 @@ function create_graph(data, graph_type) {
 		var x1 = x(x0)
 		var x2 = x(x0)
 
-		var y1 = y(max_y_values[Math.floor(x0)]) + 5
+		var y1 = y(max_y_values[Math.round(x0)]) + 5
 		var y2 = y(0)
 
 		svg.selectAll('.focus_line')
@@ -564,7 +563,7 @@ function close_readthrough_details(svg, active_node) {
 // Get the highest y value for any given x value.
 function get_max_y_values(data) {
 	var max_y_values = []
-	for (var i = 0; i < 365; i++) {
+	for (var i = 0; i <= 366; i++) {
 		var max = 0
 		for (var j = data.length - 1; j >= 0; j--) {
 			var value = data[j]['values'][i]
@@ -580,7 +579,7 @@ function get_max_y_values(data) {
 
 		max_y_values.push(max)
 	}
-	
+
 	return max_y_values;	
 }
 
