@@ -415,7 +415,6 @@ def reading_time_graph_data():
 										status='all',
 										order_by='end', 
 										include_readthroughs_completed_in_next_year=False
-				
 									)
 		print(year)
 		for readthrough in readthroughs:
@@ -686,6 +685,8 @@ def get_all_books():
 # Use a status of 'active' to only get currently read books. Or a status of 'complete' for finished books.
 def get_readthroughs(status='all', title=False, year=False, include_readthroughs_completed_in_next_year=True, order_by='start'):
 	query = Readthrough.query
+
+
 	
 	if status == 'active':
 		query = query.filter(Readthrough.end_date == None)
@@ -698,12 +699,15 @@ def get_readthroughs(status='all', title=False, year=False, include_readthroughs
 	if year:
 		year_start = datetime(year, 1, 1)
 		year_end = datetime(year, 12, 31)
+		current_year = datetime.now().year
 
+		if not year == current_year:
+			query = query.filter(Readthrough.end_date != None)
+
+		query = query.filter( (Readthrough.start_date <= year_end) | (Readthrough.end_date == None))
 		query = query.filter((Readthrough.end_date >= year_start) | (Readthrough.end_date == None))
-
-		if include_readthroughs_completed_in_next_year:
-			query = query.filter( (Readthrough.start_date <= year_end) | (Readthrough.end_date == None))
-		else:
+		
+		if not include_readthroughs_completed_in_next_year:
 			query = query.filter((Readthrough.end_date <= year_end) | (Readthrough.end_date == None))
 
 	if (order_by == 'start'):

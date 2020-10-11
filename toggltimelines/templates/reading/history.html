@@ -27,8 +27,8 @@
 						<th>Number of Books</th>
 						<th>Average Days per Book</th>
 						<th>Average Time per Book</th>
-						<th>Average Daily Reading Time</th>
-						<th>Total Reading Time</th>
+						<!-- <th>Average Daily Reading Time</th>
+						<th>Total Reading Time</th> -->
 					</tr>
 
 					{% for year_data in data.yearly_stats %}
@@ -37,8 +37,8 @@
 							<td>{{year_data.number_of_books}}</td>
 							<td>{{year_data.average_days_per_book}}</td>
 							<td>{{year_data.average_time_per_book}}</td>
-							<td>{{year_data.average_daily_reading_time}}</td>
-							<td>{{year_data.total_reading_time}}</td>
+							<!-- <td>{{year_data.average_daily_reading_time}}</td>
+							<td>{{year_data.total_reading_time}}</td> -->
 						</tr>
 					{% endfor %}
 				</tbody>
