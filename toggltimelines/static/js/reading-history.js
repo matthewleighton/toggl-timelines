@@ -495,6 +495,14 @@ function create_graph(data, graph_type) {
 			}
 		});
 
+	var focus_line = svg.selectAll('focus_line')
+		.data(data)
+		.enter()
+		.append('line')
+			.attr('class', 'focus_line')
+			.style('opacity', 0)
+			.style('stroke', 'black')
+			.style('stroke-width', 2);
 
 	var focus = svg.selectAll('focus_circle')
 		.data(data)
@@ -514,15 +522,6 @@ function create_graph(data, graph_type) {
 		.append('text')
 			.attr('class', 'focus_text')
 			.style('opacity', 0);
-
-	var focus_line = svg.selectAll('focus_line')
-		.data(data)
-		.enter()
-		.append('line')
-			.attr('class', 'focus_line')
-			.style('opacity', 0)
-			.style('stroke', 'black')
-			.style('stroke-width', 2);
 
 	var focus_date = svg.selectAll('focus_date')
 		.data(data)

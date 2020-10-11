@@ -581,6 +581,12 @@ body.hide-line-date-controls .line-date-control {
   height: 25px;
 }
 
+#width-test {
+  display: none;
+  font-size: 10px;
+  font-weight: 400;
+}
+
 /* Reading Page */
 
 #reading-history-button {

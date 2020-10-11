@@ -346,8 +346,6 @@ function submit_graph_request() {
 			serialized_object['end'] = end
 		}
 
-		console.log(serialized_object)
-
 		submission_data.push(serialized_object)
 	})
 
@@ -414,7 +412,7 @@ function get_display_trend_line() {
 	return false
 }
 
-function get_x_tick_values(data, width=false) {
+function get_x_tick_values(data, width=false, x_tick_width=50, rotate_ticks=false) {
 	if (graph_type == 'frequency' && scope_type == 'minutes') {
 		hours = []
 		for (var i = 0; i <= 24; i++) {
@@ -422,32 +420,31 @@ function get_x_tick_values(data, width=false) {
 		}
 
 		return hours
-	} else if (graph_style == 'bar' && graph_type == 'normal') {
-
-		last_tick = data[0]['keys'].length
-
-		if (graph_type == 'normal' && (scope_type == 'months' || scope_type == 'weeks')) {
-			width_divider = 38
-		} else {
-			width_divider = 60
-		}
-
-		number_of_ticks = d3.min([width/width_divider, last_tick])
-
-		if (number_of_ticks >= last_tick) {
-			return null;
-		}
-
-		step_size = Math.round(last_tick / number_of_ticks)
-		ticks = []
-		for (var i = 0; i <= number_of_ticks; i++) {
-			ticks.push(i*step_size)
-		}
-
-		return ticks
-	} else {
-		return null;
 	}
+	
+	var number_of_ticks = get_number_of_ticks(data)
+
+	var tick_width = 30
+
+	if (rotate_ticks) {
+		x_tick_width = 30
+	}
+
+	var max_ticks = Math.ceil(width / x_tick_width) - 1
+
+	if (number_of_ticks > max_ticks) {
+		ticks = []
+
+		var step_size = Math.ceil(number_of_ticks / max_ticks)
+
+		for (var i = 0; i <= number_of_ticks; i+=step_size) {
+			ticks.push(i)
+		}
+
+		return ticks;
+	}
+
+	return null;
 }
 
 function get_x_tick_format(d, data, graph_type, scope_type) {
@@ -588,6 +585,37 @@ function get_y_axis_label() {
 	return labels[graph_type][y_axis_type][scope_type]
 }
 
+function get_number_of_ticks(data) {
+	var tick_counts = []
+
+	for (var i = data.length - 1; i >= 0; i--) {
+		tick_counts.push(data[i]['keys'].length)
+	}
+
+	return d3.max(tick_counts)
+}
+
+// Get the width of the text in an x-axis tick label.
+function get_x_tick_width(data) {
+	$('#frequency_graph_container').append("<span id='width-test'>" + data[0]['keys'][0] + "</span>")
+
+	return $('#width-test').width() + 10; // Adding 10 to give a bit of buffer.
+}
+
+function check_need_to_rotate_x_ticks(number_of_ticks, width, x_tick_width, graph_type, scope_type) {
+	if (graph_type == 'frequency' && scope_type != 'days') {
+		return false;
+	}
+
+	var max_ticks = Math.ceil(width / x_tick_width) - 1
+
+	if (number_of_ticks > max_ticks) {
+		return true
+	}
+
+	return false;
+}
+
 // Calcualte an offset for the legend, based on how long the labels are.
 function get_legend_x_offset(data){
 	var longest_label_length = 0;
@@ -621,6 +649,18 @@ function create_graph(data, graph_style) {
 	var margin = {top: 10, right: 30, bottom: 100, left: 90};
 
 	var width = $('#frequency_graph_container').width() - margin.left - margin.right;
+
+	var number_of_ticks = get_number_of_ticks(data)
+
+	var x_tick_width = get_x_tick_width(data)
+
+	var need_to_rotate_x_ticks = check_need_to_rotate_x_ticks(number_of_ticks, width, x_tick_width, graph_type, scope_type)
+	
+
+	if (need_to_rotate_x_ticks) {
+		margin.bottom = 140;
+	};
+
 	var height = $(window).height() - margin.top - margin.bottom
 	var min_x = 0
 	var max_x = data[0]['values'].length
@@ -901,17 +941,26 @@ function create_graph(data, graph_style) {
 		}
 	}
 
-	var number_of_ticks = d3.min([width/60, data[0]['keys'].length])
+	// console.log(heigt)
 
 	svg.append('g')
+		.attr('class', 'x-axis')
 		.attr('transform', 'translate(0,' + height + ')')
 		.call(
 			d3.axisBottom(x)
-			.ticks(number_of_ticks)
-			.tickValues(get_x_tick_values(data, width))
+			.tickValues(get_x_tick_values(data, width, x_tick_width, need_to_rotate_x_ticks))
 			.tickFormat(d => get_x_tick_format(d, data, graph_type, scope_type))
 		);
 
+	if (need_to_rotate_x_ticks) {
+		svg.selectAll('.x-axis')
+		.selectAll('text')
+			.style('text-anchor', 'end')
+			.attr('dx', '-.8em')
+			.attr('dy', '.15em')
+			.attr("transform", "rotate(-65)" );
+	} 
+	
 	svg.append('g')
 		.call(
 			d3.axisLeft(y)
@@ -970,11 +1019,17 @@ function create_graph(data, graph_style) {
 				return label + ' (slope: ' + slope + ')';
 			});
 
+	if (need_to_rotate_x_ticks) {
+		var x_axis_adjustment = 75
+	} else {
+		var x_axis_adjustment = 30
+	}
+
 	// x-axis label
 	svg.append("text")             
 		.attr("transform",
 			"translate(" + (width/2) + " ," + 
-				(height + margin.top + 30) + ")")
+				(height + margin.top + x_axis_adjustment) + ")")
 		.style("text-anchor", "middle")
 		.text(get_x_axis_label());
 
