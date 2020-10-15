@@ -282,8 +282,8 @@ function create_graph(data, graph_type) {
 				})
 				.y(function(d, i) {
 					return y(d)
-				})
-				.curve(d3.curveMonotoneX)
+				});
+				//.curve(d3.curveMonotoneX)
 
 	var node_number = 0
 	for (var i = data.length-1; i >= 0; i--) {
@@ -313,8 +313,9 @@ function create_graph(data, graph_type) {
 					svg.call(tip)
 
 					node_number++;
+
 					var dot = svg.append('circle')
-						.attr('cx', x(completion_info[j]['day_number']) + 5)
+						.attr('cx', x(completion_info[j]['day_number']))
 						.attr('cy', y(completion_number))
 						.attr('r', 4.5)
 						.attr('fill', line_colors[i])

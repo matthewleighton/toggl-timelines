@@ -387,6 +387,7 @@ def books_completed_graph_data():
 			# For non-leap years, we say that February 29th has the same value as February 28th
 			if (date_label == '28 Feb' and not calendar.isleap(year)):
 				dates['29 Feb'] = completed_books
+				i += 1
 
 			target_date += timedelta(days=1)
 			i += 1
