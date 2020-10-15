@@ -225,10 +225,9 @@ def update_cover():
 	book_id = request.json['book_id']
 	readthrough_id = request.json['readthrough_id']
 
-	print(cover_url)
 	book = Book.query.get(book_id)
 
-	book.save_cover_locally(cover_url)
+	book.update_cover(cover_url)
 
 	readthrough = Readthrough.query.get(readthrough_id)
 
