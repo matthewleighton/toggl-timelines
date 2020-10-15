@@ -589,9 +589,8 @@ body.hide-line-date-controls .line-date-control {
 
 /* Reading Page */
 
-#reading-history-button {
-  float: left;
-  color: white;
+.reading-history-link img {
+  height: 20px;
 }
 
 .error-field {

@@ -5,11 +5,10 @@
 	<div class='container main_container'>
 		
 		<div class="books-container">
-
-			<a type="button" class="btn btn-dark" id="reading-history-button" href="{{url_for('reading.history')}}">History</a>
 			
 			<div id="new-readthrough-container">
 				Add readthrough: <input type="text" id="new-readthrough-search" name="book_title" placeholder="Book Title" autocomplete="off">
+				<a class="reading-history-link" href="{{url_for('reading.history')}}"><img src="/static/img/graph.png"/></a>
 				<span class="reading-reload">&#x21bb;</span>
 			</div>
 

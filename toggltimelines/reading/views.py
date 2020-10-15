@@ -529,6 +529,13 @@ def get_history_year_data():
 		summed_values['average_daily_reading_time'] += average_daily_reading_time
 		summed_values['total_reading_time'] += total_reading_time
 
+		# start_of_first_readthrough = readthroughs[-1].start_date
+
+		# current_year = datetime.now().year
+
+		# if year == current_year:
+		# 	days_in_reading_year = 
+
 		average_days_per_book = str(round(average_days_per_book)) + ' days'
 		average_time_per_book = helpers.format_milliseconds(average_time_per_book, days=True)
 		average_daily_reading_time = helpers.format_milliseconds(average_daily_reading_time, days=False)
@@ -686,8 +693,6 @@ def get_all_books():
 def get_readthroughs(status='all', title=False, year=False, include_readthroughs_completed_in_next_year=True, order_by='start'):
 	query = Readthrough.query
 
-
-	
 	if status == 'active':
 		query = query.filter(Readthrough.end_date == None)
 	elif status == 'complete':
