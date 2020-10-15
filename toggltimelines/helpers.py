@@ -561,7 +561,7 @@ def get_tag_data():
 
 	return tags
 
-def format_milliseconds(milliseconds, days=True, include_seconds=False):
+def format_milliseconds(milliseconds, days=True, include_seconds=False, short_labels=False):
 	# If we're not including seconds, round the milliseconds up/down to the nearest minute
 	milliseconds_per_minute = 60 * 1000
 	if not include_seconds:
@@ -601,6 +601,17 @@ def format_milliseconds(milliseconds, days=True, include_seconds=False):
 
 	if include_seconds:
 		formatted_string += seconds_string
+
+	if short_labels:
+		print('make labels short')
+		print(formatted_string)
+		formatted_string = formatted_string.replace(' seconds', 's').replace(' second', 's')
+		formatted_string = formatted_string.replace(' minutes', 'm').replace(' minute', 'm')
+		formatted_string = formatted_string.replace(' hours', 'h').replace(' hour', 'h')
+		formatted_string = formatted_string.replace(' days', 's').replace(' day', 'd')
+		formatted_string = formatted_string.replace(',', '')
+		print(formatted_string)
+
 
 	return formatted_string 
 

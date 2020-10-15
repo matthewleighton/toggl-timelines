@@ -20,29 +20,50 @@
 
 		<div id="reading-history-details">
 			
-			<table id="mytest">
+			<div class="reading-history-estimates">
+				<p>
+					<strong>Book goal: </strong><input type="number" name="book_goal" id="book_goal_input" value="50" min="1" step="1">
+				</p>
+
+				<p>
+					<strong>Days needed to read <span class="book_goal_output"></span> books: </strong> <span id="reading-days-needed"></span>
+				</p>
+				<p>
+					<strong>Reading time needed to read <span class="book_goal_output"></span> books: </strong> <span id="reading-time-needed"></span>
+				</p>
+				<p>
+					<strong>Daily time needed to read <span class="book_goal_output"></span> books in a year: </strong> <span id="reading-daily-time-needed"></span>
+				</p>
+				<p>
+					<strong>Average daily time this year:</strong> <span id="average-daily-reading-time-this-year" data-raw={{data.raw_average_daily_reading_time_this_year}}>{{data.average_daily_reading_time_this_year}}</span>
+				</p>
+			</div>
+
+
+			<table>
 				<tbody>
 					<tr>
-						<th>Completion Year</th>
+						<th>Year</th>
 						<th>Number of Books</th>
 						<th>Average Days per Book</th>
 						<th>Average Time per Book</th>
-						<!-- <th>Average Daily Reading Time</th>
-						<th>Total Reading Time</th> -->
+						<th>Average Daily Reading Time</th>
+						<!-- <th>Total Reading Time</th> -->
 					</tr>
 
 					{% for year_data in data.yearly_stats %}
 						<tr>
 							<td>{{year_data.year}}</td>
 							<td>{{year_data.number_of_books}}</td>
-							<td>{{year_data.average_days_per_book}}</td>
-							<td>{{year_data.average_time_per_book}}</td>
-							<!-- <td>{{year_data.average_daily_reading_time}}</td>
-							<td>{{year_data.total_reading_time}}</td> -->
+							<td class="average-days-per-book" data-raw="{{year_data.raw_average_days_per_book}}">{{year_data.average_days_per_book}}</td>
+							<td class="average-time-per-book" data-raw={{year_data.raw_average_time_per_book}}>{{year_data.average_time_per_book}}</td>
+							<td>{{year_data.average_daily_reading_time}}</td>
+							<!-- <td>{{year_data.total_reading_time}}</td> -->
 						</tr>
 					{% endfor %}
 				</tbody>
 			</table>
+			
 
 		</div>
 

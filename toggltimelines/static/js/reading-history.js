@@ -30,9 +30,52 @@ $(document).ready(function() {
 		}
 
 	})
+
+	update_reading_estimates()
 })
 
+function update_reading_estimates() {
+	var days_per_book = $('.average-days-per-book').last().data('raw')
+	var time_per_book = $('.average-time-per-book').last().data('raw')
 
+	var book_goal = $('#book_goal_input').val();
+
+	$('.book_goal_output').each(function() {
+		$(this).text(book_goal);
+	})
+
+	var days_needed = days_to_years(days_per_book * book_goal);
+	var time_needed = msToTime(time_per_book * book_goal, true);
+	var raw_target_daily_time = (time_per_book * book_goal) / 365
+	var target_daily_time = msToTime(raw_target_daily_time, true);
+
+	$('#reading-days-needed').text(days_needed)
+	$('#reading-time-needed').text(time_needed)
+	$('#reading-daily-time-needed').text(target_daily_time)
+
+	var $current_daily_time_element = $('#average-daily-reading-time-this-year');
+
+	var current_daily_time = $current_daily_time_element.data('raw')
+
+	if (current_daily_time >= raw_target_daily_time) {
+		$current_daily_time_element.removeClass('reading-goal-incomplete')
+		$current_daily_time_element.addClass('reading-goal-complete')
+	} else {
+		$current_daily_time_element.removeClass('reading-goal-complete')
+		$current_daily_time_element.addClass('reading-goal-incomplete')
+	}
+}
+
+function days_to_years(total_days) {
+	var years = Math.floor(total_days / 365)
+	var days = Math.floor(total_days % 365)
+
+	return years + 'y ' + days + 'd';
+}
+
+$('#book_goal_input').change(function() {
+	update_reading_estimates()
+});
 
 $('#reading-year').change(function() {
 	update_details_div()
@@ -581,9 +624,18 @@ function get_max_y_values(data) {
 	return max_y_values;	
 }
 
-function msToTime(duration) {
+function msToTime(duration, include_minutes=false) {
+    var minutes = Math.floor((duration / (1000 * 60)) % 60)
     var hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
     var days = Math.floor((duration / (1000 * 60 * 60 * 24)))
 
-    return days + 'd ' + hours + 'h';
+    var final_string = days + 'd ' + hours + 'h';
+
+    if (include_minutes) {
+    	final_string += ' ' + minutes + 'm';
+    }
+    
+    return final_string;
+
+    // return days + 'd ' + hours + 'h';
 }

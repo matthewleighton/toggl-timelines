@@ -331,11 +331,15 @@ def history():
 
 	yearly_stats = get_history_year_data()
 
+	year = datetime.today().year
+	raw_average_daily_reading_time_this_year = get_average_daily_reading_time(year)
+	average_daily_reading_time_this_year = helpers.format_milliseconds(raw_average_daily_reading_time_this_year, short_labels=True)
 
 	data = {
 		'years': years,
-		'yearly_stats': yearly_stats
-
+		'yearly_stats': yearly_stats,
+		'average_daily_reading_time_this_year': average_daily_reading_time_this_year,
+		'raw_average_daily_reading_time_this_year': raw_average_daily_reading_time_this_year
 	}
 
 	response = make_response(render_template('reading/history.html', data=data))
@@ -417,12 +421,9 @@ def reading_time_graph_data():
 										order_by='end', 
 										include_readthroughs_completed_in_next_year=False
 									)
-		print(year)
-		for readthrough in readthroughs:
-			print(readthrough.book.title)
-			book_titles.append(readthrough.book.title)
 
-		print('')
+		for readthrough in readthroughs:
+			book_titles.append(readthrough.book.title)
 
 		entries = helpers.get_db_entries(
 			start = datetime(year, 1, 1), # TODO: These should be in the correct timezones for where the user was at the time.
@@ -465,10 +466,26 @@ def reading_time_graph_data():
 			'values': list(dates.values())
 		});
 
-	# pp.pprint(data)
 
 	return jsonify(data)
 
+def get_average_daily_reading_time(year):
+	year_end = min([datetime.now(), datetime(year, 12, 31)])
+	# year = today.year
+
+	year_start = datetime(year, 1, 1)
+
+	reading_entries = helpers.get_db_entries(start=year_start, end=year_end, projects=['Reading'])
+
+	reading_time = 0
+
+	for entry in reading_entries:
+		reading_time += entry.dur
+
+	days = (year_end - year_start).days + 1
+	average_daily_reading_time = reading_time / days
+
+	return average_daily_reading_time
 
 
 def get_all_reading_years():
@@ -487,7 +504,10 @@ def get_history_year_data():
 			'average_days_per_book': 0,
 			'average_time_per_book': 0,
 			'total_reading_time': 0,
-			'average_daily_reading_time': 0
+			'average_daily_reading_time': 0,
+			'raw_average_time_per_book': 0,
+			'raw_average_days_per_book': 0,
+			'raw_average_daily_reading_time': 0
 	}
 
 	years = get_all_reading_years()
@@ -500,132 +520,83 @@ def get_history_year_data():
 										status='complete',
 										include_readthroughs_completed_in_next_year=False
 									)
-		print(year)
-		print(len(readthroughs))
-		for readthrough in readthroughs:
-			print(readthrough.book.title)
-
-		print('')
 
 		number_of_books = len(readthroughs)
 
 		average_days_per_book = 0
 		average_time_per_book = 0
-		average_daily_reading_time = 0
+		#average_daily_reading_time = 0
 		total_reading_time = 0
 
 		for readthrough in readthroughs:
 			average_days_per_book += readthrough.get_total_days_reading(raw = True)
 			average_time_per_book += readthrough.get_current_reading_time(raw = True)
-			average_daily_reading_time += readthrough.get_average_daily_reading_time(raw = True)
+			#average_daily_reading_time += readthrough.get_average_daily_reading_time(raw = True)
 			total_reading_time += readthrough.get_current_reading_time(raw = True)
 
 		average_days_per_book /= number_of_books
 		average_time_per_book /= number_of_books
-		average_daily_reading_time /= number_of_books
+		#average_daily_reading_time /= number_of_books
+
+		raw_average_daily_reading_time = get_average_daily_reading_time(year)
+		raw_average_time_per_book = average_time_per_book
+		raw_average_days_per_book = average_days_per_book
+		#raw_total_reading_time = total_reading_time
 
 		summed_values['number_of_books'] += number_of_books
 		summed_values['average_days_per_book'] += average_days_per_book
 		summed_values['average_time_per_book'] += average_time_per_book
-		summed_values['average_daily_reading_time'] += average_daily_reading_time
+		summed_values['average_daily_reading_time'] += raw_average_daily_reading_time
 		summed_values['total_reading_time'] += total_reading_time
 
-		# start_of_first_readthrough = readthroughs[-1].start_date
+		summed_values['raw_average_days_per_book'] += raw_average_days_per_book
+		summed_values['raw_average_time_per_book'] += raw_average_time_per_book
+		summed_values['raw_average_daily_reading_time'] += raw_average_daily_reading_time
+		#summed_values['raw_total_reading_time'] += raw_total_reading_time
 
-		# current_year = datetime.now().year
-
-		# if year == current_year:
-		# 	days_in_reading_year = 
+		year_data = {}
+		year_data['raw_average_days_per_book'] = raw_average_days_per_book
+		year_data['raw_average_time_per_book'] = raw_average_time_per_book
+		#year_data['raw_total_reading_time'] = raw_total_reading_time
 
 		average_days_per_book = str(round(average_days_per_book)) + ' days'
 		average_time_per_book = helpers.format_milliseconds(average_time_per_book, days=True)
-		average_daily_reading_time = helpers.format_milliseconds(average_daily_reading_time, days=False)
+		#average_daily_reading_time = helpers.format_milliseconds(average_daily_reading_time, days=False)
 		total_reading_time = helpers.format_milliseconds(total_reading_time, days=True)
+		average_daily_reading_time = helpers.format_milliseconds(raw_average_daily_reading_time, days=False)
 
-		year_data = {
-			'year': year,
-			'number_of_books': number_of_books,
-			'average_days_per_book': average_days_per_book,
-			'average_time_per_book': average_time_per_book,
-			'average_daily_reading_time': average_daily_reading_time,
-			'total_reading_time': total_reading_time
-		} 
+		year_data['year'] = year
+		year_data['number_of_books'] = number_of_books
+		year_data['average_days_per_book'] = average_days_per_book
+		year_data['average_time_per_book'] = average_time_per_book
+		year_data['average_daily_reading_time'] = average_daily_reading_time
+		year_data['total_reading_time'] = total_reading_time
+
 
 		data.append(year_data)
 
-
-
-
-
-		# pp.pprint(readthroughs)
-
-		# start_of_first_readthrough = readthroughs[-1].start_date
-		
-		# if not year:
-		# 	period_start = start_of_first_readthrough
-		# 	period_end = datetime.today()
-
-		# else:
-		# 	start_of_year = datetime(year, 1, 1, 0, 0)
-
-		# 	if start_of_first_readthrough > start_of_year:
-		# 		period_start = start_of_year
-		# 	else:
-		# 		period_start = start_of_first_readthrough
-
-		# 	period_end = min([datetime(year, 12, 31, 23, 59), datetime.today()])
-
-		# days = (period_end - period_start).days + 1
-
-		# average_days_per_book = round(days / number_of_books)
-
-		# total_reading_time = 0
-
-		# for readthrough in readthroughs:
-		# 	total_reading_time += readthrough.get_current_reading_time(raw=True)
-
-
-		# average_time_per_book = round(total_reading_time / number_of_books)
-		# average_daily_reading_time = round(total_reading_time / days)
-
-		# summed_values['number_of_books'] += number_of_books
-		# summed_values['average_days_per_book'] += average_days_per_book
-		# summed_values['average_time_per_book'] += average_time_per_book
-		# summed_values['total_reading_time'] += total_reading_time
-		# summed_values['average_daily_reading_time'] += average_daily_reading_time
-
-		# average_time_per_book = helpers.format_milliseconds(average_time_per_book, days=True)
-		# average_daily_reading_time = helpers.format_milliseconds(average_daily_reading_time, days=False)
-		# total_reading_time = helpers.format_milliseconds(total_reading_time, days=True)
-		# average_days_per_book = str(average_days_per_book) + ' days'
-
-		# year_data = {
-		# 	'year': year,
-		# 	'number_of_books': number_of_books,
-		# 	'average_days_per_book': average_days_per_book,
-		# 	'average_time_per_book': average_time_per_book,
-		# 	'total_reading_time': total_reading_time,
-		# 	'average_daily_reading_time': average_daily_reading_time
-		# }
-
-		# data.append(year_data)
-
-	pp.pprint(summed_values)
-
 	for key, value in summed_values.items():
-		summed_values[key] = round(summed_values[key] / number_of_years)
+		
+		summed_values[key] = summed_values[key] / number_of_years
+
+		if not key in ['raw_average_time_per_book', 'raw_average_days_per_book']:
+			summed_values[key] = round(summed_values[key])
 
 		if key == 'average_days_per_book':
 			summed_values[key] = str(summed_values[key]) + ' days'
 			continue
-		if key == 'number_of_books':
-			continue
-		else:
+
+		if key in ['average_time_per_book', 'total_reading_time', 'average_daily_reading_time']:
 			summed_values[key] = helpers.format_milliseconds(summed_values[key])
+			continue
+
+		else:
+			continue
 
 	summed_values['year'] = 'Average'
 	# data.insert(0, summed_values)
 	data.append(summed_values)
+
 
 	return data
 
@@ -766,8 +737,6 @@ def create_readthrough(data):
 	if data['book_format'] == 'physical':
 		db_readthrough.first_page = data['first_page']
 		db_readthrough.last_page = data['last_page']
-
-	print(data)
 
 	if data['end_date']:
 		db_readthrough.end_date = data['end_date']

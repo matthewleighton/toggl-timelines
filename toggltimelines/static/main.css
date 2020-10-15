@@ -799,8 +799,20 @@ body.hide-line-date-controls .line-date-control {
   margin-top: 30px;
 }
 
+.reading-history-estimates input {
+  width: 60px;
+}
+
+#reading-history-details .reading-history-estimates {
+  display: inline-block;
+  margin-right: 10%;
+  vertical-align: top;
+  width: 420px;
+}
+
 #reading-history-details table {
-  margin: 0 auto;
+  margin: 30px auto;
+  display: inline-block;
 }
 
 #reading-history-details th {
