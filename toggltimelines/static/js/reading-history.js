@@ -99,6 +99,8 @@ $('.reading-graph-checkbox').change(function() {
 	var checkbox_name = $(this).attr('name');
 	var checkbox_value = $(this).is(':checked');
 
+	window.max_y_values = get_max_y_values(data)
+
 	if (checkbox_name == 'all') {
 		$('.reading-graph-checkbox').each(function() {
 			$checkbox = $(this)
@@ -117,7 +119,7 @@ $('.reading-graph-checkbox').change(function() {
 function update_details_div() {
 	var year = $("#reading-year").val()
 	
-	data = {
+	request_data = {
 		'year': year
 	}
 
@@ -126,7 +128,7 @@ function update_details_div() {
 		"url": "/reading/history_year_data",
 		"contentType": "application/json",
 		"dataType": "json",
-		"data": JSON.stringify(data),
+		"data": JSON.stringify(request_data),
 		success: function(response) {
 			$container = $('#history-year-container')
 			$container.empty()
@@ -141,7 +143,7 @@ function request_graph_data(graph_type) {
 		"url": "/reading/" + graph_type + "_graph_data",
 		"contentType": "application/json",
 		"dataType": "json",
-		"data": JSON.stringify(data),
+		"data": JSON.stringify(request_data),
 		success: function(response) {
 			create_graph(response, graph_type);
 			$('#reading-graph-year-toggles').show();
@@ -163,6 +165,7 @@ d3.selection.prototype.moveToBack = function() {
 
 function create_graph(data, graph_type) {
 	console.log(data)
+	window.data = data
 
 	var close_button;
 
@@ -196,7 +199,7 @@ function create_graph(data, graph_type) {
 				.attr('transform', 'translate(' + margin.left + ',' + margin.top +')');
 
 
-	var max_y_values = get_max_y_values(data)
+	window.max_y_values = get_max_y_values(data)
 
 	function mouseover() {
 		svg.selectAll('.focus_circle')
@@ -226,16 +229,17 @@ function create_graph(data, graph_type) {
 		var x1 = x(x0)
 		var x2 = x(x0)
 
-		var y1 = y(max_y_values[Math.round(x0)]) + 5
+		var y1 = y(max_y_values[Math.round(x0)]);
 		var y2 = y(0)
+
+
 
 		svg.selectAll('.focus_line')
 			.attr('x1', x1)
 			.attr('x2', x2)
 			.attr('y1', y1)
 			.attr('y2', y2)
-
-
+			
 		svg.selectAll('.focus_text')
 			.attr('x', x(x0 + 2))
 			.attr('y', function(d) {
@@ -244,7 +248,6 @@ function create_graph(data, graph_type) {
 			.text(function(d) {
 				return msToTime(find_y_value(d, mouse, 'values'));
 			})
-
 
 		svg.selectAll('.focus_date').filter(function(d, i) { return i == 0; })
 			.attr('x', x(x0) - 20)
@@ -382,7 +385,7 @@ function create_graph(data, graph_type) {
 							}
 							active_node = this
 
-							data = {
+							request_data = {
 								'readthrough_id': readthrough_id
 							}
 
@@ -391,7 +394,7 @@ function create_graph(data, graph_type) {
 								"url": "/reading/load_single_readthrough",
 								"contentType": "application/json",
 								"dataType": "json",
-								"data": JSON.stringify(data),
+								"data": JSON.stringify(request_data),
 								success: function(response) {
 
 									var title_length = response['book_title'].length;
@@ -556,16 +559,20 @@ function create_graph(data, graph_type) {
 				return line_colors[i]
 
 			})
-			.attr('class', 'focus_circle')
 			.attr('r', 5)
-			.style('opacity', 0);
+			.style('opacity', 0)
+			.attr('class', function(d, i) {
+				return 'focus_circle line-' + d['year'];
+			});
 
 	var focus_text = svg.selectAll('focus_text')
 		.data(data)
 		.enter()
 		.append('text')
-			.attr('class', 'focus_text')
-			.style('opacity', 0);
+			.style('opacity', 0)
+			.attr('class', function(d, i) {
+				return 'focus_text line-' + d['year'];
+			});
 
 	var focus_date = svg.selectAll('focus_date')
 		.data(data)
@@ -601,12 +608,33 @@ function close_readthrough_details(svg, active_node) {
 	}
 }
 
+function get_active_years() {
+	var active_years = [];
+
+	$('.reading-graph-checkbox').each(function() {
+		$checkbox = $(this)
+		if ($checkbox.attr('name') != 'all' && $checkbox.is(':checked')) {
+			active_years.push($(this).attr('name'));
+		}
+	})
+
+	return active_years;
+}
+
 // Get the highest y value for any given x value.
 function get_max_y_values(data) {
+	var active_years = get_active_years();
 	var max_y_values = []
-	for (var i = 0; i <= 366; i++) {
+
+	for (var i = 0; i <= 366; i++) { // Days loop
 		var max = 0
-		for (var j = data.length - 1; j >= 0; j--) {
+		for (var j = data.length - 1; j >= 0; j--) { // Years loop
+			var year = data[j]['year'].toString();
+
+			if (!active_years.includes(year)) {
+				continue
+			}
+
 			var value = data[j]['values'][i]
 
 			if (!value) {
@@ -636,6 +664,4 @@ function msToTime(duration, include_minutes=false) {
     }
     
     return final_string;
-
-    // return days + 'd ' + hours + 'h';
 }
