@@ -1,3 +1,15 @@
 <div class="readthrough-position">
 	<p><strong>{{readthrough.format_current_position(html=True)|safe}}</strong></p>
+
+	{% if not readthrough.is_readthrough_complete() %}
+		<div class="readthrough-progress-bar-container">
+			<div class="readthrough-progress-bar-fill" style="width: {{readthrough.get_completion_percentage()}}%; background-color: hsl({{readthrough.get_completion_hue()}},100%,45%);">
+				
+			</div>
+			<div class="readthrough-progress-bar-time">
+				{{readthrough.get_remaining_reading_time()}} remaining
+			</div>
+		</div>
+	{% endif %}
 </div>
+

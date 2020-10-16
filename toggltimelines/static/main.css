@@ -791,6 +791,25 @@ body.hide-line-date-controls .line-date-control {
   margin-left: 5px;
 }
 
+.readthrough-progress-bar-container {
+  width: 100%;
+  border: 1px solid #B0B0B0;
+  border-radius: 5px;
+  height: 20px;
+}
+
+.readthrough-progress-bar-time {
+  text-align: center;
+  position: relative;
+  bottom: 19px;
+  font-size: 13.5px;
+}
+
+.readthrough-progress-bar-fill {
+  background-color: #B0B0B0;
+  height: 100%;
+}
+
 /* End of Reading Page */
 
 /* ---------- Reading History Page --------------*/

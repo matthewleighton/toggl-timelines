@@ -225,21 +225,18 @@ function create_graph(data, graph_type) {
 				return y(find_y_value(d, mouse, 'values'));
 			})
 
-
 		var x1 = x(x0)
 		var x2 = x(x0)
 
 		var y1 = y(max_y_values[Math.round(x0)]);
 		var y2 = y(0)
 
-
-
 		svg.selectAll('.focus_line')
 			.attr('x1', x1)
 			.attr('x2', x2)
 			.attr('y1', y1)
 			.attr('y2', y2)
-			
+
 		svg.selectAll('.focus_text')
 			.attr('x', x(x0 + 2))
 			.attr('y', function(d) {

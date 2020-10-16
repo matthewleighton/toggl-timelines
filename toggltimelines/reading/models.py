@@ -335,6 +335,13 @@ class Readthrough(db.Model):
 
 		return percentage
 
+	# Returns a hue to be used by CSS's hsl function to give a color.
+	def get_completion_hue(self):
+		percentage = self.get_completion_percentage() / 100
+		hue = ((percentage)*120)
+
+		return hue
+
 	def get_estimated_completion_time(self, raw=False):
 		current_reading_time = self.get_current_reading_time(raw=True)
 		current_percentage = self.get_completion_percentage()
@@ -350,6 +357,17 @@ class Readthrough(db.Model):
 			return estimated_completion_time
 		else:
 			return helpers.format_milliseconds(estimated_completion_time, days=False)
+
+	def get_remaining_reading_time(self, raw=False):
+		estimated_completion_time = self.get_estimated_completion_time(raw=True)
+		current_reading_time = self.get_current_reading_time(raw=True)
+
+		remaining_reading_time = estimated_completion_time - current_reading_time
+
+		if raw:
+			return remaining_reading_time
+		else:
+			return helpers.format_milliseconds(remaining_reading_time, days=False, short_labels=True)
 
 	def get_time_per_position_unit(self, raw=False):
 		total_reading_time = self.get_current_reading_time(raw=True)
