@@ -609,6 +609,11 @@ def format_milliseconds(milliseconds, days=True, include_seconds=False, short_la
 		formatted_string = formatted_string.replace(' days', 's').replace(' day', 'd')
 		formatted_string = formatted_string.replace(',', '')
 
+	formatted_string = formatted_string.strip()
+
+	if formatted_string[-1] == ',':
+		formatted_string = formatted_string[:-1]
+
 	return formatted_string 
 
 def start_tracking(description='', project=''):

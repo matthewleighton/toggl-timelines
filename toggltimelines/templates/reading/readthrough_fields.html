@@ -8,7 +8,10 @@
 			<p><strong>End date: </strong><span class="hidden-input" data-endpoint="update_end_date" data-date={{readthrough.end_date}}>{{readthrough.format_date(readthrough.end_date)}}</span></p>
 		{% endif %}
 
-		<p><strong>Days reading: </strong>{{readthrough.get_total_days_reading()}}</p>
+		<p>
+			<strong>Days reading: </strong>{{readthrough.get_total_days_reading()}}
+			<span class="year-percentage-estimate">({{readthrough.get_current_year_percentage()}}% of year)</span>
+		</p>
 		<p style="margin-bottom: 8px;"><strong>Total reading time: </strong>{{readthrough.get_current_reading_time()}}</p>
 
 

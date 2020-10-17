@@ -648,6 +648,11 @@ class Readthrough(db.Model):
 
 		return percentage
 
+	def get_current_year_percentage(self, raw=False):
+		current_days = self.get_total_days_reading(raw=True)
+		percentage = round(current_days*100/365, 1)
+		return percentage		
+
 	def pluralize_days(self, number):
 		string = f"{number} day"
 

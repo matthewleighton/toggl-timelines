@@ -432,19 +432,15 @@ function get_x_tick_values(data, width=false, x_tick_width=50, rotate_ticks=fals
 
 	var max_ticks = Math.ceil(width / x_tick_width) - 1
 
-	if (number_of_ticks > max_ticks) {
-		ticks = []
+	ticks = []
 
-		var step_size = Math.ceil(number_of_ticks / max_ticks)
+	var step_size = Math.ceil(number_of_ticks / max_ticks)
 
-		for (var i = 0; i <= number_of_ticks; i+=step_size) {
-			ticks.push(i)
-		}
-
-		return ticks;
+	for (var i = 0; i <= number_of_ticks; i+=step_size) {
+		ticks.push(i)
 	}
 
-	return null;
+	return ticks;
 }
 
 function get_x_tick_format(d, data, graph_type, scope_type) {
@@ -940,8 +936,6 @@ function create_graph(data, graph_style) {
 			trend_line_slopes.unshift(least_square['m'])
 		}
 	}
-
-	// console.log(heigt)
 
 	svg.append('g')
 		.attr('class', 'x-axis')
