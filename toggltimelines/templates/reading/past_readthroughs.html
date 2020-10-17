@@ -4,13 +4,23 @@
 		<input type="text" id="past-readthrough-search" name="past_readthrough_search" placeholder="Search" autocomplete="off" />
 	</div>
 
+	<div id="past-readthroughs-sort-type-container">
+		Sort by 
+		<select name="readthroughs-sort-type" id="readthroughs-sort-type">
+			<option value="date">Date</option>
+			<option value="total-time">Total reading time</option>
+			<option value="total-days">Total reading days</option>
+			<option value="daily-time">Average daily reading time</option>
+			<option value="daily-progress">Average daily percentage</option>
+			<option value="time-per-percentage">Average time per percentage</option>
+		</select>
+	</div>
+
 	<div id="past-readthrough-search-results">
 	</div>
 
 	<div id="past-readthrough-loading-results">
 	</div>
 </div>
-
-<!-- <a href="#" class="load-past-readthroughs">Show previously read</a> -->
 
 <button type="button" class="btn btn-info load-past-readthroughs">Show previously read</button>

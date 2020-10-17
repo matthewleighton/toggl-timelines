@@ -17,7 +17,14 @@
 
 		<div>
 			<p style="margin-top: 8px"><strong>Average daily time: </strong>{{readthrough.get_average_daily_reading_time()}}</p>
-			<p><strong>Average daily progress: </strong>{{readthrough.get_average_daily_progress()}}</p>
+			
+			<p>
+				<strong>Average daily progress: </strong>{{readthrough.get_average_daily_progress()}}
+				{% if readthrough.is_physical() %}
+					<span class="year-percentage-estimate">({{readthrough.get_average_daily_progress(force_percentage=True)}} )</span>
+				{% endif %}
+			</p>
+
 			<p style="margin-bottom: 8px"><strong>Average time per {{readthrough.get_position_unit()}}: </strong>{{readthrough.get_time_per_position_unit()}}</p>
 		</div>
 

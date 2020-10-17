@@ -107,6 +107,12 @@ class Readthrough(db.Model):
 
 		return dt.strftime(date_format)
 
+	def is_physical(self):
+		return True if self.book_format == 'physical' else False
+
+	def is_digital(self):
+		return True if self.book_format == 'digital' else False
+
 	# i.e. The unit for physical books is a page, while for digital it is a percentage.
 	def get_position_unit(self, plural=False):
 
@@ -145,13 +151,17 @@ class Readthrough(db.Model):
 			else:
 				return f"Page {position} ({equivalent_percentage})"
 
-	def get_average_daily_progress(self, raw = False):
+	def get_average_daily_progress(self, raw = False, force_percentage=False):
 		book_format = self.book_format
 
 		if book_format == 'digital':
 			completed_units = self.current_position
 		elif book_format == 'physical':
-			completed_units = self.current_position - self.first_page + 1
+			
+			if force_percentage:
+				completed_units = self.get_completion_percentage()
+			else:
+				completed_units = self.current_position - self.first_page + 1
 
 		days_reading = self.get_total_days_reading(raw=True)
 
@@ -162,10 +172,10 @@ class Readthrough(db.Model):
 
 		average_daily_progress = round(average_daily_progress, 1)
 
-		if book_format == 'physical':
-			return str(average_daily_progress) + ' pages'
-		elif book_format == 'digital':
+		if book_format == 'digital' or force_percentage:
 			return str(average_daily_progress) + '%'
+		else:
+			return str(average_daily_progress) + ' pages'
 
 	def get_end_date(self):
 		if self.end_date:
@@ -369,12 +379,16 @@ class Readthrough(db.Model):
 		else:
 			return helpers.format_milliseconds(remaining_reading_time, days=False, short_labels=True)
 
-	def get_time_per_position_unit(self, raw=False):
+	def get_time_per_position_unit(self, raw=False, force_percentage=False):
 		total_reading_time = self.get_current_reading_time(raw=True)
 		current_position = self.current_position
 
 		if self.book_format == 'physical':
-			current_position = current_position - self.first_page + 1
+
+			if force_percentage:
+				current_position = self.get_completion_percentage()
+			else:
+				current_position = current_position - self.first_page + 1
 
 		if current_position == 0:
 			if raw:

@@ -810,6 +810,10 @@ body.hide-line-date-controls .line-date-control {
   height: 100%;
 }
 
+#past-readthroughs-sort-type-container {
+  display: none;
+}
+
 /* End of Reading Page */
 
 /* ---------- Reading History Page --------------*/
