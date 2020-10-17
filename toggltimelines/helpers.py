@@ -98,11 +98,8 @@ def check_project_client_integrity():
 
 
 	for db_project in db_projects:
-		print(db_project.id)
 		project_id = db_project.id
 		toggl_project = get_toggl_project(project_id)
-
-		pp.pprint(toggl_project)
 
 		toggl_client_id = toggl_project['cid'] if 'cid' in toggl_project.keys() else None
 		db_client_id = db_project.client_id
@@ -629,8 +626,6 @@ def stop_tracking(current_tracking_id=False):
 		return current_app.toggl.stopTimeEntry(current_tracking_id)
 
 	current_tracking = get_current_toggl_entry()
-
-	print(current_tracking)
 
 	if current_tracking:
 		current_tracking_id = current_tracking['id']

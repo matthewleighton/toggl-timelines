@@ -782,7 +782,6 @@ body.hide-line-date-controls .line-date-control {
 }
 
 .load-past-readthroughs {
-  margin-top: 5px;
   overflow-anchor: none;
 }
 
@@ -811,6 +810,10 @@ body.hide-line-date-controls .line-date-control {
 }
 
 #past-readthroughs-sort-type-container {
+  display: none;
+}
+
+#load-all-readthroughs {
   display: none;
 }
 

@@ -194,10 +194,14 @@ def load_past_readthroughs():
 	all_past_readthroughs = get_readthroughs('complete')
 
 	refresh = request.json['refresh']
+	load_all = request.json['load_all']
 
 	if refresh:
 		target_start_number = 0
 		target_end_number = request.json['number_loaded'] + amount_per_request
+	elif load_all:
+		target_start_number = request.json['number_loaded']
+		target_end_number = len(all_past_readthroughs)
 	else:
 		target_start_number = request.json['number_loaded']
 		target_end_number = target_start_number + amount_per_request
