@@ -40,6 +40,9 @@ def reading_home():
 	if not os.path.exists(current_app.covers_directory):
 		os.makedirs(current_app.covers_directory)
 
+	sync_start_datetime = datetime.utcnow().replace(hour=0, minute=0, second=0)
+	helpers.toggl_sync(sync_start_datetime)
+
 	populate_books()
 
 	active_readthroughs = get_readthroughs('active')

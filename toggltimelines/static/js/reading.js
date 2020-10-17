@@ -213,7 +213,6 @@ $('body').on('click', '.hidden-input', function() {
 			"data": JSON.stringify(data),
 			success: function(response) {
 				// TODO: Some kind of validation. Only replace if True.
-				console.log(response)
 				$readthrough_fields.replaceWith(response['readthrough_fields'])
 				$readthrough_position.replaceWith(response['readthrough_position'])
 			}
@@ -230,8 +229,6 @@ $('body').on('click', '.delete-readthrough-btn', function() {
 	var title = $(this).attr('data-title')
 	var message = `Delete readthrough for "${title}"?`
 	var $readthrough_element = $(this).closest('.readthrough-control')
-
-	console.log($readthrough_element)
 
 	user_confirmation = confirm(message)
 
@@ -411,7 +408,6 @@ $('.reading-reload').click(function() {
 /* Start tracking */
 $('body').on('click', '.start-track', function() {
 	
-	console.log('Clicked start track button.')
 
 	$button = $(this)
 	readthrough_id = $button.attr('data-id')
@@ -427,7 +423,6 @@ $('body').on('click', '.start-track', function() {
 		"dataType": "json",
 		"data": JSON.stringify(data),
 		success: function(response) {
-			console.log(response)
 
 			$button.removeClass('start-track')
 			$button.removeClass('btn-success')
@@ -457,7 +452,6 @@ $('body').on('click', '.stop-track', function() {
 		"dataType": "json",
 		"data": JSON.stringify(data),
 		success: function(response) {
-			console.log(response)
 
 			$button.removeClass('stop-track')
 			$button.removeClass('btn-danger')

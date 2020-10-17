@@ -326,8 +326,7 @@ function create_graph(data, graph_type) {
 				.y(function(d, i) {
 					return y(d)
 				});
-				//.curve(d3.curveMonotoneX)
-
+				
 	var node_number = 0
 	for (var i = data.length-1; i >= 0; i--) {
 		var year = data[i]['year'];
@@ -336,17 +335,19 @@ function create_graph(data, graph_type) {
 			.data([data[i]['values']])
 			.attr('class', 'line')
 			.attr('class', 'graph_line line-' + year)
-			//.attr('id', 'line-' + data[i]['year'])
 			.attr('d', line)
 			.attr('stroke', line_colors[i]);
 
 			if (graph_type == 'books_completed') {
 				var completion_info = data[i]['completion_info']
-				var completion_number = 0
-				for (var j = 0; j <= completion_info.length-1; j++) {
-					completion_number++;
 
-					var tooltip_text = "<strong>" + completion_info[j]['title'] + "</strong><br/>Completed: " + completion_info[j]['date'];
+				for (var j = 0; j <= completion_info.length-1; j++) {
+					var book_number = ordinal_suffix_of(j+1);
+
+					var date = completion_info[j]['date'];
+					var year = date.substr(date.length - 4);
+
+					var tooltip_text = "<strong>" + completion_info[j]['title'] + "</strong><br/>Completed: " + date + "<br/>" + book_number + " book of " + year;
 
 					var tip = d3.tip()
 						.attr('class', 'd3-tip')
@@ -359,7 +360,7 @@ function create_graph(data, graph_type) {
 
 					var dot = svg.append('circle')
 						.attr('cx', x(completion_info[j]['day_number']))
-						.attr('cy', y(completion_number))
+						.attr('cy', y(j+1))
 						.attr('r', 4.5)
 						.attr('fill', line_colors[i])
 						.attr('class', 'readthrough-data-point line-' + year)
@@ -661,4 +662,19 @@ function msToTime(duration, include_minutes=false) {
     }
     
     return final_string;
+}
+
+function ordinal_suffix_of(i) {
+    var j = i % 10,
+        k = i % 100;
+    if (j == 1 && k != 11) {
+        return i + "st";
+    }
+    if (j == 2 && k != 12) {
+        return i + "nd";
+    }
+    if (j == 3 && k != 13) {
+        return i + "rd";
+    }
+    return i + "th";
 }
