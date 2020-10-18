@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import os.path
 import urllib.request
 import time
+from PIL import Image
 
 from toggltimelines.timelines.models import Entry
 from toggltimelines import db
@@ -41,6 +42,19 @@ class Book(db.Model):
 
 		try:
 			urllib.request.urlretrieve(url, file_location)
+			image = Image.open(file_location)
+
+			original_width, original_height = image.size
+
+			ratio = original_height / original_width
+
+			new_width = min([original_width, 290])
+			new_height = round(new_width * ratio)
+
+
+			image_small = image.resize((new_width, new_height), Image.ANTIALIAS)
+			image_small.save(file_location)
+
 		except:
 			return False
 
