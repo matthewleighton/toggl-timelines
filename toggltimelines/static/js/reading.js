@@ -257,9 +257,7 @@ function delete_readthrough(readthrough_id, readthrough_element) {
 }
 
 $('#readthroughs-sort-type').change(function() {
-	number_loaded = 0;
-
-	load_past_readthroughs(refresh=true);
+	load_past_readthroughs(refresh=true, load_all=false);
 
 });
 
@@ -270,11 +268,16 @@ $('#load-all-readthroughs').click(function() {
 function load_past_readthroughs(refresh=false, load_all=false) {
 	var sort_by = $( "#readthroughs-sort-type" ).val();
 
+	if (refresh) {
+		number_loaded = 0
+	}
+
 	data = {
 		'number_loaded': number_loaded,
 		'sort_by': sort_by,
 		'refresh': refresh,
-		'load_all': load_all
+		'load_all': load_all,
+		'sort_order': sort_order
 	}
 
 	$.ajax({
@@ -312,9 +315,18 @@ function load_past_readthroughs(refresh=false, load_all=false) {
 var number_loaded = 0
 $('.load-past-readthroughs').click(function(e) {
 	e.preventDefault();
-
-	load_past_readthroughs()
+	console.log('clicked load past readthroughs button')
+	load_past_readthroughs(refresh=false, load_all=false)
 })
+
+var sort_order = 'desc'
+function change_readthroughs_sort_order() {
+	$('.arrow-down').toggleClass('active');
+
+	sort_order = (sort_order == 'desc') ? 'asc' : 'desc';
+
+	load_past_readthroughs(refresh=true, load_all=false)
+}
 
 
 
@@ -360,6 +372,8 @@ function search_readthroughs(title) {
 	})
 
 }
+
+
 
 
 

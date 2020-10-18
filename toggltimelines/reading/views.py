@@ -208,26 +208,32 @@ def load_past_readthroughs():
 
 	sort_by = request.json['sort_by']
 
+	sort_order = request.json['sort_order']
+
+	reverse = True if sort_order == 'desc' else False
+
 	if sort_by == 'total-time':
 		all_past_readthroughs = sorted(all_past_readthroughs,
-								reverse=True, 
+								reverse=reverse, 
 								key=lambda readthrough: readthrough.get_current_reading_time(raw=True))
 	elif sort_by == 'daily-time':
 		all_past_readthroughs = sorted(all_past_readthroughs,
-								reverse=True, 
+								reverse=reverse, 
 								key=lambda readthrough: readthrough.get_average_daily_reading_time(raw=True))
 	elif sort_by == 'total-days':
 		all_past_readthroughs = sorted(all_past_readthroughs,
-								reverse=True, 
+								reverse=reverse, 
 								key=lambda readthrough: readthrough.get_total_days_reading(raw=True))
 	elif sort_by == 'daily-progress':
 		all_past_readthroughs = sorted(all_past_readthroughs,
-								reverse=True, 
+								reverse=reverse, 
 								key=lambda readthrough: readthrough.get_average_daily_progress(raw=True, force_percentage=True))
 	elif sort_by == 'time-per-percentage':
 		all_past_readthroughs = sorted(all_past_readthroughs,
-								reverse=True, 
+								reverse=reverse, 
 								key=lambda readthrough: readthrough.get_time_per_position_unit(raw=True, force_percentage=True))
+	elif sort_by == 'date' and sort_order =='asc':
+		all_past_readthroughs.reverse()
 
 	readthroughs_to_return = all_past_readthroughs[target_start_number : target_end_number]
 

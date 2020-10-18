@@ -614,7 +614,6 @@ def format_milliseconds(milliseconds, days=True, include_seconds=False, short_la
 	return formatted_string 
 
 def start_tracking(description='', project=''):
-	
 	project = None
 
 	response = current_app.toggl.startTimeEntry(description, project)

@@ -34,7 +34,6 @@ class Book(db.Model):
 		return '/static/img/cover_placeholder.png'
 
 	def update_cover(self, url):
-		
 		self.image_url = url
 		db.session.commit()
 

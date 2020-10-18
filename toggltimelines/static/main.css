@@ -809,6 +809,10 @@ body.hide-line-date-controls .line-date-control {
   height: 100%;
 }
 
+#past-readthrough-search {
+  float: right;
+}
+
 #past-readthroughs-sort-type-container {
   display: none;
 }
@@ -816,6 +820,48 @@ body.hide-line-date-controls .line-date-control {
 #load-all-readthroughs {
   display: none;
 }
+
+
+.arrow-down {
+  display: inline-block;
+  width: 50px;
+  height: 27px;
+  position: relative;
+  cursor: pointer;
+}
+
+.arrow-down:before, .arrow-down:after {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 5px;
+  background: black;
+  position: absolute;
+  top: 20px;
+  transition: transform .5s;
+}
+
+.arrow-down:before {
+  right: 21px;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  transform: rotate(45deg);
+}
+
+.arrow-down:after {
+  right: 10px;
+  transform: rotate(-45deg);
+}
+
+.arrow-down.active:before {
+  transform: rotate(-45deg);
+}
+
+.arrow-down.active:after {
+  transform: rotate(45deg);
+}
+
+
 
 /* End of Reading Page */
 
