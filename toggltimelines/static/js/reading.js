@@ -321,9 +321,19 @@ $('.load-past-readthroughs').click(function(e) {
 
 var sort_order = 'desc'
 function change_readthroughs_sort_order() {
-	$('.arrow-down').toggleClass('active');
+	$arrow = $('.arrow-down');
+
+	$arrow.toggleClass('active');
 
 	sort_order = (sort_order == 'desc') ? 'asc' : 'desc';
+
+	if (sort_order == 'asc') {
+		var title = 'Ascending';
+	} else {
+		var title = 'Descending';
+	}
+
+	$arrow.prop('title', title);
 
 	load_past_readthroughs(refresh=true, load_all=false)
 }
