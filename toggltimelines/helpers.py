@@ -39,7 +39,6 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 	#Only get the current entry if we're getting today's entries.
 	if start_date <= datetime.now().replace(tzinfo=timezone) <= end_date:
 		current_entry = get_current_toggl_entry()
-		#pp.pprint(current_entry)
 		if current_entry:
 			entries.append(current_entry)
 

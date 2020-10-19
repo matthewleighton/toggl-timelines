@@ -266,7 +266,8 @@ $(document).ready(function(){
 			$('.timeline_container').append(data)
 			
 			if (load_all) {
-				$('#load_more').hide()
+				$('#load_more').hide();
+				$('#current_time_marker').css('height', 'calc(100% + 10px)');
 			}
 
 			if (!load_all) {
