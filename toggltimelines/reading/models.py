@@ -599,6 +599,9 @@ class Readthrough(db.Model):
 
 	# Return the current streak for the daily reading goal.
 	def get_current_streak(self, raw=False):
+
+		print('get_current_streak')
+
 		streak = 0
 		goal_in_minutes = self.daily_reading_goal
 		goal_in_milliseconds = goal_in_minutes * 60 * 1000

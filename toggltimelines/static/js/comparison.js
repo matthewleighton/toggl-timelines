@@ -14,8 +14,17 @@ $(document).ready(function() {
 		submit_comparison_form()
 	});
 
-	$('#comparison_form').change(function() {
-		$('#comparison_form').submit()
+	$('#comparison_form').change(function(e) {
+		if (e.target.name == 'weekdays') {
+			clearTimeout(window.weekday_timeout);
+
+			window.weekday_timeout = setTimeout(function() {
+				$('#comparison_form').submit()				
+			}, 800)
+		} else {
+			$('#comparison_form').submit()
+
+		}
 	});
 
 	$('#comparison_form').submit()
@@ -23,6 +32,31 @@ $(document).ready(function() {
 	$('.comparison_reload').click(function() {
 		submit_comparison_form(true)
 	})
+
+
+
+	$('#comparison_weekday_selection input:checkbox').change(function() {
+		var id = $(this).attr('id');
+		var checked = $(this).attr('checked');
+		
+		if (id == 'all-days-checkbox' && this.checked) {
+
+			$('input[name=weekdays]').each(function() {
+				if (!this.checked) {
+					$(this).click();
+				}
+			})
+
+		} else if (id == 'all-days-checkbox') {
+			$('input[name=weekdays]').each(function() {
+				if (this.checked) {
+					$(this).click();
+				}
+			})
+		}
+	});
+
+
 
 	$('input[type=radio][name=period_type]').change(function() {
 	    if (this.value == 'calendar') {
