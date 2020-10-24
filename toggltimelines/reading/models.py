@@ -260,7 +260,6 @@ class Readthrough(db.Model):
 		for entry in reading_entries:
 			total_milliseconds += entry.dur
 
-		total_milliseconds = total_milliseconds
 		if raw:
 			return total_milliseconds
 		else:
@@ -370,11 +369,12 @@ class Readthrough(db.Model):
 		current_percentage = self.get_completion_percentage()
 
 		if current_percentage == 0:
-			return 'N/A'
+			time_per_percentage = 24*60*60*1000 # If the user hasn't read any yet,
+												# default to 24 hours per percentage.
 		else:
 			time_per_percentage = current_reading_time / current_percentage
 
-			estimated_completion_time = time_per_percentage * 100
+		estimated_completion_time = time_per_percentage * 100
 
 		if raw:
 			return estimated_completion_time

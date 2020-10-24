@@ -7,6 +7,8 @@ $(document).ready(function() {
 
 	update_details_div();
 
+	
+
 	$('body').keydown(function(e) {
 		var keyCode = e.originalEvent.keyCode
 

@@ -254,6 +254,8 @@ def search_readthroughs():
 
 	verify_covers(readthroughs)
 
+	pp.pprint(readthroughs)
+
 
 	if readthroughs:
 		return jsonify(render_template('reading/readthrough_list.html', readthroughs=readthroughs))

@@ -809,7 +809,7 @@ function create_graph(data, graph_style) {
 				'months': 500*12
 			},
 			'normal': {
-				'days': 7000,
+				'days': 5000,
 				'weeks': 5000,
 				'months': 5000
 			}
@@ -833,7 +833,7 @@ function create_graph(data, graph_style) {
 				path.attr("stroke-dasharray", totalLength + " " + totalLength)
 					.attr("stroke-dashoffset", totalLength)
 					.transition()
-						.duration(animation_duration)
+						.duration(duration)
 						.ease(d3.easeLinear)
 						.attr("stroke-dashoffset", 0)
 			}

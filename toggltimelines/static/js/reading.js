@@ -376,7 +376,7 @@ function search_readthroughs(title) {
 		"data": JSON.stringify(data),
 		success: function(response) {
 			$('#past-readthrough-loading-results').hide()
-			$('#past-readthrough-serach-results').show()
+			$('#past-readthrough-search-results').show()
 			$('#past-readthrough-search-results').html(response)
 		}
 	})
