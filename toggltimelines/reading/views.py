@@ -232,8 +232,11 @@ def load_past_readthroughs():
 		all_past_readthroughs = sorted(all_past_readthroughs,
 								reverse=reverse, 
 								key=lambda readthrough: readthrough.get_time_per_position_unit(raw=True, force_percentage=True))
-	elif sort_by == 'date' and sort_order =='asc':
-		all_past_readthroughs.reverse()
+	elif sort_by == 'date':
+		all_past_readthroughs = sorted(all_past_readthroughs,
+						reverse=reverse, 
+						key=lambda readthrough: readthrough.end_date)
+
 
 	readthroughs_to_return = all_past_readthroughs[target_start_number : target_end_number]
 
