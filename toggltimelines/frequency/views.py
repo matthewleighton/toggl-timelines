@@ -110,9 +110,6 @@ date_formats = {
 def frequency_data():
 	submission_data = request.json
 
-	print('Submission data!')
-	pp.pprint(submission_data)
-
 	data = []
 
 	scope_type = submission_data[0]['scope_type']
@@ -213,8 +210,6 @@ def frequency_data():
 			'values': values,
 			'keys': keys
 		})
-
-	pp.pprint(data)
 
 	return jsonify(data)
 
