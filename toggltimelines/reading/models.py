@@ -2,7 +2,7 @@ from flask import current_app
 from sqlalchemy import func
 
 import math, pytz
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import os.path
 import urllib.request
 import time
@@ -78,6 +78,9 @@ class Book(db.Model):
 	# Return the date for either the first or last entry of a book.
 	def get_default_readthrough_date(self, start_or_end, dt=False):
 		reading_entries = self.get_all_reading_entries()
+
+		if not reading_entries:
+			return date.today()
 
 		target_entry = reading_entries[0] if start_or_end == 'start' else reading_entries[-1]
 
