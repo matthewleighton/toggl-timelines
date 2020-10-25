@@ -8,16 +8,11 @@ var filter_settings = {
 }
 
 function get_day_percentage() {
-	var now  = new Date()
-		then = new Date(
-			now.getFullYear(),
-			now.getMonth(),
-			now.getDate(),
-			0, 0, 0
-		)
+	var now  = new Date();
+	var hour = now.getHours();
+	var minute = now.getMinutes();
 
-	ms_since_midnight = now.getTime() - then.getTime()
-	minutes_since_midnight = ms_since_midnight/60000
+	minutes_since_midnight = hour * 60 + minute	
 	day_percentage = (minutes_since_midnight/(60*24))*100
 
 	return day_percentage
