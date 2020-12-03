@@ -110,10 +110,13 @@ date_formats = {
 def frequency_data():
 	submission_data = request.json
 
+	pp.pprint(submission_data)
+
 	data = []
 
-	scope_type = submission_data[0]['scope_type']
-	graph_type = submission_data[0]['graph_type']
+	scope_type 		= submission_data[0]['scope_type']
+	graph_type 		= submission_data[0]['graph_type']
+	rolling_average = submission_data[0]['rolling_average']
 
 	for line in submission_data:
 		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
@@ -203,6 +206,8 @@ def frequency_data():
 		values = list(line_data_container.values())
 		keys = list(line_data_container.keys())
 
+		if graph_type == 'normal' and scope_type == 'days' and rolling_average:
+			values = apply_rolling_average(values)
 
 		data.append({
 			'line_data': line,
@@ -212,6 +217,31 @@ def frequency_data():
 		})
 
 	return jsonify(data)
+
+# Apply a 7 day rolling average to the data.
+# (Every data point becomes an average of the past 7 days.)
+def apply_rolling_average(values):
+	i = len(values) - 1
+	while i >= 0:
+		summation = 0
+		j = i
+		k = 0
+		sum_string = ''
+		while k < 7:
+			k += 1
+
+			summation += values[j]
+			sum_string += str(values[j]) + ' '
+			if j == 0:
+				break
+			j -= 1
+
+		average_value = round(summation / k, 0)
+		values[i] = average_value
+
+		i -= 1
+
+	return values
 
 
 # Get how many times a certain time block (week/month) occurs between two dates.

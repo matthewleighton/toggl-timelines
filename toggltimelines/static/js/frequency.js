@@ -8,17 +8,18 @@ $(document).ready(function() {
 
 // On change of graph type...
 $('body').on('change', 'input[type=radio][name=graph_type]', function() {
-	console.log('Changed graph type')
 	toggle_y_axis_type()
 	toggle_line_date_display()
 	hide_show_minutes_scope()
 	toggle_current_minute_checkbox()
+	toggle_rolling_average_checkbox()
 })
 
 // On change of scope type...
 $('body').on('change', 'input[type=radio][name=scope_type]', function() {
 	toggle_y_axis_type()
 	toggle_current_minute_checkbox()
+	toggle_rolling_average_checkbox()
 })
 
 // On change of graph style...
@@ -62,6 +63,19 @@ function toggle_current_minute_checkbox() {
 		checkbox_container.show()
 	} else {
 		checkbox_container.hide()
+	}
+}
+
+function toggle_rolling_average_checkbox() {
+	var graph_type = get_graph_type();
+	var scope_type = get_scope_type();
+
+	var element = $('.rolling-average-checkbox-container');
+
+	if (graph_type == 'normal' && scope_type == 'days') {
+		element.show();
+	} else {
+		element.hide();
 	}
 }
 
@@ -306,7 +320,6 @@ $('#frequency_graph_submit').on('click', function() {
 
 function submit_graph_request() {
 	submission_data = []
-	console.log('submit_graph_request')
 
 	$('.frequency_line_control').each(function() {
 		serialized_data = $(this).serializeArray();
@@ -336,6 +349,7 @@ function submit_graph_request() {
 		serialized_object['scope_type'] = $("input[type='radio'][name='scope_type']:checked").val()
 		serialized_object['graph_type'] = $("input[type='radio'][name='graph_type']:checked").val()
 		serialized_object['graph_style'] = $("input[type='radio'][name='graph_style']:checked").val()
+		serialized_object['rolling_average'] = $("#rolling-average-checkbox").is(':checked')
 
 		graph_type = get_graph_type()
 		if (graph_type == 'normal') {
