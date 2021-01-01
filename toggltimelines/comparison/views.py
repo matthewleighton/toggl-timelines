@@ -331,7 +331,7 @@ def get_comparison_start_end(period_type, number_of_current_days, number_of_hist
 		
 		elif calendar_period == 'month':
 			previous_month = (now.month-1) or 12
-			historic_year = now.year if previous_month != 12 else now_utc.year - 1
+			historic_year = now.year if previous_month != 12 else now.year - 1
 
 			last_day_of_previous_month = calendar.monthrange(historic_year, previous_month)[1]
 			

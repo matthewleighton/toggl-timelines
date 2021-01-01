@@ -558,12 +558,6 @@ def get_tag_data():
 	return tags
 
 def format_milliseconds(milliseconds, days=True, include_seconds=False, short_labels=False):
-	
-	if milliseconds == 0:
-		if short_labels:
-			return '0s'
-		return '0 seconds'
-
 	# If we're not including seconds, round the milliseconds up/down to the nearest minute
 	milliseconds_per_minute = 60 * 1000
 	if not include_seconds:
@@ -612,6 +606,11 @@ def format_milliseconds(milliseconds, days=True, include_seconds=False, short_la
 		formatted_string = formatted_string.replace(',', '')
 
 	formatted_string = formatted_string.strip()
+
+	if not formatted_string:
+		if short_labels:
+			return '0s'
+		return '0 seconds'
 
 	if formatted_string[-1] == ',':
 		formatted_string = formatted_string[:-1]
