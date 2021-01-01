@@ -153,7 +153,7 @@ function request_graph_data(graph_type) {
 	});
 }
 
-var line_colors = ['red', 'blue', 'green', 'yellow']
+var line_colors = ['red', 'orange', 'blue', 'green']
 var active_node = false
 
 d3.selection.prototype.moveToBack = function() {  

@@ -368,7 +368,6 @@ def graph():
 
 @bp.route("/reading/history", methods=['GET'])
 def history():
-
 	first_year = get_readthroughs(year=False)[-1].start_date.year
 	current_year = datetime.now().year
 
@@ -580,8 +579,11 @@ def get_history_year_data():
 			#average_daily_reading_time += readthrough.get_average_daily_reading_time(raw = True)
 			total_reading_time += readthrough.get_current_reading_time(raw = True)
 
-		average_days_per_book /= number_of_books
-		average_time_per_book /= number_of_books
+
+		divider = number_of_books if number_of_books > 0 else 1
+
+		average_days_per_book /= divider
+		average_time_per_book /= divider
 		#average_daily_reading_time /= number_of_books
 
 		raw_average_daily_reading_time = get_average_daily_reading_time(year)
@@ -656,6 +658,9 @@ def history_year_data():
 	
 		readthroughs = get_readthroughs(year=year, status='complete', include_readthroughs_completed_in_next_year=False)
 		number_of_books = len(readthroughs)
+
+		if not len(readthroughs):
+			continue
 
 		start_of_first_readthrough = readthroughs[-1].start_date
 		
