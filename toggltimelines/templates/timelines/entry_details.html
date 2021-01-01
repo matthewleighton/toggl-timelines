@@ -1,0 +1,8 @@
+<h1 id="entry_description">
+	{{entry.description}} <span class="entry_project" style="color: {{entry.get_project_color()}};">- {{entry.project.project_name}}</span>
+</h1>
+<p>{{entry.get_details_timestamp()}}</p>
+<input id="entry_id" type="hidden" name="entry_id" value="{{entry.id}}">
+<textarea id="journal" name="journal" rows="10" cols="30">{{entry.get_journal()}}</textarea>
+
+<span id="close_entry_details">x</span>

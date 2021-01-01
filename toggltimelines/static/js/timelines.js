@@ -1,5 +1,6 @@
 var start_days_ago = 14
 var end_days_ago = 7
+var disable_search = false
 
 var filter_settings = {
 	'active': false,
@@ -68,27 +69,36 @@ function move_time_marker() {
 	$('#current_time_marker').css('left', get_day_percentage() - 0.1 + '%');
 }
 
+var DELAY = 200, entry_clicks = 0, timer = null, mousedown = false
 // This has all been put into a function so we can call it again after loading elements via AJAX.
 function assign_listeners() {
-	var DELAY = 200, entry_clicks = 0, timer = null
-
 	$('[data-toggle="tooltip"]').tooltip({placement: 'bottom'});
 	
 	move_time_marker()
 	setInterval(move_time_marker, 30000)
 
-	// Selecting Projects
-	$('.tracked_time').on('click', function(e){
+
+	$('.tracked_time').on('mousedown', function(e) {
 		entry_clicks++
 
+		clicked_entry_id = $(this).data('id')
 		clicked_project = $(this).data('project')
 		clicked_client = $(this).data('client')
 
-		if(entry_clicks===1) {
+		mousedown = true
+
+		if (entry_clicks === 1) {
 			
-			timer = setTimeout(function() {
+			long_click_timeout = setTimeout(function() {
+				display_entry_details(clicked_entry_id)
+			}, 500)
+
+			short_click_timeout = setTimeout(function() {
 				entry_clicks = 0
-			
+				if (mousedown) {
+					return
+				}
+
 				if (e.ctrlKey) {
 
 					if (filter_settings['type'] == 'client') {
@@ -96,6 +106,7 @@ function assign_listeners() {
 					}
 
 					apply_filter('client', clicked_client)
+
 				} else {
 
 					if (filter_settings['type'] == 'project') {
@@ -103,26 +114,32 @@ function assign_listeners() {
 					}
 
 					apply_filter('project', clicked_project)
+
 				}
-				
-			}, DELAY)
+			}, 200)
 		} else {
-			clearTimeout(timer)
+			// Double click
 			entry_clicks = 0
+
+			clearTimeout(short_click_timeout)
+			clearTimeout(long_click_timeout)
+			
 
 			clicked_description = $(this).data('description')
 			apply_filter('description', clicked_description)
 		}
-	})
-	.on('dblclick', function(e) {
+	}).on('dblclick', function(e) {
 		e.preventDefault()
+	}).on('mouseup', function() {
+		clearTimeout(long_click_timeout)
+		mousedown = false
 	})
 
 	// Filtering Days
 	var date_clicks = 0, filtering_days = false
-	$('.day_date').on('click', function(e){
+	$('.day_date').on('mousedown', function(e){
 		date_clicks++
-		
+
 		if(date_clicks===1) {
 			target_day = $(this).data('day')
 			
@@ -166,6 +183,60 @@ function assign_listeners() {
 	})
 
 }
+
+function display_entry_details(entry_id) {
+	console.log('display_entry_details')
+	console.log(entry_id)
+
+	var data = {
+		'entry_id': entry_id
+	}
+
+	$.ajax({
+		"type": "POST",
+		"url": "/timelines/entry_details",
+		"contentType": "application/json",
+		"dataType": "json",
+		"data": JSON.stringify(data),
+		success: function(response) {
+			console.log(response)
+
+			$container = $('#entry_details_container')
+			$container.html(response)
+
+			$('#entry_details_container').show();
+			disable_search = true
+		}
+	})
+}
+
+$('body').on('blur', '#journal', function() {
+	console.log('update journal')
+
+	var entry_id = $('#entry_id').val()
+	var journal = $('#journal').val()
+
+	data = {
+		'entry_id': entry_id,
+		'journal': journal
+	}
+
+	$.ajax({
+		"type": "POST",
+		"url": "/timelines/update_entry",
+		"contentType": "application/json",
+		"dataType": "json",
+		"data": JSON.stringify(data),
+		success: function(response) {
+			console.log('updated!')
+		}
+	})
+})
+
+$('body').on('click', '#close_entry_details', function() {
+	$('#entry_details_container').hide()
+})
+
 
 function remove_listeners() {
 	$('.day_date').off()
@@ -281,6 +352,11 @@ $(document).ready(function(){
 	black_mode = false
 	search_visible = false
 	$('body').keypress(function(e) {
+		
+		if(disable_search) {
+			return
+		}
+
 		//console.log(e.which)
 
 		/*

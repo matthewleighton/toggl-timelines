@@ -24,6 +24,8 @@ class Entry(db.Model):
 	location = db.Column(db.String(50))
 	tags = db.relationship('Tag', secondary=tags, lazy='subquery',
         backref=db.backref('entries', lazy=True))
+	journal = db.Column(db.Text())
+	# journal = db.relationship('Journal', uselist=False, back_populates='entry')
 
 	def __repr__(self):
 		return "<Entry (Description: " + self.description + ") (Start: " + str(self.start) + ") (End: " + str(self.end) + ") (Duration: " + str(self.dur) + ") (ID: " + str(self.id) + ")"
@@ -129,6 +131,44 @@ class Entry(db.Model):
 
 		return hours_string + minutes_string
 
+	def update_data(self, entry_data):
+		self.description = entry_data['description']
+		self.start 		 = entry_data['start']
+		self.end 		 = entry_data['end']
+		self.dur 		 = entry_data['dur']
+		self.location 	 = entry_data['location']
+		self.user_id 	 = entry_data['user_id']
+		self.tags 		 = entry_data['tags']
+
+		if 'journal' in entry_data.keys():
+			self.journal = entry_data['journal']
+
+		if 'db_project' in entry_data.keys():
+			self.project = entry_data['db_project']
+
+		db.session.commit()
+
+		return self
+
+	def get_journal(self):
+		journal = self.journal
+
+		if not journal:
+			return ''
+
+		return journal
+
+	def get_details_timestamp(self):
+		weekday = self.get_local_start_time().strftime("%A")
+		date = self.get_local_start_time().strftime("%d/%m/%Y")
+		start_time = self.get_local_start_time().strftime('%H:%M')
+		end_time = self.get_local_end_time().strftime('%H:%M')
+
+		timestamp = f'{weekday} {date} | {start_time} - {end_time}'
+
+		return timestamp
+
+
 class Project(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	project_name = db.Column(db.String(50))
@@ -148,3 +188,10 @@ class Tag(db.Model):
 
 	def __repr__(self):
 		return f"<id: {self.id} tag_name: {self.tag_name}>"
+
+# class Journal(db.Model):
+# 	id = db.Column(db.Integer, primary_key=True)
+# 	entry_id = db.Column(db.Integer, db.ForeignKey('entry.id'))
+# 	entry = db.relationship('Entry', back_populates='journal')
+# 	body = db.Column(db.String())
+# 	

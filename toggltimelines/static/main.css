@@ -225,10 +225,6 @@ body {
   margin-bottom: 150px;
 }
 
-.load_more {
-	
-}
-
 .timelines_reload {
     position: absolute;
     right: 0px;
@@ -242,6 +238,34 @@ body {
   left: 42%;
   top: 42%;
   display: none;
+}
+
+#entry_details_container {
+  display: none;
+  border: 1px solid black;
+  border-radius: 5px;
+  position: fixed;
+  background-color: inherit;
+  top: 50%;
+  left: 50%;
+  width: 500px;
+  /*height: 600px;*/
+  margin-top: -140px;
+  margin-left: -250px;
+  padding: 10px;
+  z-index: 9999999;
+
+}
+
+#entry_details_container #entry_description {
+  font-size: 20px;
+}
+
+#entry_details_container #close_entry_details {
+  position: absolute;
+  right: 10px;
+  top: 0px;
+  cursor: pointer;
 }
 
 /* -----------------Loading Spinners--------------- */

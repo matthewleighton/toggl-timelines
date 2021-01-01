@@ -119,3 +119,32 @@ def start_stop():
 		status = 'stop'
 
 	return status
+
+@bp.route("/timelines/entry_details", methods=['POST'])
+def entry_details():
+	entry_id = request.json['entry_id']
+	entry = Entry.query.get(entry_id)
+
+	print(entry.journal)
+
+	return jsonify(
+		render_template('timelines/entry_details.html', entry=entry)
+	)
+
+@bp.route("/timelines/update_entry", methods=['POST'])
+def update_entry():
+	
+	print('update_entry')
+	entry_id = request.json['entry_id']
+	entry = Entry.query.get(entry_id)
+
+	data = request.json
+
+
+	# TODO: Temporary version. Add logic to work with all different attributes.
+	if 'journal' in data.keys():
+		entry.journal = data['journal']
+
+	db.session.commit()
+
+	return jsonify(entry_id)

@@ -44,17 +44,21 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 
 	entries = split_entries_over_midnight(entries)
 
-	# local_projects = get_all_projects_from_database()
+	# pp.pprint(entries)
 
-	# Remove database entries which already exist in the sync window.
-	existing_db_entries = get_db_entries(start_date, end_date)
-	for db_entry in existing_db_entries:
-		db.session.delete(db_entry)
+	# # Remove database entries which already exist in the sync window.
+	# existing_db_entries = get_db_entries(start_date, end_date)
+	# for db_entry in existing_db_entries:
+	# 	db.session.delete(db_entry)
 
-	db.session.commit() # This is here because of issues when an entry was deleted and re-added during resync. 
-						# Project wasn't correctly updating if changed to NULL.
+	# db.session.commit() # This is here because of issues when an entry was deleted and re-added during resync. 
+	# 					# Project wasn't correctly updating if changed to NULL.
+
+	entry_ids = []
 
 	for entry in entries:
+		entry_ids.append(entry['id'])
+
 		project_id = entry['pid'] if 'pid' in entry.keys() else None
 		db_project = get_or_create_project(project_id)
 
@@ -67,7 +71,7 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 
 		description = entry['description'] if 'description' in entry.keys() else ''
 
-		db_entry = create_entry({
+		entry_data = {
 			'id': 		   entry['id'],
 			'description': description,
 			'start': 	   start_datetime,
@@ -77,13 +81,31 @@ def toggl_sync(start_date=False, end_date=False, days=False):
 			'user_id': 	   entry['uid'],
 			'db_project':  db_project,
 			'tags':		   db_tags
-		})
+		}
+
+		db_entry = update_or_create_entry(entry_data)
+
+		# db_entry = create_entry(entry_data)
+
+	remove_deleted_entries(entry_ids, start_date, end_date)
 
 	check_project_client_integrity()
 
 	db.session.commit()
 
 	return entries
+
+# Remove all entries between the start and end dates, except for the given IDs.
+def remove_deleted_entries(remaining_entry_ids, start_date, end_date):
+	entries_to_delete = get_db_entries(start=start_date,
+									   end=end_date,
+									   exclude_ids=remaining_entry_ids)
+
+	for db_entry in entries_to_delete:
+		db.session.delete(db_entry)
+
+	db.session.commit()
+
 
 # Make sure that the database projects are assigned to the same clients as in Toggl.
 # (Also check database projects colors against Toggl).
@@ -268,7 +290,14 @@ def get_entry_location(entry_datetime):
 
 	return location
 
-def get_db_entries(start=False, end=False, projects=False, clients=False, description=False, tags=False, tags_mode='OR'):
+def get_db_entries(start=False,
+				   end=False,
+				   projects=False,
+				   clients=False,
+				   description=False,
+				   tags=False,
+				   tags_mode='OR',
+				   exclude_ids=False):
 	query = Entry.query
 
 	if start:
@@ -278,6 +307,9 @@ def get_db_entries(start=False, end=False, projects=False, clients=False, descri
 	if end:
 		end = end.astimezone(pytz.utc)
 		query = query.filter(Entry.start <= end)
+
+	if exclude_ids:
+		query = query.filter(Entry.id.notin_(exclude_ids))
 
 	if projects:
 		query = query.join(Entry.project, aliased=True)
@@ -339,35 +371,46 @@ def sort_db_entries_by_day(db_entries, return_as_dict=False):
 
 	return days_list
 
-# Save a new entry to the database
-def create_entry(entry_data):
-	# This is here to catch an edge case of when an old version of an entry still exists.
-	# (The old one is usually already deleted, by can remain if the edge of the sync window has an entry overflowing midnight)#
-	# Could maybe find a better way of doing this? How much extra time does it take to check each entry like this?
-	old_entry = Entry.query.get(entry_data['id'])
-	if old_entry:
-		db.session.delete(old_entry)
-		db.session.commit()
+def update_or_create_entry(entry_data):
+	db_entry = Entry.query.get(entry_data['id'])
 
-	db_entry = Entry(
-		id 				  = entry_data['id'],
-		description 	  = entry_data['description'],
-		start 			  = entry_data['start'],
-		end 			  = entry_data['end'],
-		dur 			  = entry_data['dur'],
-		#client 			  = entry_data['client'],
-		location 		  = entry_data['location'],
-		user_id 		  = entry_data['user_id'],
-		tags 			  = entry_data['tags']
-	)
+	if not db_entry:
+		db_entry = Entry(id=entry_data['id'])
 
-	if entry_data['db_project']:
-		db_entry.project = entry_data['db_project']
-
-	db.session.add(db_entry)
-	#db.session.commit()
+	db_entry.update_data(entry_data)
 
 	return db_entry
+
+
+# # Save a new entry to the database
+# def create_entry(entry_data):
+# 	# This is here to catch an edge case of when an old version of an entry still exists.
+# 	# (The old one is usually already deleted, by can remain if the edge of the sync window has an entry overflowing midnight)#
+# 	# Could maybe find a better way of doing this? How much extra time does it take to check each entry like this?
+# 	old_entry = Entry.query.get(entry_data['id'])
+# 	if old_entry:
+# 		db.session.delete(old_entry)
+# 		db.session.commit()
+
+# 	db_entry = Entry(
+# 		id 				  = entry_data['id'],
+# 		description 	  = entry_data['description'],
+# 		start 			  = entry_data['start'],
+# 		end 			  = entry_data['end'],
+# 		dur 			  = entry_data['dur'],
+# 		#client 			  = entry_data['client'],
+# 		location 		  = entry_data['location'],
+# 		user_id 		  = entry_data['user_id'],
+# 		tags 			  = entry_data['tags']
+# 	)
+
+# 	if entry_data['db_project']:
+# 		db_entry.project = entry_data['db_project']
+
+# 	db.session.add(db_entry)
+# 	#db.session.commit()
+
+# 	return db_entry
 
 # Save a new project to the database
 def create_project(project_data):
