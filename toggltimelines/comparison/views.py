@@ -106,7 +106,6 @@ def comparison_data():
 
 	start_end_values = get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode)
 
-
 	db_entries = helpers.get_db_entries(start_end_values['current_start'], start_end_values['current_end'])
 
 	current_days = helpers.sort_db_entries_by_day(db_entries)
@@ -117,7 +116,6 @@ def comparison_data():
 		db_entries = helpers.get_db_entries(start_end_values['historic_start'], start_end_values['historic_end'])
 
 		historic_days = helpers.sort_db_entries_by_day(db_entries)
-
 
 		# Assign tracked time to historic data.
 		sum_category_durations(historic_days, project_data, period_type, historic=True, live_mode=live_mode, weekdays=target_weekdays)
@@ -144,8 +142,6 @@ def comparison_data():
 
 def sum_category_durations(days, categories, view_type, historic=False, live_mode=False, weekdays=[]):
 	current_or_historic_tracked = 'historic_tracked' if historic else 'current_tracked'
-
-	pp.pprint(categories)
 
 	for day in days:
 		entries = day['entries']
@@ -182,9 +178,6 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 				if tags:
 					for tag in tags:
 						if tag.tag_name in categories and categories[tag.tag_name]['type'] == 'tag':
-						# if tag.tag_name in categories:
-							print('Hello!')
-							print(entry)
 							categories[tag.tag_name]['current_tracked'] += duration
 
 

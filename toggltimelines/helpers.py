@@ -272,11 +272,11 @@ def get_db_entries(start=False, end=False, projects=False, clients=False, descri
 	query = Entry.query
 
 	if start:
-		start = start.astimezone(pytz.utc)
+		start = start.astimezone(pytz.utc).replace(microsecond=0)
 		query = query.filter(Entry.start >= start)
 
 	if end:
-		end = end.astimezone(pytz.utc)
+		end = end.astimezone(pytz.utc).replace(microsecond=0)
 		query = query.filter(Entry.start <= end)
 
 	if projects:
