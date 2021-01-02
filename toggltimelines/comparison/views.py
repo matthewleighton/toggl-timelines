@@ -13,7 +13,10 @@ from werkzeug.exceptions import abort
 import calendar
 import csv
 import pytz
+import pprint
 from datetime import datetime, timedelta
+
+pp = pprint.PrettyPrinter(indent=4)
 
 from toggltimelines import db
 from toggltimelines.timelines.models import Entry, Project
@@ -60,7 +63,8 @@ def comparison_data():
 					'historic_tracked': 0,
 					'current_tracked': 0,
 					'average': 0,
-					'name': goal_name
+					'name': goal_name,
+					'type': goal['type']
 				}
 
 			if goal['color']:
@@ -141,6 +145,8 @@ def comparison_data():
 def sum_category_durations(days, categories, view_type, historic=False, live_mode=False, weekdays=[]):
 	current_or_historic_tracked = 'historic_tracked' if historic else 'current_tracked'
 
+	pp.pprint(categories)
+
 	for day in days:
 		entries = day['entries']
 
@@ -175,15 +181,23 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 				tags = entry.tags
 				if tags:
 					for tag in tags:
-						if tag.tag_name in categories:
+						if tag.tag_name in categories and categories[tag.tag_name]['type'] == 'tag':
+						# if tag.tag_name in categories:
+							print('Hello!')
+							print(entry)
 							categories[tag.tag_name]['current_tracked'] += duration
 
 
 				client = entry.get_client()
-				if client and client.client_name in categories:
+				if client and client.client_name in categories and categories[client.client_name]['type'] == 'client':
 					categories[entry.get_client().client_name]['current_tracked'] += duration
 
-			categories[project_name][current_or_historic_tracked] += duration
+
+			# Do not add duration based on project name if we are in goals mode, looking at a non-project based goal.
+			if view_type == 'goals' and 'type' in categories[project_name].keys() and categories[project_name]['type'] != 'project':
+				pass
+			else:
+				categories[project_name][current_or_historic_tracked] += duration
 
 
 
