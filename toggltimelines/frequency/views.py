@@ -36,6 +36,7 @@ def index():
 	scope_type = request_data['scope_type'] if 'scope_type' in request_data.keys() else 'days'
 	graph_style = request_data['graph_style'] if 'graph_style' in request_data.keys() else 'line'
 	lines = request_data['lines'] if 'graph_style' in request_data.keys() else []
+	scale_from_zero = 'checked' if 'scale_from_zero' in request_data.keys() else ''
 
 	start = request_data['start'] if 'start' in request_data.keys() else get_first_entry_date()
 	end = request_data['end'] if 'end' in request_data.keys() else date.today()
@@ -51,7 +52,8 @@ def index():
 		'scope_type': scope_type,
 		'graph_style': graph_style,
 		'lines': lines,
-		'tags': tags
+		'tags': tags,
+		'scale_from_zero': scale_from_zero
 	}
 
 	response = make_response(render_template('frequency/index.html', data=page_data))
@@ -110,7 +112,7 @@ date_formats = {
 def frequency_data():
 	submission_data = request.json
 
-	pp.pprint(submission_data)
+	# pp.pprint(submission_data)
 
 	data = []
 

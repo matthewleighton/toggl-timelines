@@ -358,7 +358,8 @@ def graph():
 		'scope_type': 'days',
 		'graph_style': 'bar',
 		'start': start.strftime('%Y-%m-%d'),
-		'end': end.strftime('%Y-%m-%d')
+		'end': end.strftime('%Y-%m-%d'),
+		'scale_from_zero': True
 	}
 
 	
