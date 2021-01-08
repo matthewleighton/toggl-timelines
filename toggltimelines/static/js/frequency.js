@@ -350,6 +350,7 @@ function submit_graph_request() {
 		serialized_object['graph_type'] = $("input[type='radio'][name='graph_type']:checked").val()
 		serialized_object['graph_style'] = $("input[type='radio'][name='graph_style']:checked").val()
 		serialized_object['rolling_average'] = $("#rolling-average-checkbox").is(':checked')
+		serialized_object['cumulative'] = $("#cumulative-checkbox").is(':checked')
 
 		graph_type = get_graph_type()
 		if (graph_type == 'normal') {

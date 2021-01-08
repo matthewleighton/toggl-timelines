@@ -117,6 +117,7 @@ def frequency_data():
 	scope_type 		= submission_data[0]['scope_type']
 	graph_type 		= submission_data[0]['graph_type']
 	rolling_average = submission_data[0]['rolling_average']
+	cumulative 		= submission_data[0]['cumulative']
 
 	for line in submission_data:
 		start_datetime = datetime.strptime(line['start'], '%Y-%m-%d')
@@ -209,6 +210,9 @@ def frequency_data():
 		if graph_type == 'normal' and scope_type == 'days' and rolling_average:
 			values = apply_rolling_average(values)
 
+		if cumulative:
+			values = apply_cumulative_values(values)
+
 		data.append({
 			'line_data': line,
 			'entry_data': line_data_container,
@@ -217,6 +221,16 @@ def frequency_data():
 		})
 
 	return jsonify(data)
+
+# Update the data such that each value is the cumulation of all the values before.
+def apply_cumulative_values(values):
+	total = 0
+
+	for i, value in enumerate(values):
+		total += value
+		values[i] = total
+
+	return values
 
 # Apply a 7 day rolling average to the data.
 # (Every data point becomes an average of the past 7 days.)
