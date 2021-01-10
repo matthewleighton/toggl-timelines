@@ -187,6 +187,12 @@ body {
   height: 45px;
 }
 
+.view_day_on_toggl img {
+  height: 14px;
+  margin-left: 5px;
+  cursor: pointer;
+}
+
 .day_date {
 	background: none;
 	position: absolute;

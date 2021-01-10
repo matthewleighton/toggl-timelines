@@ -321,9 +321,13 @@ def sort_db_entries_by_day(db_entries, return_as_dict=False):
 		entry_date_label = entry.get_local_start_time().strftime('%Y-%m-%d')
 
 		if entry_date_label not in sorted_by_day:
+			date = entry.get_local_start_time()
+			toggl_date_url = get_toggl_date_url(date)
+
 			sorted_by_day[entry_date_label] = {
 				'entries': [],
-				'date': entry.get_local_start_time().strftime('%a %d %b, %Y')
+				'date': date.strftime('%a %d %b, %Y'),
+				'toggl_date_url': toggl_date_url
 			}
 
 		sorted_by_day[entry_date_label]['entries'].append(entry)
@@ -338,6 +342,14 @@ def sort_db_entries_by_day(db_entries, return_as_dict=False):
 	days_list.reverse()
 
 	return days_list
+
+def get_toggl_date_url(date):
+	workspace_id = current_app.config['WORKSPACE_ID']
+	date_string = date.strftime('%Y-%m-%d')
+
+	url = f'https://track.toggl.com/reports/summary/{workspace_id}/from/{date_string}/to/{date_string}'
+
+	return url
 
 # Save a new entry to the database
 def create_entry(entry_data):
