@@ -479,8 +479,9 @@ function format_y_value(value) {
 }
 
 function format_minutes(total_minutes, clock=false) {
-	var hours = Math.floor(total_minutes / 60).toString()
-	var minutes = (total_minutes % 60).toString()
+	var days = Math.floor(total_minutes / 1440).toString();
+	var hours = Math.floor(total_minutes / 60).toString();
+	var minutes = (total_minutes % 60).toString();
 
 	if (clock) {
 		if (minutes.length == 1) {
@@ -490,7 +491,15 @@ function format_minutes(total_minutes, clock=false) {
 		return hours + ':' + minutes
 	}
 
-	return hours.toString() + 'h, ' + minutes.toString() + 'm';
+	if (total_minutes < 60*24) {
+		return hours.toString() + 'h, ' + minutes.toString() + 'm';	
+	}
+
+	var hours = Math.floor( (total_minutes % 1440) / 60 )
+
+	return days.toString() + 'd, ' + hours.toString() + 'h';
+
+	
 }
 
 function make_y_gridlines(y) {
@@ -558,6 +567,11 @@ function get_y_axis_label() {
 	var graph_type = get_graph_type()
 	var y_axis_type = get_y_axis_type()
 	var scope_type = get_scope_type()
+	var cumulative = $("#cumulative-checkbox").is(':checked')
+
+	if (cumulative) {
+		return 'Total Time'
+	}
 
 	var labels = {
 		'normal': {
@@ -650,7 +664,7 @@ function get_legend_x_offset(data){
 	
 
 function create_graph(data, graph_style) {
-	console.log(data)
+	// console.log(data)
 	reset_graph_view()
 
 	var legend_x_offset = get_legend_x_offset(data)
