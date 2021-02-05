@@ -17,7 +17,7 @@ from toggltimelines.timelines.models import Tag
 from toggltimelines import db
 
 
-def toggl_sync(start_date=False, end_date=False, days=False):
+def toggl_sync(start_date=False, end_date=False, days=False):	
 	if days is not False:
 		start_date = datetime.utcnow().replace(hour=0, minute=0, second=0) - timedelta(days=days)
 		start_date = start_date.replace(tzinfo=pytz.utc)
@@ -94,8 +94,6 @@ def check_project_client_integrity():
 
 	db_projects = Project.query.all()
 
-
-
 	for db_project in db_projects:
 		project_id = db_project.id
 		toggl_project = get_toggl_project(project_id)
@@ -115,6 +113,8 @@ def check_project_client_integrity():
 
 		if toggl_project_color != db_project_color:
 			db_project.project_hex_color = toggl_project_color
+
+
 
 def get_toggl_project(project_id):
 	toggl_project_list = get_user_toggl_data()['projects']

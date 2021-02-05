@@ -10,6 +10,7 @@ from flask import make_response
 from flask import jsonify
 from werkzeug.exceptions import abort
 
+import os
 import pytz
 from datetime import datetime, timedelta
 import pprint
@@ -30,7 +31,6 @@ def index():
 
 @bp.route("/timelines")
 def timelines_page():
-	
 	sync_start_datetime = datetime.utcnow().replace(hour=0, minute=0, second=0) - timedelta(days=2)
 	helpers.toggl_sync(sync_start_datetime)
 
@@ -40,10 +40,12 @@ def timelines_page():
 
 	dispalyed_days = helpers.sort_db_entries_by_day(db_entries)
 
+	heart = True if is_user_johanna() else False
+
 	page_data = {
 		'days': dispalyed_days,
 		'times': range(0, 24),
-		'heart': False # TODO
+		'heart': heart
 	}
 
 	response = make_response(render_template('timelines/timelines.html', data=page_data))
@@ -119,3 +121,10 @@ def start_stop():
 		status = 'stop'
 
 	return status
+
+def is_user_johanna():
+	user = os.environ.get('USER').lower()
+
+	if user == 'johanna':
+		return True
+	return False

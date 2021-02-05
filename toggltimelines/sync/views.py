@@ -29,8 +29,6 @@ def sync_home():
 		'end': end
 	}
 
-	print(data)
-
 	response = make_response(render_template('sync/index.html', data=data))
 
 	return response

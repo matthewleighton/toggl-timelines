@@ -411,6 +411,7 @@ body {
   color: #fff;
   border-radius: 2px;
   font-size: 13px;
+  z-index: 99;
 }
 
 .d3-tip strong {

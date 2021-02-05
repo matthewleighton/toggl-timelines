@@ -77,6 +77,18 @@ $(document).ready(function() {
 	});
 })
 
+function get_period_type() {
+	return $('input[type=radio][name=period_type]:checked').val();
+}
+
+function get_goals_time_window() {
+	return $("#goals_period option:selected").val();
+}
+
+function get_goals_live_mode() {
+	return $("#live_mode_goals").is(":checked");
+}
+
 function submit_comparison_form(reload=false) {
 	serialized_data = $("#comparison_form").serializeArray();
 	
@@ -491,7 +503,21 @@ function create_graph(data, sort_type) {
 	    difference_seconds = Math.abs(d.difference)
 	    difference_string = format_seconds(difference_seconds)
 
-	    return "<strong>" + d.name + "</strong><div><span>" + current_period_string + "</span>" + current_tracked + "</div><div><span>" + average_label + "</span>" + average + "</div><div><span>Difference: </span>" + difference_string + "</div>";
+	    tooltip = "<strong>" + d.name + "</strong><div><span>" + current_period_string + "</span>" + current_tracked + "</div><div><span>" + average_label + "</span>" + average + "</div><div><span>Difference: </span>" + difference_string + "</div>";
+
+	    period_type = get_period_type()
+	    goals_time_window = get_goals_time_window()
+	    goals_live_mode = get_goals_live_mode()
+
+	    // If we're in goals mode, and the remaining time is less than a day,
+	    // display the earliest possible completion time in the tooltip.
+	    if (period_type == 'goals' && -86400 < d.difference && d.difference < 0 
+	    	/*&& goals_time_window == 'day' && !goals_live_mode*/) {
+			possible_completion = get_goal_possible_completion_time(difference_seconds)
+			tooltip += "<div><span>Possible Completion:</span> " + possible_completion + "</div>";	
+	    }
+
+	    return tooltip
 	  })
 
 	canvas.call(tip)
@@ -522,4 +548,13 @@ function create_graph(data, sort_type) {
 			.text(d => get_bar_value_label(d[sort_type], sort_type));
 }
 
+function get_goal_possible_completion_time(remainging_seconds) {
+	completion_time = new Date();
+    completion_time.setSeconds(completion_time.getSeconds() + remainging_seconds)
+
+    hour = completion_time.getHours();
+    minute = (completion_time.getMinutes() < 10 ? '0' : '') + completion_time.getMinutes();
+
+    return hour + ":" + minute
+}
 
