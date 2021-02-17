@@ -143,14 +143,10 @@ def comparison_data():
 def sum_category_durations(days, categories, view_type, historic=False, live_mode=False, weekdays=[]):
 	current_or_historic_tracked = 'historic_tracked' if historic else 'current_tracked'
 
-	# pp.pprint(days)
-
 	for day in days:
 		entries = day['entries']
 
 		for entry in entries:
-
-			# print(entry)
 
 			if entry.project in (None, 'No Project'): # Skip entries without projects.
 				continue
@@ -191,6 +187,9 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 				if client and client.client_name in categories and categories[client.client_name]['type'] == 'client':
 					categories[client.client_name]['current_tracked'] += duration
 
+			# This is needed because goals which have not started yet are removed from the categories list.
+			if not project_name in categories.keys():
+				return
 
 			# Do not add duration based on project name if we are in goals mode, looking at a non-project based goal.
 			if view_type == 'goals' and 'type' in categories[project_name].keys() and categories[project_name]['type'] != 'project':
