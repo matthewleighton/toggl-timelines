@@ -693,3 +693,50 @@ class Readthrough(db.Model):
 			string += "s"
 
 		return string
+
+	def get_average_time_per_session(self, raw=False):
+		if hasattr(self, 'average_time_per_session'):
+			average_time_per_session = self.average_time_per_session			
+		else:
+			number_of_sessions = self.get_number_of_sessions()
+			reading_time = self.get_current_reading_time(raw=True)
+			average_time_per_session = reading_time / number_of_sessions
+
+		if raw:
+			return average_time_per_session
+		
+		return helpers.format_milliseconds(average_time_per_session, days=False, include_seconds=True)
+
+	def get_number_of_sessions(self):
+		entries = self.get_all_readthrough_entries()
+
+		number_of_sessions = 0
+
+		max_pause_within_session = timedelta(minutes=5)
+
+		for i, entry in enumerate(entries):
+			if i == 0:
+				number_of_sessions += 1
+			else:
+				this_entry_start = entry.start
+				previous_entry_end = entries[i-1].end
+
+				pause_between_entries = this_entry_start - previous_entry_end
+
+
+				if pause_between_entries > max_pause_within_session:
+					number_of_sessions += 1
+
+		return number_of_sessions
+	
+	def get_estimated_total_sessions(self):
+		average_time_per_session = self.get_average_time_per_session(raw=True)
+		estimated_completion_time = self.get_estimated_completion_time(raw=True)
+
+		return round(estimated_completion_time / average_time_per_session)
+
+	def get_remaining_sessions(self):
+		current_sessions = self.get_number_of_sessions()
+		estimated_total_sessions = self.get_estimated_total_sessions()
+
+		return estimated_total_sessions - current_sessions

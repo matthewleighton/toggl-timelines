@@ -12,7 +12,11 @@
 			<strong>Days reading: </strong>{{readthrough.get_total_days_reading()}}
 			<span class="year-percentage-estimate">({{readthrough.get_current_year_percentage()}}% of year)</span>
 		</p>
-		<p style="margin-bottom: 8px;"><strong>Total reading time: </strong>{{readthrough.get_current_reading_time()}}</p>
+		<p><strong>Total reading time: </strong>{{readthrough.get_current_reading_time()}}</p>
+
+		<p style="margin-bottom: 8px;">
+			<strong>Total sessions: </strong> {{readthrough.get_number_of_sessions()}}
+		</p>
 
 
 		<div>
@@ -25,7 +29,11 @@
 				{% endif %}
 			</p>
 
-			<p style="margin-bottom: 8px"><strong>Average time per {{readthrough.get_position_unit()}}: </strong>{{readthrough.get_time_per_position_unit()}}</p>
+			<p><strong>Average time per {{readthrough.get_position_unit()}}: </strong>{{readthrough.get_time_per_position_unit()}}</p>
+
+			<p style="margin-bottom: 8px">
+				<strong>Average time per session: </strong>{{readthrough.get_average_time_per_session()}}
+			</p>
 		</div>
 
 		{% if not readthrough.is_readthrough_complete() %}
@@ -36,6 +44,10 @@
 					<strong>Estimated total days: </strong>
 					{{readthrough.get_estimated_total_days()}}
 					<span class="year-percentage-estimate">({{readthrough.get_estimated_year_percentage()}}% of year)</span>
+				</p>
+				<p>
+					<strong>Estimated total sessions: </strong> {{readthrough.get_estimated_total_sessions()}}
+					<span class="year-percentage-estimate">({{readthrough.get_remaining_sessions()}} remaining)</span>
 				</p>
 			</div>
 		{% endif %}		
@@ -72,8 +84,6 @@
 			{% if readthrough.get_daily_reading_goal(raw=True) %}
 				<p><strong>Current streak: </strong>{{readthrough.get_current_streak()}}</p>
 			{% endif %}
-
-			
 
 		</div>
 	{% endif %}
