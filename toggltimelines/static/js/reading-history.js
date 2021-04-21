@@ -7,7 +7,11 @@ $(document).ready(function() {
 
 	update_details_div();
 
-	
+
+	// Defaulting to show books completed graph
+	$('#reading-history-details').hide();
+	request_graph_data('books_completed')
+
 
 	$('body').keydown(function(e) {
 		var keyCode = e.originalEvent.keyCode
@@ -166,7 +170,7 @@ d3.selection.prototype.moveToBack = function() {
     };
 
 function create_graph(data, graph_type) {
-	console.log(data)
+	// console.log(data)
 	window.data = data
 
 	var close_button;
