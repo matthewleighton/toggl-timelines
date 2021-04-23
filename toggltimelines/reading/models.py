@@ -699,6 +699,11 @@ class Readthrough(db.Model):
 			average_time_per_session = self.average_time_per_session			
 		else:
 			number_of_sessions = self.get_number_of_sessions()
+
+			# Rough fix to avoid dividing by zero.
+			if not number_of_sessions:
+				number_of_sessions = 1
+
 			reading_time = self.get_current_reading_time(raw=True)
 			average_time_per_session = reading_time / number_of_sessions
 
@@ -732,6 +737,9 @@ class Readthrough(db.Model):
 	def get_estimated_total_sessions(self):
 		average_time_per_session = self.get_average_time_per_session(raw=True)
 		estimated_completion_time = self.get_estimated_completion_time(raw=True)
+
+		if not average_time_per_session:
+			average_time_per_session = 1
 
 		return round(estimated_completion_time / average_time_per_session)
 
