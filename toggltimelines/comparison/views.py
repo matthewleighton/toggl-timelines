@@ -53,7 +53,9 @@ def comparison_data():
 		live_mode_goals = request.json.get('live_mode_goals')
 
 		goals_raw = get_comparison_goals()
-		
+
+		remove_projects_without_goals(goals_raw, project_data)
+
 		for goal in goals_raw:
 			goals_projects.append(goal['name'])
 			goal_name = goal['name']
@@ -139,6 +141,17 @@ def comparison_data():
 
 	return jsonify(sorted_response)
 
+# Given a list of goals, remove any projects from the project_data dict if it has no goal.
+def remove_projects_without_goals(goals, project_data):
+	goal_names_list = [goal['name'] for goal in goals]
+
+	projects_without_goals = []
+	for project_name, project in project_data.items():
+		if project_name not in goal_names_list:
+			projects_without_goals.append(project_name)
+
+	for project_name in projects_without_goals:
+		project_data.pop(project_name)
 
 def sum_category_durations(days, categories, view_type, historic=False, live_mode=False, weekdays=[]):
 	current_or_historic_tracked = 'historic_tracked' if historic else 'current_tracked'
@@ -178,10 +191,9 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 				if tags:
 					for tag in tags:
 						if tag.tag_name in categories and categories[tag.tag_name]['type'] == 'tag':
-							categories[tag.tag_name]['current_tracked'] += duration
+								categories[tag.tag_name]['current_tracked'] += duration
 
 				project_name = entry.get_project_name()
-
 
 				client = entry.get_client()
 				if client and client.client_name in categories and categories[client.client_name]['type'] == 'client':
@@ -189,11 +201,11 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 
 			# This is needed because goals which have not started yet are removed from the categories list.
 			if not project_name in categories.keys():
-				return
+				continue
 
 			# Do not add duration based on project name if we are in goals mode, looking at a non-project based goal.
 			if view_type == 'goals' and 'type' in categories[project_name].keys() and categories[project_name]['type'] != 'project':
-				pass
+				continue
 			else:
 				categories[project_name][current_or_historic_tracked] += duration
 
@@ -263,9 +275,6 @@ def get_period_completion_ratio(period, working_time_start=False, working_time_e
 		completion_ratio = minutes_complete_this_year / minutes_in_this_year
 
 	return completion_ratio
-
-
-
 
 # Calculate how the ratio of time tracked in a current vs historic period. Return as a list.
 def calculate_ratios(category_data, view_type, goals=[]):
