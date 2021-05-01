@@ -37,6 +37,7 @@ def comparison_data():
 		helpers.toggl_sync(days=1)
 
 	live_mode 				= bool(request.json.get('live_mode_calendar'))
+	hide_completed 			= bool(request.json.get('hide_completed'))
 	number_of_current_days  = int(request.json.get('timeframe'))
 	number_of_historic_days = int(request.json.get('datarange'))
 	target_weekdays 		= request.json.get('weekdays')
@@ -135,7 +136,7 @@ def comparison_data():
 	# Assign tracked time to current data.
 	sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
 
-	response = calculate_ratios(project_data, period_type, goals)
+	response = calculate_ratios(project_data, period_type, goals, hide_completed)
 
 	sorted_response = sorted(response, key=lambda k: k[sort_type])
 
@@ -277,7 +278,7 @@ def get_period_completion_ratio(period, working_time_start=False, working_time_e
 	return completion_ratio
 
 # Calculate how the ratio of time tracked in a current vs historic period. Return as a list.
-def calculate_ratios(category_data, view_type, goals=[]):
+def calculate_ratios(category_data, view_type, goals=[], hide_completed=False):
 	response = []
 
 	for project_name in category_data:
@@ -296,12 +297,19 @@ def calculate_ratios(category_data, view_type, goals=[]):
 
 		category_data[project_name]['ratio'] = ratio
 
-		if current_tracked > 0 or historic_tracked > 0 or view_type == 'goals': # Don't include projects with no recent/historic tracked time.
-			
-			if view_type == 'goals' and project_name not in goals.keys():
+		# In goals mode, don't include projecst with no recent/historic tracked time.
+		if view_type != 'goals' and current_tracked < 0 and historic_tracked < 0:
+			continue
+
+		if view_type == 'goals':
+
+			if project_name not in goals.keys():
 				continue # Don't include projects which don't have goals.
 
-			response.append(category_data[project_name])
+			if hide_completed and ratio > 1:
+				continue # Don't include completed goals if 'Hide completed' is checked.
+		
+		response.append(category_data[project_name])
 
 	return response
 
