@@ -306,7 +306,7 @@ def calculate_ratios(category_data, view_type, goals=[], hide_completed=False):
 			if project_name not in goals.keys():
 				continue # Don't include projects which don't have goals.
 
-			if hide_completed and ratio > 1:
+			if hide_completed and ratio >= 1:
 				continue # Don't include completed goals if 'Hide completed' is checked.
 		
 		response.append(category_data[project_name])
