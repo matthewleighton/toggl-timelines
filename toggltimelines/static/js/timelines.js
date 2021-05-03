@@ -1,4 +1,4 @@
-var start_days_ago = 14
+var start_days_ago = 7
 var end_days_ago = 7
 
 var filter_settings = {
@@ -231,10 +231,14 @@ $(document).ready(function(){
 	})
 	
 	$('.load_more').click(function() {
-		load_all = $(this).attr('id') == 'load_all' ? true : false
+		load_all = $(this).attr('id') == 'load-0' ? true : false
 		
-		if (load_all) {
-			start_days_ago = false
+		load_period = parseInt($(this).attr('id').split('-')[1]);
+
+		if (load_period == 0) {
+			start_days_ago = false;
+		} else {
+			start_days_ago += load_period
 		}
 
 		data = {
@@ -248,7 +252,7 @@ $(document).ready(function(){
 			"contentType": "application/json",
 			'data': JSON.stringify(data),
 			'beforeSend': function() {
-				if (load_all) {
+				if (true) {
 					$('.load_more').hide()
 					$('#loading_div').show()
 				}
@@ -256,6 +260,10 @@ $(document).ready(function(){
 			},
 			'complete': function() {
 				$('#loading_div').hide()
+
+				if (!load_all) {
+					$('.load_more').show()
+				}
 			}
 		}).done(function(data) {
 			$('.timeline_container').append(data)
@@ -265,10 +273,7 @@ $(document).ready(function(){
 				$('#current_time_marker').css('height', 'calc(100% + 10px)');
 			}
 
-			if (!load_all) {
-				start_days_ago += 7
-				end_days_ago += 7
-			}
+			end_days_ago += load_period
 
 			remove_listeners()
 			assign_listeners()
