@@ -297,8 +297,8 @@ def calculate_ratios(category_data, view_type, goals=[], hide_completed=False):
 
 		category_data[project_name]['ratio'] = ratio
 
-		# In goals mode, don't include projecst with no recent/historic tracked time.
-		if view_type != 'goals' and current_tracked < 0 and historic_tracked < 0:
+		# In not in goals mode, don't include projecst with no recent/historic tracked time.
+		if view_type != 'goals' and current_tracked == 0 and historic_tracked == 0:
 			continue
 
 		if view_type == 'goals':
