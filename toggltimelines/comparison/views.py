@@ -8,6 +8,10 @@ from flask import url_for
 from flask import current_app
 from flask import make_response
 from flask import jsonify
+from flask import session
+
+# from flask.ext.session import Session
+
 from werkzeug.exceptions import abort
 
 import calendar
@@ -24,10 +28,26 @@ from toggltimelines import helpers
 
 bp = Blueprint("comparison", __name__)
 
+# app = current_app
+
+# @app.context_processor
+# def inject_user():
+# 	with app.app_context():
+# 		return 'test'
+
 @bp.route("/comparison")
 def index():
 	helpers.toggl_sync(days=2)
-	return render_template("comparison/index.html")
+
+	page_data = {
+		'comparison_defaults': get_comparison_defaults()
+	}
+
+	response = make_response(render_template('comparison/index.html', data=page_data))
+
+	return response
+
+	# return render_template("comparison/index.html")
 
 @bp.route("/comparison/data", methods=['POST'])
 def comparison_data():
@@ -302,7 +322,6 @@ def calculate_ratios(category_data, view_type, goals=[], hide_completed=False):
 			continue
 
 		if view_type == 'goals':
-
 			if project_name not in goals.keys():
 				continue # Don't include projects which don't have goals.
 
@@ -522,3 +541,23 @@ def calculate_historic_averages(category_data, view_type, historic_days, current
 			average = goals[project_name]
 		
 		category_data[project_name]['average'] = average
+
+@bp.route("/comparison/set_default", methods=['POST'])
+def set_default():
+	print('------------set_default---------------')
+	data = request.json
+
+	session['comparison_defaults'] = data
+
+	print(data)
+
+	return jsonify(data)
+
+def get_comparison_defaults():
+	print('------------get_comparison_defaults---------------')
+	print(session)
+
+	if 'comparison_defaults' in session.keys():
+		return session['comparison_defaults']
+
+	return False

@@ -8,6 +8,8 @@ $(document).ready(function() {
 	current_month_name = monthNames[new Date().getMonth()]
 	$('#calendar_period option[value="month-of-year').text('This month vs. ' + current_month_name + ' last year')
 
+	set_defaults()
+
 
 	$( "#comparison_form" ).on( "submit", function( event ) {
 		event.preventDefault();
@@ -27,19 +29,25 @@ $(document).ready(function() {
 		}
 	});
 
+
+
+
+
 	$('#comparison_form').submit()
+
+
+
+
 
 	$('.comparison_reload').click(function() {
 		submit_comparison_form(true)
 	})
 
-
-
 	$('#comparison_weekday_selection input:checkbox').change(function() {
 		var id = $(this).attr('id');
 		var checked = $(this).attr('checked');
 		
-		if (id == 'all-days-checkbox' && this.checked) {
+		if (id == 'all_weekdays' && this.checked) {
 
 			$('input[name=weekdays]').each(function() {
 				if (!this.checked) {
@@ -47,7 +55,7 @@ $(document).ready(function() {
 				}
 			})
 
-		} else if (id == 'all-days-checkbox') {
+		} else if (id == 'all_weekdays') {
 			$('input[name=weekdays]').each(function() {
 				if (this.checked) {
 					$(this).click();
@@ -56,26 +64,93 @@ $(document).ready(function() {
 		}
 	});
 
-
-
 	$('input[type=radio][name=period_type]').change(function() {
-	    if (this.value == 'calendar') {
-	        $('.custom_comparison_settings').hide()
-	        $('.goals_comparison_settings').hide()
-	        $('.calendar_comparison_settings').css('display', 'flex')
-	    }
-	    else if (this.value == 'custom') {
-	        $('.calendar_comparison_settings').hide()
-	        $('.goals_comparison_settings').hide()
-	        $('.custom_comparison_settings').css('display', 'flex')
-	    }
-	    else if (this.value == 'goals') {
-	        $('.calendar_comparison_settings').hide()
-	        $('.custom_comparison_settings').hide()
-	        $('.goals_comparison_settings').css('display', 'flex')
-	    }
+		change_displayed_settings(this.value)
 	});
-})
+
+	$('#set_detault_comparison').click(function() {
+		
+		serialized_data = get_serialized_data()
+
+		$.ajax({
+			"type": "POST",
+			"url": "/comparison/set_default",
+			"contentType": "application/json",
+			"dataType": "json",
+			"data": JSON.stringify(serialized_data),
+			success: function(response) {
+				
+				console.log(response);
+				
+			}
+		})
+	})
+
+	
+});
+
+function change_displayed_settings(period_type) {
+	if (period_type == 'calendar') {
+        $('.custom_comparison_settings').hide()
+        $('.goals_comparison_settings').hide()
+        $('.calendar_comparison_settings').css('display', 'flex')
+    }
+    else if (period_type == 'custom') {
+        $('.calendar_comparison_settings').hide()
+        $('.goals_comparison_settings').hide()
+        $('.custom_comparison_settings').css('display', 'flex')
+    }
+    else if (period_type == 'goals') {
+        $('.calendar_comparison_settings').hide()
+        $('.custom_comparison_settings').hide()
+        $('.goals_comparison_settings').css('display', 'flex')
+    }
+}
+
+// Set the default configuration values, depending out the values saved in our session.
+function set_defaults() {
+	// console.log(comparison_defaults)
+
+	// Radio Buttons
+	period_type = comparison_defaults['period_type'] ? comparison_defaults['period_type'] : 'calendar'
+	sort_type = comparison_defaults['sort_type'] ? comparison_defaults['sort_type'] : 'ratio'
+	calendar_period = comparison_defaults['calendar_period'] ? comparison_defaults['calendar_period'] : 'week'
+
+	$('input:radio[name=period_type][value=' + period_type + ']').prop('checked', true)
+	$('input:radio[name=sort_type][value=' + sort_type + ']').prop('checked', true)
+	$('#calendar_period option[value=' + calendar_period + ']').prop('selected', true)
+
+	// Dropdowns
+	timeframe = comparison_defaults['timeframe'] ? comparison_defaults['timeframe'] : 7
+	datarange = comparison_defaults['datarange'] ? comparison_defaults['datarange'] : 7
+	goals_period = comparison_defaults['goals_period'] ? comparison_defaults['goals_period'] : 'month'	
+
+	$('#timeframe').val(timeframe)
+	$('#datarange').val(datarange)
+	$('#goals_period').val(goals_period)
+
+	// Check Boxes
+	live_mode_calendar = comparison_defaults['live_mode_calendar'] ? true : false
+	live_mode_goals = comparison_defaults['live_mode_goals'] ? true : false
+	hide_completed = comparison_defaults['hide_completed'] ? true : false
+	include_empty_projects = comparison_defaults['include_empty_projects'] ? true : false
+	all_weekdays = comparison_defaults['all_weekdays'] ? true : false
+
+	$('#live_mode_calendar').prop('checked', live_mode_calendar)
+	$('#live_mode_goals').prop('checked', live_mode_goals)
+	$('#hide_completed').prop('checked', hide_completed)
+	$('#include_empty_projects').prop('checked', include_empty_projects)
+	$('#all_weekdays').prop('checked', all_weekdays)
+
+	// Weekdays
+	weekdays = comparison_defaults['weekdays'] ? comparison_defaults['weekdays'] : [0, 1, 2, 3, 4, 5, 6]
+
+	for (var i = weekdays.length - 1; i >= 0; i--) {
+		$('input:checkbox[name=weekdays][value=' + weekdays[i] + ']').prop('checked', true)		
+	}
+
+	change_displayed_settings(period_type)
+}
 
 function get_period_type() {
 	return $('input[type=radio][name=period_type]:checked').val();
@@ -89,14 +164,20 @@ function get_goals_live_mode() {
 	return $("#live_mode_goals").is(":checked");
 }
 
-function submit_comparison_form(reload=false) {
+function get_serialized_data(reload=false) {
 	serialized_data = $("#comparison_form").serializeArray();
-	
+
 	if (reload) {
 		serialized_data.push({name: 'reload', value: true})
 	}
 
 	serialized_data = format_serialized_data(serialized_data);
+
+	return serialized_data
+}
+
+function submit_comparison_form(reload=false) {
+	serialized_data = get_serialized_data(reload)
 
 	sort_type = $('input[type=radio][name=sort_type]:checked').val()
 
@@ -107,7 +188,9 @@ function submit_comparison_form(reload=false) {
 		"dataType": "json",
 		"data": JSON.stringify(serialized_data),
 		success: function(response) {
-	
+			
+			console.log(response)
+
 			if (serialized_data['period_type'] == 'calendar' && !serialized_data['include_empty_projects']) {
 				response = remove_projects_with_no_current_time(response)
 			}

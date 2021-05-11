@@ -2,17 +2,24 @@
 
 {% block body %}
 <script type="text/javascript">
-		$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-	</script>
+	$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+	comparison_defaults = {{data['comparison_defaults']|tojson|safe}};
+
+	// console.log(comparison_defaults)
+</script>
+
+<!-- 	<div>
+		{{data}}
+	</div> -->
 
 	<div class='container main_container'>
 		<form action="/comparison_data" id="comparison_form" method="post" class="form-horizontal">
 			
-			
 			<div id="comparison_form_contents">
 				<div class="btn-group btn-group-toggle comparison_mode_radio" data-toggle="buttons">
 					<label class="btn btn-secondary active">
-						<input type="radio" name="period_type" id="calendar_mode" autocomplete="off" value="calendar" checked> Calendar
+						<input type="radio" name="period_type" id="calendar_mode" autocomplete="off" value="calendar"> Calendar
 					</label>
 					<label class="btn btn-secondary">
 						<input type="radio" name="period_type" id="goals_mode" autocomplete="off" value="goals"> Goals
@@ -23,11 +30,16 @@
 				</div>
 				<div class="btn-group btn-group-toggle sort_type_radio" data-toggle="buttons">
 					<label class="btn btn-secondary active">
-						<input type="radio" name="sort_type" id="absolute_sort_type" autocomplete="off" value="ratio" checked> Relative
+						<input type="radio" name="sort_type" id="relative_sort_type" autocomplete="off" value="ratio"> Relative
 					</label>
 					<label class="btn btn-secondary">
 						<input type="radio" name="sort_type" id="absolute_sort_type" autocomplete="off" value="difference"> Absolute
 					</label>
+				</div>
+				<div class="btn-group">
+					<button type="button" class="btn btn-info" id="set_detault_comparison">
+						<img src="/static/img/lock.svg">
+					</button>
 				</div>
 				<div class="form-row custom_comparison_settings">
 					<div class="col-md-6">
@@ -59,7 +71,7 @@
 					<div class="col-md-6">
 						<select class="form-control" id="calendar_period" name="calendar_period">
 							<option value="day">Today vs. Yesterday</option>
-							<option value="week" selected="selected">This week vs. Last week</option>
+							<option value="week">This week vs. Last week</option>
 							<option value="month">This month vs. Last month</option>
 							<option value="month-of-year">This month vs. same month of last year</option>
 							<option value="quarter">This quarter vs. Last quarter</option>
@@ -69,7 +81,7 @@
 					</div>
 					<div class="col-md-6 live_mode_container">
 						<div class="custom-control custom-checkbox">
-							<input type="checkbox" class="custom-control-input" name="live_mode_calendar" id="live_mode_calendar" checked>
+							<input type="checkbox" class="custom-control-input" name="live_mode_calendar" id="live_mode_calendar">
 							<label class="custom-control-label" for="live_mode_calendar">Live mode</label>
 						</div>
 
@@ -104,35 +116,35 @@
 
 				<div id="comparison_weekday_selection">
 					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="checkbox" checked="checked" name="all-weekdays" id="all-days-checkbox">
+						<input class="form-check-input" type="checkbox" name="all_weekdays" id="all_weekdays">
 						<label class="form-check-label active" for="all-days-checkbox">All</label>
 					</div>
 					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="checkbox" value="0" checked="checked" name="weekdays" id="monday-checkbox">
+						<input class="form-check-input" type="checkbox" value="0" name="weekdays" id="monday-checkbox">
 						<label class="form-check-label active" for="monday-checkbox">Mon</label>
 					</div>
 					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="checkbox" value="1" checked="checked" name="weekdays" id="tuesday-checkbox">
+						<input class="form-check-input" type="checkbox" value="1" name="weekdays" id="tuesday-checkbox">
 						<label class="form-check-label active" for="tuesday-checkbox">Tue</label>
 					</div>
 					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="checkbox" value="2" checked="checked" name="weekdays" id="wednesday-checkbox">
+						<input class="form-check-input" type="checkbox" value="2" name="weekdays" id="wednesday-checkbox">
 						<label class="form-check-label active" for="wednesday-checkbox">Wed</label>
 					</div>
 					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="checkbox" value="3" checked="checked" name="weekdays" id="thursday-checkbox">
+						<input class="form-check-input" type="checkbox" value="3" name="weekdays" id="thursday-checkbox">
 						<label class="form-check-label active" for="thursday-checkbox">Thur</label>
 					</div>
 					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="checkbox" value="4" checked="checked" name="weekdays" id="friday-checkbox">
+						<input class="form-check-input" type="checkbox" value="4" name="weekdays" id="friday-checkbox">
 						<label class="form-check-label active" for="friday-checkbox">Fri</label>
 					</div>
 					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="checkbox" value="5" checked="checked" name="weekdays" id="saturday-checkbox">
+						<input class="form-check-input" type="checkbox" value="5" name="weekdays" id="saturday-checkbox">
 						<label class="form-check-label active" for="saturday-checkbox">Sat</label>
 					</div>
 					<div class="form-check form-check-inline">
-						<input class="form-check-input" type="checkbox" value="6" checked="checked" name="weekdays" id="sunday-checkbox">
+						<input class="form-check-input" type="checkbox" value="6" name="weekdays" id="sunday-checkbox">
 						<label class="form-check-label active" for="sunday-checkbox">Sun</label>
 					</div>
 					<span class="comparison_reload">&#x21bb;</span>
