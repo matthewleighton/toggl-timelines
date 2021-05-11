@@ -79,9 +79,7 @@ $(document).ready(function() {
 			"dataType": "json",
 			"data": JSON.stringify(serialized_data),
 			success: function(response) {
-				
-				console.log(response);
-				
+								
 			}
 		})
 	})
@@ -189,13 +187,19 @@ function submit_comparison_form(reload=false) {
 		"data": JSON.stringify(serialized_data),
 		success: function(response) {
 			
-			console.log(response)
+			// console.log(response)
 
 			if (serialized_data['period_type'] == 'calendar' && !serialized_data['include_empty_projects']) {
 				response = remove_projects_with_no_current_time(response)
 			}
 
-			create_graph(response, sort_type)
+			if (serialized_data['period_type'] == 'goals' && serialized_data['hide_completed'] && !response.length ) {
+				toggle_goals_completed_message(true)
+			} else {
+				toggle_goals_completed_message(false)
+				create_graph(response, sort_type)				
+			}
+
 		}
 	})
 }
@@ -641,3 +645,22 @@ function get_goal_possible_completion_time(remainging_seconds) {
     return hour + ":" + minute
 }
 
+function toggle_goals_completed_message(goals_completed) {
+	if (!goals_completed) {
+		$('#goals_completed_message').hide()
+		return true
+	}
+
+	$('svg').remove()
+	$('.d3-tip').remove()
+
+	all_emojis = ['🐢', '🦙', '🎉', '✨', '🌈', '🔥', '🎆', '🍕', '🍨', '🍩', '🏆', '🏅', ]
+	emoji_1 = all_emojis[Math.floor(Math.random() * all_emojis.length)];
+	emoji_2 = all_emojis[Math.floor(Math.random() * all_emojis.length)];
+
+	message = emoji_1 + ' All goals completed! ' + emoji_2
+
+	$('#goals_completed_message').html(message)	
+
+	$('#goals_completed_message').show()
+}

@@ -453,6 +453,13 @@ body {
   bottom: 5px;
 }
 
+#goals_completed_message {
+  display: none;
+  text-align: center;
+  margin-top: 30px;
+  font-size: 23px;
+}
+
 #comparison_form_contents {
   margin: 0 auto;
   max-width: 50%;
