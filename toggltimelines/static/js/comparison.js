@@ -186,14 +186,12 @@ function submit_comparison_form(reload=false) {
 		"dataType": "json",
 		"data": JSON.stringify(serialized_data),
 		success: function(response) {
-			
-			// console.log(response)
 
 			if (serialized_data['period_type'] == 'calendar' && !serialized_data['include_empty_projects']) {
 				response = remove_projects_with_no_current_time(response)
 			}
 
-			if (serialized_data['period_type'] == 'goals' && serialized_data['hide_completed'] && !response.length ) {
+			if (serialized_data['period_type'] == 'goals' && !response.length ) {
 				toggle_goals_completed_message(true)
 			} else {
 				toggle_goals_completed_message(false)
