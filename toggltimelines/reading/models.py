@@ -459,11 +459,14 @@ class Readthrough(db.Model):
 		self.current_position = new_position
 
 		if self.is_readthrough_complete():
-			self.end_date = helpers.get_current_datetime_in_user_timezone()
+			self.end_date = self.get_last_reading_date()
 		else:
 			self.end_date = None
 
 		return new_position
+
+	def get_last_reading_date(self):
+		return self.get_all_readthrough_entries()[-1].end
 
 	def update_date(self, new_date, date_type):
 		if new_date == '':
@@ -602,9 +605,6 @@ class Readthrough(db.Model):
 
 	# Return the current streak for the daily reading goal.
 	def get_current_streak(self, raw=False):
-
-		print('get_current_streak')
-
 		streak = 0
 		goal_in_minutes = self.daily_reading_goal
 		goal_in_milliseconds = goal_in_minutes * 60 * 1000
