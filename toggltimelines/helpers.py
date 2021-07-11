@@ -470,6 +470,11 @@ def get_all_projects_from_database():
 
 	return projects
 
+def get_all_clients_from_database():
+	clients = Client.query.all()
+
+	return clients
+
 # Convert a timestamp string to a datetime object.
 def timestamp_to_datetime(timestamp, string_format='%Y-%m-%dT%H:%M:%S%z', utc=True):
 	timestamp = remove_colon_from_timezone(timestamp)

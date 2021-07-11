@@ -146,6 +146,11 @@ def comparison_data():
 		historic_days = []
 
 
+	# Assign tracked time to current data.
+	sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
+
+	add_client_comparisons(project_data)
+
 	calculate_historic_averages(category_data=project_data,
 								view_type=period_type,
 								historic_days=historic_days,
@@ -153,8 +158,10 @@ def comparison_data():
 								goals_projects=goals_projects,
 								goals=goals)
 
-	# Assign tracked time to current data.
-	sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
+	# # Assign tracked time to current data.
+	# sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
+
+	# pp.pprint(project_data)
 
 	response = calculate_ratios(project_data, period_type, goals, hide_completed)
 
@@ -561,3 +568,28 @@ def get_comparison_defaults():
 		return session['comparison_defaults']
 
 	return False
+
+# Distribute the project time among their parent clients, and add it to the project_data dictionary.
+def add_client_comparisons(project_data):
+	all_clients = helpers.get_all_clients_from_database()
+
+	for client in all_clients:
+		current_tracked = 0
+		historic_tracked = 0
+
+		for project in client.projects:
+			if project.project_name in project_data:
+				current_tracked += project_data[project.project_name]['current_tracked']
+				historic_tracked += project_data[project.project_name]['historic_tracked']
+
+
+		client_info = {
+			'average': 0,
+			'color': '#202020', #TODO
+			'current_tracked': current_tracked,
+			'historic_tracked': historic_tracked,
+			'name': client.client_name,
+			'type': 'client'
+		}
+
+		project_data[client.client_name] = client_info
