@@ -149,7 +149,8 @@ def comparison_data():
 	# Assign tracked time to current data.
 	sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
 
-	add_client_comparisons(project_data)
+	if period_type != 'goals':
+		add_client_comparisons(project_data)
 
 	calculate_historic_averages(category_data=project_data,
 								view_type=period_type,
