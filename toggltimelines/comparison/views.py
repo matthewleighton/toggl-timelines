@@ -602,7 +602,8 @@ def add_client_comparisons(project_data):
 
 		client_info = {
 			'average': 0,
-			'color': '#202020', #TODO
+			'color': helpers.get_client_color(client.client_name),
+			# 'color': 'red',
 			'current_tracked': current_tracked,
 			'historic_tracked': historic_tracked,
 			'name': client.client_name,

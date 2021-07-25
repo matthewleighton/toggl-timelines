@@ -1,3 +1,4 @@
+import os.path
 from flask import current_app
 
 from sqlalchemy import func
@@ -657,3 +658,22 @@ def stop_tracking(current_tracking_id=False):
 # Convert a datetime object from tz to UTC.
 def to_utc(dt, tz):
 	return tz.normalize(tz.localize(dt)).astimezone(pytz.utc)
+
+# Get the color for a particular client, based on the client_colors.csv file.
+def get_client_color(client_name):
+	client_color = '#202020'
+	filename = 'client_colors.csv'
+
+	if not os.path.isfile(filename):
+		return client_color
+
+	with open (filename, 'r') as file:
+		reader = csv.DictReader(file)
+		for row in reader:
+			if row['client_name'] == client_name:
+				client_color = row['color']
+				break
+
+	file.close()
+
+	return client_color
