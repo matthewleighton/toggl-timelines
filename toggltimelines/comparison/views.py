@@ -58,11 +58,16 @@ def comparison_data():
 
 	live_mode 				= bool(request.json.get('live_mode_calendar'))
 	hide_completed 			= bool(request.json.get('hide_completed'))
+	show_projects 			= bool(request.json.get('show_projects'))
+	show_clients 			= bool(request.json.get('show_clients'))
 	number_of_current_days  = int(request.json.get('timeframe'))
 	number_of_historic_days = int(request.json.get('datarange'))
 	target_weekdays 		= request.json.get('weekdays')
 	sort_type 				= request.json.get('sort_type')
 	period_type 			= request.json.get('period_type')
+
+	goals_mode = True if period_type == 'goals' else False
+
 
 	project_data = helpers.get_project_data(comparison_mode=True)
 
@@ -120,7 +125,7 @@ def comparison_data():
 				goal_seconds_in_view_period = goal_seconds_in_view_period * period_completion
 
 			goals.update( {goal['name']: goal_seconds_in_view_period })
-	else:
+	else:			
 		calendar_period = request.json.get('calendar_period')
 
 
@@ -149,7 +154,7 @@ def comparison_data():
 	# Assign tracked time to current data.
 	sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
 
-	if period_type != 'goals':
+	if period_type != 'goals' and show_clients:
 		add_client_comparisons(project_data)
 
 	calculate_historic_averages(category_data=project_data,
@@ -158,6 +163,10 @@ def comparison_data():
 								current_days=current_days,
 								goals_projects=goals_projects,
 								goals=goals)
+
+
+	if not show_projects and not goals_mode:
+		hide_project_comparisons(project_data)
 
 	# # Assign tracked time to current data.
 	# sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
@@ -552,23 +561,30 @@ def calculate_historic_averages(category_data, view_type, historic_days, current
 
 @bp.route("/comparison/set_default", methods=['POST'])
 def set_default():
-	print('------------set_default---------------')
+	# print('------------set_default---------------')
 	data = request.json
 
 	session['comparison_defaults'] = data
 
-	print(data)
+	# print(data)
 
 	return jsonify(data)
 
 def get_comparison_defaults():
-	print('------------get_comparison_defaults---------------')
-	print(session)
+	# print('------------get_comparison_defaults---------------')
+	# print(session)
 
 	if 'comparison_defaults' in session.keys():
 		return session['comparison_defaults']
 
 	return False
+
+def hide_project_comparisons(project_data):
+	projects = helpers.get_all_projects_from_database()
+
+	for project in projects:
+		del project_data[project.project_name]
+
 
 # Distribute the project time among their parent clients, and add it to the project_data dictionary.
 def add_client_comparisons(project_data):

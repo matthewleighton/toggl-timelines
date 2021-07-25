@@ -605,6 +605,10 @@ body.hide-line-date-controls .line-date-control {
   font-weight: 400;
 }
 
+#show_clients_container {
+  margin-left: 20px;
+}
+
 /* Reading Page */
 
 .reading-history-link img {

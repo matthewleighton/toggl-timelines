@@ -133,12 +133,19 @@ function set_defaults() {
 	hide_completed = comparison_defaults['hide_completed'] ? true : false
 	include_empty_projects = comparison_defaults['include_empty_projects'] ? true : false
 	all_weekdays = comparison_defaults['all_weekdays'] ? true : false
+	show_projects = comparison_defaults['show_projects'] ? true : false
+	show_clients = comparison_defaults['show_clients'] ? true : false
+
 
 	$('#live_mode_calendar').prop('checked', live_mode_calendar)
 	$('#live_mode_goals').prop('checked', live_mode_goals)
 	$('#hide_completed').prop('checked', hide_completed)
 	$('#include_empty_projects').prop('checked', include_empty_projects)
 	$('#all_weekdays').prop('checked', all_weekdays)
+	$('#show_projects').prop('checked', show_projects)
+	$('#show_clients').prop('checked', show_clients)
+
+
 
 	// Weekdays
 	weekdays = comparison_defaults['weekdays'] ? comparison_defaults['weekdays'] : [0, 1, 2, 3, 4, 5, 6]
