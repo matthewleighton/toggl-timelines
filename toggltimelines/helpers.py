@@ -348,7 +348,7 @@ def get_toggl_date_url(date):
 	workspace_id = current_app.config['WORKSPACE_ID']
 	date_string = date.strftime('%Y-%m-%d')
 
-	url = f'https://track.toggl.com/reports/summary/{workspace_id}/from/{date_string}/to/{date_string}'
+	url = f'https://api.track.toggl.com/reports/summary/{workspace_id}/from/{date_string}/to/{date_string}'
 
 	return url
 
@@ -461,7 +461,7 @@ def get_current_toggl_entry():
 # Store it as an app variable, so we only make the API request once.
 def get_user_toggl_data():
 	if not current_app.user_toggl_data:
-		request_url = "https://www.toggl.com/api/v8/me?with_related_data=true"
+		request_url = "https://api.track.toggl.com/api/v8/me?with_related_data=true"
 		current_app.user_toggl_data = current_app.toggl.request(request_url)['data']
 
 	return current_app.user_toggl_data

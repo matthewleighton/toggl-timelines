@@ -10,7 +10,7 @@ class Endpoints():
 	PROJECTS = "https://api.track.toggl.com/api/v8/projects"
 	TASKS = "https://api.track.toggl.com/api/v8/tasks"
 	REPORT_WEEKLY = "https://api.track.toggl.com/reports/api/v2/weekly"
-	REPORT_DETAILED = "https://toggl.com/reports/api/v2/details"
+	REPORT_DETAILED = "https://api.track.toggl.com/reports/api/v2/details"
 	REPORT_SUMMARY = "https://api.track.toggl.com/reports/api/v2/summary"
 	START_TIME = "https://api.track.toggl.com/api/v8/time_entries/start"
 	TIME_ENTRIES = "https://api.track.toggl.com/api/v8/time_entries"
