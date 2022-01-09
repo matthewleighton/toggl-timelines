@@ -157,7 +157,9 @@ function request_graph_data(graph_type) {
 	});
 }
 
-var line_colors = ['red', 'orange', 'blue', 'green']
+// Dear Future Matthew: Please make a better solution than just adding a new color to this list every year.
+// Yours Sincerely, 2022 Matthew
+var line_colors = ['red', 'orange', 'blue', 'green', 'BlueViolet', 'Turquoise', 'CornflowerBlue']
 var active_node = false
 
 d3.selection.prototype.moveToBack = function() {  
