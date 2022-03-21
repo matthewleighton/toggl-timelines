@@ -110,7 +110,14 @@ def comparison_data():
 			}
 
 			goal_period = goal['time_period']
-			goal_value_in_seconds = int(goal['goal_value']) * 60
+			goal_value = goal['goal_value']
+
+			# The goal is written as hours.minutes. We now convert this into a number of seconds.
+			if goal_value.find('.') < 0:
+				goal_value += '.0'
+
+			goal_hours, goal_minutes = list(map(int, goal_value.split('.')))
+			goal_value_in_seconds = goal_hours*60*60 + goal_minutes*60
 
 			period_ratio 				= seconds[calendar_period] / seconds[goal_period]
 			goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
