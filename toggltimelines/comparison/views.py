@@ -85,6 +85,7 @@ def comparison_data():
 		for goal in goals_raw:
 			goals_projects.append(goal['name'])
 			goal_name = goal['name']
+			goal_days = [int(day)-1 for day in list(goal['days'])] if goal['days'] is not None else list(range(0,7))
 
 			if goal['type']  in ('tag', 'client'):
 				project_data[goal_name] = {
@@ -114,13 +115,20 @@ def comparison_data():
 			period_ratio 				= seconds[calendar_period] / seconds[goal_period]
 			goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
 
+			# period_ratio is the ratio of goal_days in the calendar_period to goal_days in the goal_period.
+			period_ratio = goal_days_in_period(calendar_period, goal_days, completed_only=False) / goal_days_in_period(goal_period, goal_days, completed_only=False)
+			goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
+
+			if goal_seconds_in_view_period == 0:
+				del project_data[goal['name']]
+
 			if live_mode_goals: # If live mode, reduce the goal relative to how much of the period is over.
 								# E.g. if we're halfway through a day, the daily goal is half.
-				period_completion = get_period_completion_ratio(calendar_period, goal['working_time_start'], goal['working_time_end'])
+				period_completion = get_period_completion_ratio(calendar_period, goal['working_time_start'], goal['working_time_end'], goal_days)
 
-				if period_completion == 0: # Don't show projects which have goals currently requiring 0 time.
-										   # i.e. working hours haven't started.
-					del project_data[goal['name']]
+				# Don't show projects which have goals currently requiring 0 time. i.e. working hours haven't started.
+				if period_completion == 0 and goal['name'] in project_data:
+						del project_data[goal['name']]
 
 				goal_seconds_in_view_period = goal_seconds_in_view_period * period_completion
 
@@ -250,7 +258,7 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 
 
 # Get a ratio (0 to 1) describing how much a certain period of time (e.g. today/this week/month/year) is complete/over.
-def get_period_completion_ratio(period, working_time_start=False, working_time_end=False):
+def get_period_completion_ratio(period, working_time_start=False, working_time_end=False, goal_days=[0,1,2,3,4,5,6]):
 	now = helpers.get_current_datetime_in_user_timezone()
 	
 	hour_of_day = now.hour
@@ -276,9 +284,16 @@ def get_period_completion_ratio(period, working_time_start=False, working_time_e
 
 	minutes_complete_today = (worked_until_today - work_start_datetime).seconds/60
 
+	today_weekday = now.weekday()
+
+	if today_weekday not in goal_days:
+		minutes_complete_today = 0
+
+
 	minutes_in_a_day = (work_end_datetime - work_start_datetime).seconds/60
 	if minutes_in_a_day == 0: # Fixing weird case of above line returning 0.
 		minutes_in_a_day = 60*24
+
 
 
 	#------ Now figuring out how much of the workday is complete.
@@ -286,33 +301,68 @@ def get_period_completion_ratio(period, working_time_start=False, working_time_e
 		completion_ratio = minutes_complete_today / minutes_in_a_day
 
 	elif period == 'week':
-		weekday = now.weekday()
-
-		minutes_complete_this_week = weekday * minutes_in_a_day + minutes_complete_today
-		minutes_in_a_week = minutes_in_a_day * 7
+		minutes_complete_this_week = goal_days_in_period('week', goal_days) * minutes_in_a_day + minutes_complete_today
+		minutes_in_a_week = minutes_in_a_day * len(goal_days)
 
 		completion_ratio = minutes_complete_this_week / minutes_in_a_week
 
 	elif period == 'month':
-		days_complete_this_month = now.day - 1
-
-		minutes_complete_this_week = minutes_in_a_day * days_complete_this_month + minutes_complete_today
-
-		days_in_this_month = calendar.monthrange(now.year, now.month)[1]
+		minutes_complete_this_month = goal_days_in_period('month', goal_days) * minutes_in_a_day + minutes_complete_today
+		days_in_this_month = goal_days_in_period('month', goal_days, completed_only=False)
 		minutes_in_this_month = minutes_in_a_day * days_in_this_month
 
-		completion_ratio = minutes_complete_this_week / minutes_in_this_month
+		completion_ratio = minutes_complete_this_month / minutes_in_this_month
 
 	elif period == 'year':
-		days_complete_this_year = datetime.now().timetuple().tm_yday - 1
-		minutes_complete_this_year = minutes_in_a_day * days_complete_this_year + minutes_complete_today
-
-		days_this_year = 366 if (calendar.isleap(now.year)) else 365
+		minutes_complete_this_year = goal_days_in_period('year', goal_days, completed_only=False) * minutes_in_a_day + minutes_complete_today
+		days_this_year = goal_days_in_period('year', goal_days, completed_only=False)
 		minutes_in_this_year = days_this_year * minutes_in_a_day
 
 		completion_ratio = minutes_complete_this_year / minutes_in_this_year
 
 	return completion_ratio
+
+# Get the number of goal days in a given period. Goal days are defined by the weekdays listed in goal_days.
+# completed_only causes the function to only consider days which have been completed.
+def goal_days_in_period(period_name, goal_days, completed_only=True):
+	now = datetime.now()
+	today_weekday = now.weekday()
+
+	goal_days_completed = 0
+
+	if period_name == 'week':
+		period_start = now - timedelta(days=now.weekday())
+	if period_name == 'month':
+		period_start = now - timedelta(days=now.day-1)
+	if period_name == 'year':
+		period_start = now - timedelta(days=now.timetuple().tm_yday-1)
+
+	if not completed_only:
+		if period_name == 'day':
+			if now.weekday() in goal_days:
+				return 1
+			else:
+				return 0
+
+		elif period_name == 'week':
+			period_end = now + timedelta(days=6-now.weekday())
+		elif period_name == 'month':
+			days_in_this_month = calendar.monthrange(now.year, now.month)[1]
+			days_remaining = days_in_this_month - now.day + 1
+			period_end = now + timedelta(days_remaining)
+		elif period_name == 'year':
+			period_end = now.replace(month=12, day=31)
+	else:
+		period_end = now
+
+	while period_start < period_end:
+		if period_start.weekday() in goal_days:
+			goal_days_completed += 1
+
+		period_start += timedelta(days=1)
+
+	return goal_days_completed
+
 
 # Calculate how the ratio of time tracked in a current vs historic period. Return as a list.
 def calculate_ratios(category_data, view_type, goals=[], hide_completed=False):
