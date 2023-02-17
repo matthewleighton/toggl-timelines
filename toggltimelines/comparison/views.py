@@ -17,23 +17,14 @@ from werkzeug.exceptions import abort
 import calendar
 import csv
 import pytz
-import pprint
+from pprint import pprint
 from datetime import datetime, timedelta
-
-pp = pprint.PrettyPrinter(indent=4)
 
 from toggltimelines import db
 from toggltimelines.timelines.models import Entry, Project
 from toggltimelines import helpers
 
 bp = Blueprint("comparison", __name__)
-
-# app = current_app
-
-# @app.context_processor
-# def inject_user():
-# 	with app.app_context():
-# 		return 'test'
 
 @bp.route("/comparison")
 def index():
@@ -67,7 +58,6 @@ def comparison_data():
 	period_type 			= request.json.get('period_type')
 
 	goals_mode = True if period_type == 'goals' else False
-
 
 	project_data = helpers.get_project_data(comparison_mode=True)
 
@@ -185,8 +175,6 @@ def comparison_data():
 
 	# # Assign tracked time to current data.
 	# sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
-
-	# pp.pprint(project_data)
 
 	response = calculate_ratios(project_data, period_type, goals, hide_completed)
 

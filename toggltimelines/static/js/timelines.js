@@ -7,6 +7,7 @@ var filter_settings = {
 	'value': false
 }
 
+
 function get_day_percentage() {
 	var now  = new Date();
 	var hour = now.getHours();

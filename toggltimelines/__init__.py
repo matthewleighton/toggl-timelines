@@ -37,11 +37,8 @@ def create_app(test_config=None):
 	app.user_toggl_data = False
 
 	from toggltimelines import MyTogglPy
-
 	app.toggl = MyTogglPy.MyTogglPy()
 	app.toggl.setAPIKey(app.config['API_KEY'])
-
-	from toggltimelines import helpers
 
 	# some deploy systems set the database url in the environ
 	db_url = os.environ.get("DATABASE_URL")
@@ -72,7 +69,7 @@ def create_app(test_config=None):
 
 	app.cli.add_command(init_db_command)
 	app.cli.add_command(toggl_sync_all)
-	app.cli.add_command(mytest)
+	# app.cli.add_command(mytest)
 	app.cli.add_command(update_book_covers)
 
 	from toggltimelines import timelines
@@ -191,9 +188,9 @@ def update_book_covers():
 
 
 
-@click.command('mytest')
-@with_appcontext
-def mytest():
-	entry = Entry.query.first()
+# @click.command('mytest')
+# @with_appcontext
+# def mytest():
+# 	entry = Entry.query.first()
 
-	print(entry.start)
+# 	print(entry.start)

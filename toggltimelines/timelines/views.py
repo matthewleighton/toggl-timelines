@@ -1,89 +1,52 @@
-from flask import Blueprint
-from flask import flash
-from flask import g
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import url_for
-from flask import current_app
-from flask import make_response
-from flask import jsonify
-from werkzeug.exceptions import abort
-
 import os
-import pytz
 from datetime import datetime, timedelta
-import pprint
-
-from toggltimelines import db
-
-from toggltimelines.timelines.models import Entry
+from flask import Blueprint, render_template, request, make_response, jsonify
 
 from toggltimelines import helpers
 
-pp = pprint.PrettyPrinter(indent=4)
-
 bp = Blueprint("timelines", __name__)
+
+DAYS_SYNC = 2
+DAYS_DISPLAY = 7
 
 @bp.route("/")
 def index():
 	return render_template("index.html")
 
+# The main timelines page.
 @bp.route("/timelines")
 def timelines_page():
-	sync_start_datetime = datetime.utcnow().replace(hour=0, minute=0, second=0) - timedelta(days=2)
+	now = datetime.utcnow().replace(hour=0, minute=0, second=0)
+
+	sync_start_datetime = now - timedelta(days=DAYS_SYNC)
+	query_start_datetime = now - timedelta(days=DAYS_DISPLAY)
+
 	helpers.toggl_sync(sync_start_datetime)
 
-	dispaly_start_datetime = datetime.now().replace(hour=0, minute=0, second=0) - timedelta(days=7)
-
-	db_entries = helpers.get_db_entries(dispaly_start_datetime)
-
+	db_entries = helpers.get_db_entries(query_start_datetime)
 	dispalyed_days = helpers.sort_db_entries_by_day(db_entries)
-
-	heart = True if is_user_johanna() else False
 
 	page_data = {
 		'days': dispalyed_days,
 		'times': range(0, 24),
-		'heart': heart
+		'heart': True if is_user_johanna() else False
 	}
 
-	response = make_response(render_template('timelines/timelines.html', data=page_data))
+	return make_response(render_template('timelines/timelines.html', data=page_data))
 
-	return response
-
-@bp.route("/timelines/load_more", methods=['GET', 'POST'])
+# Load more days on the timelines page.
+@bp.route("/timelines/load_more", methods=['POST'])
 def load_more():
 	reloading = request.json.get('reload')
 
 	start_days_ago = request.json.get('start_days_ago')
 	end_days_ago = request.json.get('end_days_ago')
 
-	print(f"Start: {start_days_ago}")
-	print(f"End: {end_days_ago}")
+	start, end = get_query_start_end(reloading, start_days_ago, end_days_ago)
 
 	if reloading:
 		helpers.toggl_sync(days=0)
 
-		start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-		end = False
-
-	else:
-		
-		if start_days_ago:
-			start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=start_days_ago)
-		else:
-			start = False			
-
-		end = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=end_days_ago, microseconds=1)
-
-	if start:
-		start_tz = helpers.get_user_timezone_at_date(start)
-		start = helpers.to_utc(start, start_tz)
-
-	if end:
-		end_tz = helpers.get_user_timezone_at_date(end)
-		end = helpers.to_utc(end, end_tz)
 
 	db_entries = helpers.get_db_entries(start, end)
 
@@ -93,38 +56,39 @@ def load_more():
 		'days': displayed_days
 	}
 
-	return jsonify(render_template('timelines/day.html', data=page_data))
+	# TODO: Rendering all the data into HTML is slow.
+	# Instead, just return the data and render it on the client side.
 
-@bp.route("/timelines/start_stop", methods=['GET', 'POST'])
-def start_stop():
+	rendered_template = render_template('timelines/day.html', data=page_data)
+	return jsonify(rendered_template)
+
+
+# Get the start and end datetimes for the query to load more days.
+def get_query_start_end(reloading, start_days_ago, end_days_ago):
+	today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 	
-	config_auth = current_app.config['START_STOP_AUTH']
-	submitted_auth = request.args.get('auth')
+	if reloading:
+		start = today_start
+		end = False
 
-	validated = False
-	if config_auth and config_auth == submitted_auth:
-		validated = True
-
-
-	if not validated:
-		return jsonify('0')
-
-
-	currently_tracking = helpers.get_current_toggl_entry()
-
-	if not currently_tracking:
-		helpers.start_tracking()
-		status = 'start'
 	else:
-		current_id = currently_tracking['id']
-		helpers.stop_tracking(current_id)
-		status = 'stop'
+		if start_days_ago:
+			start = today_start - timedelta(days=start_days_ago)
+		else:
+			start = False			
 
-	return status
+		end = today_start - timedelta(days=end_days_ago, microseconds=1)
+
+	if start:
+		start_tz = helpers.get_user_timezone_at_date(start)
+		start = helpers.to_utc(start, start_tz)
+
+	if end:
+		end_tz = helpers.get_user_timezone_at_date(end)
+		end = helpers.to_utc(end, end_tz)
+
+	return start, end
 
 def is_user_johanna():
-	user = os.environ.get('USER').lower()
-
-	if user == 'johanna':
-		return True
-	return False
+	username = os.environ.get('USER').lower()
+	return True if 'johanna' in username else False

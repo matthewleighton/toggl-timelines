@@ -288,14 +288,12 @@ def get_db_entries(start=False, end=False, projects=False, clients=False, descri
 		query = query.filter(Entry.client.in_(clients))
 
 	if description:
-
 		if (isinstance(description, str)):
 			query = query.filter(func.lower(Entry.description).contains(description.lower()))
 		else:
 			query = query.filter(func.lower(Entry.description).in_([x.lower() for x in description]))
 
 	if tags:
-
 		if tags_mode.upper() == 'OR':
 			query = query.filter(Entry.tags.any(Tag.id.in_(tags)))
 		else:
@@ -314,9 +312,8 @@ def get_db_entries(start=False, end=False, projects=False, clients=False, descri
 # Return the entries in a new list, grouped by day,
 def sort_db_entries_by_day(db_entries, return_as_dict=False):
 	sorted_by_day = {}
-	for entry in db_entries:
 
-		#entry.start = entry.start.replace(tzinfo=pytz.utc)
+	for entry in db_entries:
 		# Below we use get_local_start_time() because we need to make sure we're sorting
 		# with reference to what day it was in the user's location. Not simply UTC.
 		entry_date_label = entry.get_local_start_time().strftime('%Y-%m-%d')
@@ -344,6 +341,7 @@ def sort_db_entries_by_day(db_entries, return_as_dict=False):
 
 	return days_list
 
+# Generate a URL to the Toggl summary report for a given date.
 def get_toggl_date_url(date):
 	workspace_id = current_app.config['WORKSPACE_ID']
 	date_string = date.strftime('%Y-%m-%d')
