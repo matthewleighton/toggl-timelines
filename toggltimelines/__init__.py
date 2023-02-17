@@ -72,30 +72,33 @@ def create_app(test_config=None):
 	# app.cli.add_command(mytest)
 	app.cli.add_command(update_book_covers)
 
+	# Timeline Page
 	from toggltimelines import timelines
 	app.register_blueprint(timelines.bp)
 	app.add_url_rule("/", endpoint="index")
 	app.add_url_rule("/timelines", endpoint="timelines")
 
+	# Comparison Page
 	from toggltimelines import comparison
 	app.register_blueprint(comparison.bp)
 	app.add_url_rule("/comparison", endpoint="comparison")
 
+	# Graphing Page
 	from toggltimelines import frequency
 	app.register_blueprint(frequency.bp)
 	app.add_url_rule("/frequency", endpoint="frequency")
 
+	# Reading Page
 	from toggltimelines import reading
 	app.register_blueprint(reading.bp)
 	app.add_url_rule("/reading", endpoint="reading")
 
+	# Sync Page
 	from toggltimelines import sync
 	app.register_blueprint(sync.bp)
 	app.add_url_rule("/sync", endpoint="sync")
 
-
 	app.failed_image_api_search = False
-
 	app.covers_directory = os.path.dirname(os.path.realpath(__file__)) + '/static/img/covers/'
 
 	return app
@@ -185,12 +188,3 @@ def update_book_covers():
 		book.image_url = cover_url
 
 	db.session.commit()
-
-
-
-# @click.command('mytest')
-# @with_appcontext
-# def mytest():
-# 	entry = Entry.query.first()
-
-# 	print(entry.start)

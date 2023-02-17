@@ -281,7 +281,9 @@ def get_db_entries(start=False, end=False, projects=False, clients=False, descri
 		query = query.filter(Entry.start <= end)
 
 	if projects:
-		query = query.join(Entry.project, aliased=True)
+		# Note: I've removed the aliased=True here because it was deprecated in SQLAlchemy 1.4.
+		# Simply removing it doesn't seem to cause any issues.
+		query = query.join(Entry.project)
 		query = query.filter(Project.project_name.in_(projects))
 
 	if clients:

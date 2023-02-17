@@ -20,8 +20,7 @@ from toggltimelines import db
 from toggltimelines.timelines.models import Entry, Project
 from toggltimelines import helpers
 
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
+from pprint import pprint
 
 weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -30,7 +29,9 @@ bp = Blueprint("frequency", __name__)
 
 @bp.route("/frequency", methods=['GET', 'POST'])
 def index():
-	request_data = request.json if request.json else {}
+	# This is the old way of getting data from the request.
+	# request_data = request.json if request.json else {}
+	request_data = {}
 
 	graph_type = request_data['graph_type'] if 'graph_type' in request_data.keys() else 'normal'
 	scope_type = request_data['scope_type'] if 'scope_type' in request_data.keys() else 'days'
@@ -56,9 +57,7 @@ def index():
 		'scale_from_zero': scale_from_zero
 	}
 
-	response = make_response(render_template('frequency/index.html', data=page_data))
-
-	return response
+	return make_response(render_template('frequency/index.html', data=page_data))
 
 @bp.route('/frequency/new_frequency_line', methods=['POST'])
 def new_frequency_line():
@@ -111,8 +110,6 @@ date_formats = {
 @bp.route('/frequency/frequency_data', methods=['POST'])
 def frequency_data():
 	submission_data = request.json
-
-	# pp.pprint(submission_data)
 
 	data = []
 
