@@ -1,27 +1,12 @@
-from flask import Blueprint
-from flask import flash
-from flask import g
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import url_for
-from flask import current_app
-from flask import make_response
-from flask import jsonify
-from flask import session
-
-# from flask.ext.session import Session
-
-from werkzeug.exceptions import abort
-
 import calendar
 import csv
 import pytz
+from time import perf_counter
+
 from pprint import pprint
 from datetime import datetime, timedelta
+from flask import Blueprint, render_template, request, make_response, jsonify, session
 
-from toggltimelines import db
-from toggltimelines.timelines.models import Entry, Project
 from toggltimelines import helpers
 
 bp = Blueprint("comparison", __name__)
@@ -34,153 +19,182 @@ def index():
 		'comparison_defaults': get_comparison_defaults()
 	}
 
-	response = make_response(render_template('comparison/index.html', data=page_data))
-
-	return response
-
-	# return render_template("comparison/index.html")
+	return make_response(render_template('comparison/index.html', data=page_data))
 
 @bp.route("/comparison/data", methods=['POST'])
 def comparison_data():
-	reload_data = request.json.get('reload')
-
-	if reload_data:
+	if request.json.get('reload'):
 		helpers.toggl_sync(days=1)
 
-	live_mode 				= bool(request.json.get('live_mode_calendar'))
+	start_time = perf_counter()
+
+	calendar_period 		= get_calendar_period()
+	goals_mode 				= get_goals_mode()
 	hide_completed 			= bool(request.json.get('hide_completed'))
-	show_projects 			= bool(request.json.get('show_projects'))
-	show_clients 			= bool(request.json.get('show_clients'))
+	live_mode_calendar 		= bool(request.json.get('live_mode_calendar'))
 	number_of_current_days  = int(request.json.get('timeframe'))
 	number_of_historic_days = int(request.json.get('datarange'))
-	target_weekdays 		= request.json.get('weekdays')
-	sort_type 				= request.json.get('sort_type')
 	period_type 			= request.json.get('period_type')
-
-	goals_mode = True if period_type == 'goals' else False
+	show_clients 			= bool(request.json.get('show_clients'))
+	show_projects 			= bool(request.json.get('show_projects'))
+	sort_type 				= request.json.get('sort_type')
+	target_weekdays 		= get_target_weekdays()
 
 	project_data = helpers.get_project_data(comparison_mode=True)
+	goals, goals_projects = prepare_goals(project_data)
 
-	goals_projects = []
-	goals = {}
+	print('number_of_current_days: ', number_of_current_days)
 
-	if period_type == 'goals':
-		calendar_period = request.json.get('goals_period')
-		live_mode_goals = request.json.get('live_mode_goals')
-
-		goals_raw = get_comparison_goals()
-
-		remove_projects_without_goals(goals_raw, project_data)
-
-		for goal in goals_raw:
-			goals_projects.append(goal['name'])
-			goal_name = goal['name']
-			goal_days = [int(day)-1 for day in list(goal['days'])] if goal['days'] is not None else list(range(0,7))
-
-			if goal['type']  in ('tag', 'client'):
-				project_data[goal_name] = {
-					'historic_tracked': 0,
-					'current_tracked': 0,
-					'average': 0,
-					'name': goal_name,
-					'type': goal['type']
-				}
-
-			if goal['color']:
-				project_data[goal_name]['color'] = goal['color']
-
-			seconds_in_day = 86400
-			now = datetime.now()
-
-			seconds = {
-				'day': seconds_in_day,
-				'week': seconds_in_day * 7,
-				'month': seconds_in_day * calendar.monthrange(now.year, now.month)[1],
-				'year': seconds_in_day * (366 if (calendar.isleap(now.year)) else 365)
-			}
-
-			goal_period = goal['time_period']
-			goal_value = goal['goal_value']
-
-			# The goal is written as hours.minutes. We now convert this into a number of seconds.
-			if goal_value.find('.') < 0:
-				goal_value += '.0'
-
-			goal_hours, goal_minutes = list(map(int, goal_value.split('.')))
-			goal_value_in_seconds = goal_hours*60*60 + goal_minutes*60
-
-			period_ratio 				= seconds[calendar_period] / seconds[goal_period]
-			goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
-
-			# period_ratio is the ratio of goal_days in the calendar_period to goal_days in the goal_period.
-			period_ratio = goal_days_in_period(calendar_period, goal_days, completed_only=False) / goal_days_in_period(goal_period, goal_days, completed_only=False)
-			goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
-
-			if goal_seconds_in_view_period == 0:
-				del project_data[goal['name']]
-
-			if live_mode_goals: # If live mode, reduce the goal relative to how much of the period is over.
-								# E.g. if we're halfway through a day, the daily goal is half.
-				period_completion = get_period_completion_ratio(calendar_period, goal['working_time_start'], goal['working_time_end'], goal_days)
-
-				# Don't show projects which have goals currently requiring 0 time. i.e. working hours haven't started.
-				if period_completion == 0 and goal['name'] in project_data:
-						del project_data[goal['name']]
-
-				goal_seconds_in_view_period = goal_seconds_in_view_period * period_completion
-
-			goals.update( {goal['name']: goal_seconds_in_view_period })
-	else:			
-		calendar_period = request.json.get('calendar_period')
-
-
-	if type(target_weekdays) is not list:
-		target_weekdays = [target_weekdays]
-
-	start_end_values = get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode)
-
-	db_entries = helpers.get_db_entries(start_end_values['current_start'], start_end_values['current_end'])
-
-	current_days = helpers.sort_db_entries_by_day(db_entries)
-
-
-	if period_type != "goals": # Don't need to do historic days work if we're in goals mode.
+	start_end_values = get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode_calendar)
 	
-		db_entries = helpers.get_db_entries(start_end_values['historic_start'], start_end_values['historic_end'])
-
-		historic_days = helpers.sort_db_entries_by_day(db_entries)
-
-		# Assign tracked time to historic data.
-		sum_category_durations(historic_days, project_data, period_type, historic=True, live_mode=live_mode, weekdays=target_weekdays)
-	else:
-		historic_days = []
-
-
-	# Assign tracked time to current data.
+	current_days = prepare_current_days(start_end_values)
+	historic_days = prepare_historic_days(start_end_values)
+	
 	sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
 
-	if period_type != 'goals' and show_clients:
+	if not goals_mode:
+		sum_category_durations(historic_days, project_data, period_type, historic=True, live_mode=live_mode_calendar, weekdays=target_weekdays)
+
+	if show_clients and not goals_mode:
 		add_client_comparisons(project_data)
 
-	calculate_historic_averages(category_data=project_data,
-								view_type=period_type,
-								historic_days=historic_days,
-								current_days=current_days,
-								goals_projects=goals_projects,
-								goals=goals)
+	assign_historic_time(category_data=project_data,
+						 view_type=period_type,
+						 historic_days=historic_days,
+						 current_days=current_days,
+						 goals_projects=goals_projects,
+						 goals=goals)
 
 
 	if not show_projects and not goals_mode:
 		hide_project_comparisons(project_data)
 
-	# # Assign tracked time to current data.
-	# sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
-
 	response = calculate_ratios(project_data, period_type, goals, hide_completed)
-
 	sorted_response = sorted(response, key=lambda k: k[sort_type])
 
+	end_time = perf_counter()
+	print('Time elapsed: ', end_time - start_time)
+
 	return jsonify(sorted_response)
+
+def get_target_weekdays():
+	target_weekdays = request.json.get('weekdays')
+
+	if type(target_weekdays) is not list:
+		target_weekdays = [target_weekdays]
+
+	return target_weekdays
+
+def get_calendar_period():
+	goals_mode = get_goals_mode()
+	
+	if goals_mode:
+		return request.json.get('goals_period')
+	else:
+		return request.json.get('calendar_period')
+
+def get_goals_mode():
+	return True if request.json.get('period_type') == 'goals' else False
+
+
+def prepare_goals(project_data):
+	goals = {}
+	goals_projects = []
+	
+	if not get_goals_mode():
+		return goals, goals_projects
+
+	goals_projects = []
+	calendar_period = get_calendar_period()
+	live_mode_goals = bool(request.json.get('live_mode_goals'))
+
+	goals_raw = get_comparison_goals() # Get goals from csv file.
+	remove_projects_without_goals(goals_raw, project_data)
+
+	for goal in goals_raw:
+		update_goal(goal, project_data, goals, goals_projects, calendar_period, live_mode_goals)
+	
+	return goals, goals_projects
+
+def update_goal(goal, project_data, goals, goals_projects, calendar_period, live_mode_goals):
+	goals_projects.append(goal['name'])
+	goal_name = goal['name']
+	goal_days = [int(day)-1 for day in list(goal['days'])] if goal['days'] is not None else list(range(0,7))
+
+	if goal['type']  in ('tag', 'client'):
+		project_data[goal_name] = {
+			'historic_tracked': 0,
+			'current_tracked': 0,
+			'average': 0,
+			'name': goal_name,
+			'type': goal['type']
+		}
+
+	if goal['color']:
+		project_data[goal_name]['color'] = goal['color']
+
+	seconds_in_day = 86400
+	now = datetime.now()
+
+	seconds = {
+		'day': seconds_in_day,
+		'week': seconds_in_day * 7,
+		'month': seconds_in_day * calendar.monthrange(now.year, now.month)[1],
+		'year': seconds_in_day * (366 if (calendar.isleap(now.year)) else 365)
+	}
+
+	goal_period = goal['time_period']
+	goal_value = goal['goal_value']
+
+	# The goal is written as hours.minutes. We now convert this into a number of seconds.
+	if goal_value.find('.') < 0:
+		goal_value += '.0'
+
+	goal_hours, goal_minutes = list(map(int, goal_value.split('.')))
+	goal_value_in_seconds = goal_hours*60*60 + goal_minutes*60
+
+	period_ratio 				= seconds[calendar_period] / seconds[goal_period]
+	goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
+
+	# period_ratio is the ratio of goal_days in the calendar_period to goal_days in the goal_period.
+	period_ratio = goal_days_in_period(calendar_period, goal_days, completed_only=False) / goal_days_in_period(goal_period, goal_days, completed_only=False)
+	goal_seconds_in_view_period = period_ratio * goal_value_in_seconds
+
+	if goal_seconds_in_view_period == 0:
+		del project_data[goal['name']]
+
+	if live_mode_goals: # If live mode, reduce the goal relative to how much of the period is over.
+						# E.g. if we're halfway through a day, the daily goal is half.
+		period_completion = get_period_completion_ratio(calendar_period, goal['working_time_start'], goal['working_time_end'], goal_days)
+
+		# Don't show projects which have goals currently requiring 0 time. i.e. working hours haven't started.
+		if period_completion == 0 and goal['name'] in project_data:
+				del project_data[goal['name']]
+
+		goal_seconds_in_view_period = goal_seconds_in_view_period * period_completion
+
+	goals.update( {goal['name']: goal_seconds_in_view_period })
+
+
+def prepare_current_days(start_end_values):
+	db_entries = helpers.get_db_entries(start_end_values['current_start'], start_end_values['current_end'])
+	return helpers.sort_db_entries_by_day(db_entries)
+
+def prepare_historic_days(start_end_values):
+	if get_goals_mode():
+		return []
+	
+	db_entries = helpers.get_db_entries(start_end_values['historic_start'], start_end_values['historic_end'])
+	return helpers.sort_db_entries_by_day(db_entries)
+
+
+
+
+
+
+
+
+
 
 # Given a list of goals, remove any projects from the project_data dict if it has no goal.
 def remove_projects_without_goals(goals, project_data):
@@ -256,9 +270,6 @@ def sum_category_durations(days, categories, view_type, historic=False, live_mod
 def get_period_completion_ratio(period, working_time_start=False, working_time_end=False, goal_days=[0,1,2,3,4,5,6]):
 	now = helpers.get_current_datetime_in_user_timezone()
 	
-	hour_of_day = now.hour
-	minute_of_hour = now.minute
-
 	#------ Figuring out how long a workday is based on the start and end times.
 	if working_time_start:
 		dt = datetime.strptime(working_time_start, '%H:%M')
@@ -321,7 +332,6 @@ def get_period_completion_ratio(period, working_time_start=False, working_time_e
 # completed_only causes the function to only consider days which have been completed.
 def goal_days_in_period(period_name, goal_days, completed_only=True):
 	now = datetime.now()
-	today_weekday = now.weekday()
 
 	goal_days_completed = 0
 
@@ -404,205 +414,287 @@ def get_comparison_goals():
 
 	return goals
 
-def get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode):
-	now = datetime.utcnow().replace(tzinfo=pytz.utc)
-
+def get_now_in_user_timezone():
 	user_timezone = helpers.get_current_timezone()
+	now = datetime.utcnow().replace(tzinfo=pytz.utc)
+	return now.astimezone(user_timezone)
 
-	now = now.astimezone(user_timezone)
-
-	today_end = now.replace(hour=23, minute=59, second=59)
-	today_start = now.replace(hour=0, minute=0, second=0)
-	
-	today_day = now.day
-	today_hour = now.hour
-	today_minute = now.minute
-
-	current_end = now
+# Returns a dictionary containing the start and end datetimes for the current and historic periods.
+def get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode):
+	now = get_now_in_user_timezone()
 
 	if period_type == 'custom':
-		current_start = (now - timedelta(days=number_of_current_days-1)).replace(hour=0, minute=0, second=0)
+		current_start, historic_start, historic_end = get_custom_start_end()
 
-		historic_end = current_start - timedelta(seconds=1)
-		historic_start = (historic_end - timedelta(days=number_of_historic_days-1)).replace(hour=0, minute=0, second=0)
 	else:
-		if calendar_period == 'day':
-			current_start = now.replace(hour=0, minute=0, second=0)
+		current_start  = get_current_start(calendar_period)
+		historic_start = get_historic_start(calendar_period, current_start)
+		historic_end   = get_historic_end(calendar_period, historic_start, live_mode)
 
-			historic_end = (current_end - timedelta(days=1)) if live_mode else (today_end - timedelta(days=1))
-			historic_start = historic_end.replace(hour=0, minute=0, second=0)
-		
-		elif calendar_period == 'week':
-			days_since_week_start = now.weekday()
-			current_start = today_start - timedelta(days=days_since_week_start)
-
-			historic_start = current_start - timedelta(days=7)
-			historic_end = (now - timedelta(days=7)) if live_mode else (historic_start + timedelta(days=6, hours=23, minutes=59, seconds=59))
-		
-		elif calendar_period == 'month':
-			previous_month = (now.month-1) or 12
-			historic_year = now.year if previous_month != 12 else now.year - 1
-
-			last_day_of_previous_month = calendar.monthrange(historic_year, previous_month)[1]
-			
-
-			current_start = today_start.replace(day=1)
-
-			historic_start = (current_start - timedelta(days=1)).replace(day=1)
-
-			if live_mode:
-				historic_end = historic_start.replace(day=min(now.day, last_day_of_previous_month), hour=now.hour, minute=now.minute)
-			else:
-				historic_end = historic_start.replace(day=last_day_of_previous_month, hour=23, minute=59, second=59)
-
-		elif calendar_period == 'quarter':
-			current_quarter = (now.month-1)//3 # First quarter is 0
-			first_month_of_current_quarter = 1 + current_quarter*3
-
-			previous_quarter = (current_quarter - 1) if current_quarter > 0 else 3
-			first_month_of_previous_quarter = 1 + previous_quarter*3
-
-			historic_year = now.year if current_quarter > previous_quarter else now.year - 1
-
-			month_of_current_quarter = (now.month-1) % 3  # First month of quarter is 0
-			equivalent_month_of_previous_quarter = first_month_of_previous_quarter + month_of_current_quarter #If we're in the 2nd month of this quarter, this will be the 2nd month of last quarter.
-			last_day_of_equivalent_month = calendar.monthrange(historic_year, equivalent_month_of_previous_quarter)[1]
-
-			last_month_of_previous_quarter = first_month_of_previous_quarter + 2
-			last_day_of_previous_quarter = calendar.monthrange(historic_year, last_month_of_previous_quarter)[1]
-
-			current_start = today_start.replace(month=first_month_of_current_quarter, day=1)
-
-			historic_start = today_start.replace(year=historic_year, month=first_month_of_previous_quarter, day=1)
-
-			if live_mode:
-				historic_end = historic_start.replace(
-					year = historic_year,
-					month = equivalent_month_of_previous_quarter,
-					day = min(now.day, last_day_of_equivalent_month),
-					hour = now.hour,
-					minute = now.minute
-				)
-			else:
-				historic_end = historic_start.replace(
-					year = historic_year,
-					month = last_month_of_previous_quarter,
-					day = last_day_of_previous_quarter,
-					hour = 23,
-					minute = 59
-				)
-
-		elif calendar_period == 'half-year': # TODO: Combine this and 'quarter' logic. They should be the same except for some of the numbers.
-			current_half = (now.month-1)//6 # First half is 0
-			first_month_of_current_half = 1 + current_half*6
-
-			previous_half = 0 if (current_half == 1) else 1
-			first_month_of_previous_half = 1 + previous_half*6
-
-			historic_year = now.year if current_half > previous_half else now.year - 1
-
-			month_of_current_half = (now.month-1) % 6 # First month of half is 0
-			equivalent_month_of_previous_half = first_month_of_previous_half + month_of_current_half
-			last_day_of_equivalent_half = calendar.monthrange(historic_year, equivalent_month_of_previous_half)[1]
-
-			last_month_of_previous_half = first_month_of_previous_half + 5
-			last_day_of_previous_half = calendar.monthrange(historic_year, last_month_of_previous_half)[1]
-
-			current_start = today_start.replace(month=first_month_of_current_half, day=1)
-
-			historic_start = today_start.replace(year=historic_year, month=first_month_of_previous_half, day=1)
-
-			if live_mode:
-				historic_end = historic_start.replace(
-					year = historic_year,
-					month = equivalent_month_of_previous_half,
-					day = min(now.day, last_day_of_equivalent_half),
-					hour = now.hour,
-					minute = now.minute
-				)
-			else:
-				historic_end = historic_start.replace(
-					year = historic_year,
-					month = last_month_of_previous_half,
-					day = last_day_of_previous_half,
-					hour = 23,
-					minute = 59
-				)
-
-		elif calendar_period == 'year':
-			current_start = today_start.replace(month=1, day=1)
-
-			historic_start = today_start.replace(year=now.year-1, month=1, day=1)
-
-			if live_mode:
-				historic_day = now.day
-				if historic_day == 29 and now.month == 2:
-					historic_day = 28 # Leap years.
-
-				historic_end = today_start.replace(
-					year = now.year - 1,
-					month = now.month,
-					day = historic_day,
-					hour = now.hour,
-					minute = now.minute
-				)
-			else:
-				historic_end = today_start.replace(
-					year = now.year - 1,
-					month = 12,
-					day = 31,
-					hour = 23,
-					minute = 59
-				)
-
-		elif calendar_period == 'month-of-year':
-			historic_year = now.year - 1
-			last_day_of_month = calendar.monthrange(now.year, now.month)[1]	
-
-			current_start = today_start.replace(day=1)
-			historic_start = current_start.replace(year=historic_year)
-
-			if live_mode:
-				historic_end = historic_start.replace(day=now.day, hour=now.hour, minute=now.minute)
-			else:
-				historic_end = historic_start.replace(day=last_day_of_month, hour=23, minute=59, second=59)
-
-	"""
-	print('Current start: ' + str(current_start))
-	print('Current end: ' + str(current_end))
-	print('Historic start: ' + str(historic_start))
-	print('Historic end: ' + str(historic_end))
-	"""
-	
 	return {
 		'current_start': current_start,
-		'current_end': current_end,
+		'current_end': now,
 		'historic_start': historic_start,
 		'historic_end': historic_end
 	}
 
+def get_custom_start_end():
+	now = get_now_in_user_timezone()
+
+	number_of_current_days 	= int(request.json.get('timeframe'))
+	number_of_historic_days = int(request.json.get('datarange'))
+
+	current_start = (now - timedelta(days=number_of_current_days-1)).replace(hour=0, minute=0, second=0)
+
+	historic_end = current_start - timedelta(seconds=1)
+	historic_start = (historic_end - timedelta(days=number_of_historic_days-1)).replace(hour=0, minute=0, second=0)
+
+	return current_start, historic_start, historic_end
+
+
+# Returns the start of the current period, based on the calendar_period argument.
+# For example, if calendar_period is 'day', this will return the start of today.
+# Or if calendar_period is 'week', this will return the start of the current week.
+def get_current_start(calendar_period):
+	now = get_now_in_user_timezone()
+
+	today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+	now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+	if calendar_period == 'day':
+		return today_start
+
+	if calendar_period == 'week':
+		current_start = today_start - timedelta(days=today_start.weekday())
+		return current_start
+	
+	if calendar_period in ['month', 'month-of-year']:
+		return today_start.replace(day=1)
+	
+	if calendar_period == 'quarter':
+		current_quarter = (today_start.month-1)//3 # First quarter is 0
+		first_month_of_current_quarter = 1 + current_quarter*3
+		return today_start.replace(month=first_month_of_current_quarter, day=1)
+
+	if calendar_period == 'half-year':
+		current_half = (today_start.month-1)//6 # First half is 0
+		first_month_of_current_half = 1 + current_half*6
+		return today_start.replace(month=first_month_of_current_half, day=1)
+	
+	if calendar_period == 'year':
+		return today_start.replace(month=1, day=1)
+	
+	raise ValueError('Invalid calendar period: ' + calendar_period)
+
+def get_historic_start(calendar_period, current_start):
+	if get_goals_mode():
+		return None
+
+	now = get_now_in_user_timezone()
+
+	today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+	if calendar_period == 'day':
+		return current_start - timedelta(days=1)
+
+	if calendar_period == 'week':
+		return current_start - timedelta(days=7)
+	
+	if calendar_period == 'month':
+		return (current_start - timedelta(days=1)).replace(day=1)
+
+	if calendar_period == 'quarter':
+		current_quarter = (now.month-1)//3 # First quarter is 0
+		previous_quarter = (current_quarter - 1) if current_quarter > 0 else 3
+		first_month_of_previous_quarter = 1 + previous_quarter*3
+		historic_year = now.year if current_quarter > previous_quarter else now.year - 1
+
+		return today_start.replace(year=historic_year, month=first_month_of_previous_quarter, day=1)
+
+	if calendar_period == 'half-year':
+		current_half = (now.month-1)//6 # First half is 0
+		previous_half = 0 if (current_half == 1) else 1
+		first_month_of_previous_half = 1 + previous_half*6
+		historic_year = now.year if current_half > previous_half else now.year - 1
+
+		return today_start.replace(year=historic_year, month=first_month_of_previous_half, day=1)
+
+	if calendar_period == 'year':
+		return today_start.replace(year=now.year-1, month=1, day=1)
+
+	if calendar_period == 'month-of-year':
+		return current_start.replace(year=now.year-1)
+
+	raise ValueError('Invalid calendar period: ' + calendar_period)	
+
+def get_historic_end(calendar_period, historic_start, live_mode):
+	if get_goals_mode():
+		return None
+	
+	now = get_now_in_user_timezone()
+
+	if calendar_period == 'day':
+		today_end   = now.replace(hour=23, minute=59, second=59)
+		
+		if live_mode:
+			return now - timedelta(days=1)
+		else:
+			return today_end - timedelta(days=1)
+	
+	if calendar_period == 'week':
+		if live_mode:
+			return now - timedelta(days=7)
+		else:
+			return historic_start + timedelta(days=6, hours=23, minutes=59, seconds=59)
+			
+	if calendar_period == 'month':
+		previous_month = (now.month-1) or 12
+		historic_year = now.year if previous_month != 12 else now.year - 1
+
+		last_day_of_previous_month = calendar.monthrange(historic_year, previous_month)[1]
+
+		if live_mode:
+			return historic_start.replace(day=min(now.day, last_day_of_previous_month), hour=now.hour, minute=now.minute)
+		else:
+			return historic_start.replace(day=last_day_of_previous_month, hour=23, minute=59, second=59)
+
+	if calendar_period == 'quarter':
+		historic_year, first_month_of_previous_quarter = get_historic_year_and_first_division_month(calendar_period)
+
+		if live_mode:
+			month_of_current_quarter = (now.month-1) % 3  # First month of quarter is 0
+			equivalent_month_of_previous_quarter = first_month_of_previous_quarter + month_of_current_quarter
+			last_day_of_equivalent_month = calendar.monthrange(historic_year, equivalent_month_of_previous_quarter)[1]
+			
+			return historic_start.replace(
+				year = historic_year,
+				month = equivalent_month_of_previous_quarter,
+				day = min(now.day, last_day_of_equivalent_month),
+				hour = now.hour,
+				minute = now.minute
+			)
+		else:
+			last_month_of_previous_quarter = first_month_of_previous_quarter + 2
+			last_day_of_previous_quarter = calendar.monthrange(historic_year, last_month_of_previous_quarter)[1]
+	
+			return historic_start.replace(
+				year = historic_year,
+				month = last_month_of_previous_quarter,
+				day = last_day_of_previous_quarter,
+				hour = 23,
+				minute = 59
+			)
+
+	if calendar_period == 'half-year':
+		historic_year, first_month_of_previous_half = get_historic_year_and_first_division_month(calendar_period)
+
+		if live_mode:
+			month_of_current_half = (now.month-1) % 6 # First month of half is 0
+			equivalent_month_of_previous_half = first_month_of_previous_half + month_of_current_half
+			last_day_of_equivalent_half = calendar.monthrange(historic_year, equivalent_month_of_previous_half)[1]
+
+			return historic_start.replace(
+				year = historic_year,
+				month = equivalent_month_of_previous_half,
+				day = min(now.day, last_day_of_equivalent_half),
+				hour = now.hour,
+				minute = now.minute
+			)
+		else:
+			last_month_of_previous_half = first_month_of_previous_half + 5
+			last_day_of_previous_half = calendar.monthrange(historic_year, last_month_of_previous_half)[1]
+
+			return historic_start.replace(
+				year = historic_year,
+				month = last_month_of_previous_half,
+				day = last_day_of_previous_half,
+				hour = 23,
+				minute = 59
+			)
+
+	if calendar_period == 'year':
+		today_start = now.replace(hour=0, minute=0, second=0)
+
+		if live_mode:
+			historic_day = now.day
+			if historic_day == 29 and now.month == 2:
+				historic_day = 28 # Leap years.
+
+			return today_start.replace(
+				year = now.year - 1,
+				month = now.month,
+				day = historic_day,
+				hour = now.hour,
+				minute = now.minute
+			)
+		else:
+			return today_start.replace(
+				year = now.year - 1,
+				month = 12,
+				day = 31,
+				hour = 23,
+				minute = 59
+			)
+
+	if calendar_period == 'month-of-year':
+		last_day_of_month = calendar.monthrange(now.year, now.month)[1]	
+
+		if live_mode:
+			return historic_start.replace(day=now.day, hour=now.hour, minute=now.minute)
+		else:
+			return historic_start.replace(day=last_day_of_month, hour=23, minute=59, second=59)
+
+	raise Exception('Invalid calendar period: ' + calendar_period)
+
+# Returns the year and first month of the historic period, based on the calendar_period argument.
+# "division" means quarter or half-year.
+# For example, if calendar_period is 'quarter', this will return the year and first month of the previous quarter.
+def get_historic_year_and_first_division_month(calendar_period):
+	if calendar_period not in ['quarter', 'half-year']:
+		raise ValueError('Invalid calendar period: ' + calendar_period)
+
+	# Number of months in a division.
+	num_months = 3 if calendar_period == 'quarter' else 6
+	
+	# Number of divisions in a year.
+	max_division = 3 if calendar_period == 'quarter' else 1
+	
+	now = get_now_in_user_timezone()
+
+	current_division = (now.month-1) // num_months # First division is 0
+	previous_division = (current_division - 1) if current_division > 0 else max_division
+	
+	historic_year = now.year if current_division > previous_division else now.year - 1
+	first_month_of_previous_division = 1 + previous_division * num_months
+
+	return historic_year, first_month_of_previous_division
 
 
 # Calculate the average time spent on various projects in a given historic period. (Or, assign goal time if in goals mode)
-def calculate_historic_averages(category_data, view_type, historic_days, current_days, goals_projects=[], goals=[]):
+def assign_historic_time(category_data, view_type, historic_days, current_days, goals_projects=[], goals=[]):
 	for project_name in category_data:
 
 		seconds = category_data[project_name]['historic_tracked']
 		
 		if view_type == 'custom':
-			
 			number_of_historic_days = len(historic_days)
 			number_of_current_days = len(current_days)
 
-			average = (seconds/number_of_historic_days)*number_of_current_days	
+			if number_of_historic_days == 0:
+				historic_time = 0
+			else:
+				historic_time = (seconds/number_of_historic_days)*number_of_current_days
+
 		elif view_type == 'calendar':
-			average = seconds # When using calendar mode, we aren't actually taking an average, but just the amount of time tracked in that period.
+			historic_time = seconds # When using calendar mode, we aren't actually taking an average, but just the amount of time tracked in that period.
 		elif view_type == 'goals':
 			if not project_name in goals_projects: # Ignore projects which don't have goals.
 				continue
-			average = goals[project_name]
+			historic_time = goals[project_name]
 		
-		category_data[project_name]['average'] = average
+		# TODO: Calling the value 'average' is because the system originally only worked with averages.
+		# The name should be changed. (Maybe 'value'?)
+		category_data[project_name]['average'] = historic_time
 
 @bp.route("/comparison/set_default", methods=['POST'])
 def set_default():

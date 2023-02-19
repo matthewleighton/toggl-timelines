@@ -549,7 +549,8 @@ def get_user_today_start_end_in_utc():
 		'end': today_end_user
 	}
 
-# Used in Comparison and Frequency pages
+# Used in Comparison and Frequency pages.
+# Returns a dictionary of all the projects, with their name, color, and tracked time (initialised to 0).
 def get_project_data(comparison_mode = False):
 	projects = Project.query.all()
 
