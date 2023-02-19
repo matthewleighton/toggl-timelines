@@ -32,8 +32,6 @@ def comparison_data():
 	goals_mode 				= get_goals_mode()
 	hide_completed 			= bool(request.json.get('hide_completed'))
 	live_mode_calendar 		= bool(request.json.get('live_mode_calendar'))
-	number_of_current_days  = int(request.json.get('timeframe'))
-	number_of_historic_days = int(request.json.get('datarange'))
 	period_type 			= request.json.get('period_type')
 	show_clients 			= bool(request.json.get('show_clients'))
 	show_projects 			= bool(request.json.get('show_projects'))
@@ -43,20 +41,20 @@ def comparison_data():
 	project_data = helpers.get_project_data(comparison_mode=True)
 	goals, goals_projects = prepare_goals(project_data)
 
-	print('number_of_current_days: ', number_of_current_days)
-
-	start_end_values = get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode_calendar)
+	# These are the start and end dates for the current and historic periods.
+	start_end_values = get_comparison_start_end(period_type, calendar_period, live_mode_calendar)
 	
+	# These two variables are lists of dicts.
+	# Each dict contains the date, and a list of entries for that day.
 	current_days = prepare_current_days(start_end_values)
 	historic_days = prepare_historic_days(start_end_values)
 	
 	sum_category_durations(current_days, project_data, period_type, historic=False, weekdays=target_weekdays)
 
-	if not goals_mode:
+	if not goals_mode: # If we're in goals mode, there is no historic data.
 		sum_category_durations(historic_days, project_data, period_type, historic=True, live_mode=live_mode_calendar, weekdays=target_weekdays)
 
-	if show_clients and not goals_mode:
-		add_client_comparisons(project_data)
+	add_client_comparisons(project_data)
 
 	assign_historic_time(category_data=project_data,
 						 view_type=period_type,
@@ -82,8 +80,8 @@ def get_target_weekdays():
 
 	if type(target_weekdays) is not list:
 		target_weekdays = [target_weekdays]
-
-	return target_weekdays
+	
+	return list(map(int, target_weekdays))
 
 def get_calendar_period():
 	goals_mode = get_goals_mode()
@@ -178,23 +176,14 @@ def update_goal(goal, project_data, goals, goals_projects, calendar_period, live
 
 def prepare_current_days(start_end_values):
 	db_entries = helpers.get_db_entries(start_end_values['current_start'], start_end_values['current_end'])
-	return helpers.sort_db_entries_by_day(db_entries)
+	return helpers.sort_db_entries_by_day(db_entries, date_format='date')
 
 def prepare_historic_days(start_end_values):
 	if get_goals_mode():
 		return []
 	
 	db_entries = helpers.get_db_entries(start_end_values['historic_start'], start_end_values['historic_end'])
-	return helpers.sort_db_entries_by_day(db_entries)
-
-
-
-
-
-
-
-
-
+	return helpers.sort_db_entries_by_day(db_entries, date_format='date')
 
 # Given a list of goals, remove any projects from the project_data dict if it has no goal.
 def remove_projects_without_goals(goals, project_data):
@@ -208,61 +197,65 @@ def remove_projects_without_goals(goals, project_data):
 	for project_name in projects_without_goals:
 		project_data.pop(project_name)
 
+# This function handles the actual assigning of durations to projects/goals (collectively called categories).
 def sum_category_durations(days, categories, view_type, historic=False, live_mode=False, weekdays=[]):
-	current_or_historic_tracked = 'historic_tracked' if historic else 'current_tracked'
-
 	for day in days:
-		entries = day['entries']
+		if day['date'].weekday() not in weekdays: # Skip weekdays which are not selected.
+			continue
+		
+		for entry in day['entries']:
+			is_most_recent_entry = live_mode and day == days[0] and entry == day['entries'][-1]
+			process_entry_summation(entry, categories, view_type, historic, live_mode, is_most_recent_entry)
 
-		for entry in entries:
+# Assign the time for an individual entry to the appropriate category.
+def process_entry_summation(entry, categories, view_type, historic, live_mode, is_most_recent_entry):
+	if entry.project in (None, 'No Project'): # Skip entries without projects.
+		return
 
-			if entry.project in (None, 'No Project'): # Skip entries without projects.
-				continue
+	project_name = entry.get_project_name()
+	goals_mode = not historic and view_type == 'goals'
+	duration = entry.dur/1000
 
-			weekday = str(entry.start.weekday())
-			if weekday not in weekdays: # Skip weekdays which are not selected.
-				continue
+	# TODO: I'm not entirely if this is needed. Need to test further.
+	if is_most_recent_entry and historic and live_mode:
+		now = datetime.utcnow()
+		entry_mid = entry.start.replace(hour=now.hour, minute=now.minute)
+		entry_start = entry.start
+		time_difference = entry_mid - entry_start
 
-			project_name = entry.get_project_name()
+		duration = min(time_difference.seconds, duration)
 
-			if historic and live_mode and day == days[0] and entry == entries[-1]: # If this is the most recent historic entry...
-				
-				# Here we need to deal with the raw UTC time.
-				# The reason is that we don't know what time zone the user was in at the historic period. Can't assume it's the same as now.
-				# So we compare things in UTC.
 
-				now = datetime.utcnow()
-				entry_mid = entry.start.replace(hour=now.hour, minute=now.minute)
-				entry_start = entry.start
+	# if not historic and view_type == 'goals':
+	if goals_mode:
+		# Handling tag-based goals.
+		tags = entry.tags
+		if tags:
+			for tag in tags:
+				if tag.tag_name in categories and categories[tag.tag_name]['type'] == 'tag':
+						categories[tag.tag_name]['current_tracked'] += duration
 
-				time_difference = entry_mid - entry_start
+		# Handling client-based goals.
+		client = entry.get_client()
+		if client and client.client_name in categories and categories[client.client_name]['type'] == 'client':
+			categories[client.client_name]['current_tracked'] += duration
 
-				duration = min(time_difference.seconds, entry.dur/1000)
-			else:
-				duration = entry.dur/1000
+	# This is needed because goals which have not started yet are removed from the categories list.
+	# i.e. If the goal is for 9am to 5pm, and it's currently 8am, the goal will not be in the categories list.
+	if not project_name in categories.keys():
+		return
 
-			if not historic and view_type == 'goals':
-				tags = entry.tags
-				if tags:
-					for tag in tags:
-						if tag.tag_name in categories and categories[tag.tag_name]['type'] == 'tag':
-								categories[tag.tag_name]['current_tracked'] += duration
+	# Check if the goal is a non-project-based goal.
+	# (i.e. Based on a tag or client.)
+	is_non_project_based_goal = view_type == 'goals' and 'type' in categories[project_name].keys() and categories[project_name]['type'] != 'project'
 
-				project_name = entry.get_project_name()
+	if not is_non_project_based_goal:
+		current_or_historic_tracked = 'historic_tracked' if historic else 'current_tracked'
+		categories[project_name][current_or_historic_tracked] += duration
+		
 
-				client = entry.get_client()
-				if client and client.client_name in categories and categories[client.client_name]['type'] == 'client':
-					categories[client.client_name]['current_tracked'] += duration
 
-			# This is needed because goals which have not started yet are removed from the categories list.
-			if not project_name in categories.keys():
-				continue
 
-			# Do not add duration based on project name if we are in goals mode, looking at a non-project based goal.
-			if view_type == 'goals' and 'type' in categories[project_name].keys() and categories[project_name]['type'] != 'project':
-				continue
-			else:
-				categories[project_name][current_or_historic_tracked] += duration
 
 
 
@@ -420,12 +413,11 @@ def get_now_in_user_timezone():
 	return now.astimezone(user_timezone)
 
 # Returns a dictionary containing the start and end datetimes for the current and historic periods.
-def get_comparison_start_end(period_type, number_of_current_days, number_of_historic_days, calendar_period, live_mode):
+def get_comparison_start_end(period_type, calendar_period, live_mode):
 	now = get_now_in_user_timezone()
 
 	if period_type == 'custom':
 		current_start, historic_start, historic_end = get_custom_start_end()
-
 	else:
 		current_start  = get_current_start(calendar_period)
 		historic_start = get_historic_start(calendar_period, current_start)
@@ -534,7 +526,7 @@ def get_historic_end(calendar_period, historic_start, live_mode):
 	now = get_now_in_user_timezone()
 
 	if calendar_period == 'day':
-		today_end   = now.replace(hour=23, minute=59, second=59)
+		today_end = now.replace(hour=23, minute=59, second=59)
 		
 		if live_mode:
 			return now - timedelta(days=1)
@@ -698,19 +690,12 @@ def assign_historic_time(category_data, view_type, historic_days, current_days, 
 
 @bp.route("/comparison/set_default", methods=['POST'])
 def set_default():
-	# print('------------set_default---------------')
 	data = request.json
-
 	session['comparison_defaults'] = data
-
-	# print(data)
 
 	return jsonify(data)
 
 def get_comparison_defaults():
-	# print('------------get_comparison_defaults---------------')
-	# print(session)
-
 	if 'comparison_defaults' in session.keys():
 		return session['comparison_defaults']
 
@@ -725,6 +710,12 @@ def hide_project_comparisons(project_data):
 
 # Distribute the project time among their parent clients, and add it to the project_data dictionary.
 def add_client_comparisons(project_data):
+	
+	# Only add the client data if the user has selected to show clients.
+	# (And we're not in goals mode.)
+	if not bool(request.json.get('show_clients')) or get_goals_mode():
+		return
+	
 	all_clients = helpers.get_all_clients_from_database()
 
 	for client in all_clients:
@@ -736,11 +727,9 @@ def add_client_comparisons(project_data):
 				current_tracked += project_data[project.project_name]['current_tracked']
 				historic_tracked += project_data[project.project_name]['historic_tracked']
 
-
 		client_info = {
 			'average': 0,
 			'color': helpers.get_client_color(client.client_name),
-			# 'color': 'red',
 			'current_tracked': current_tracked,
 			'historic_tracked': historic_tracked,
 			'name': client.client_name,

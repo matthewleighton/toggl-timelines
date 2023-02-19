@@ -312,7 +312,7 @@ def get_db_entries(start=False, end=False, projects=False, clients=False, descri
 	return entries
 
 # Return the entries in a new list, grouped by day,
-def sort_db_entries_by_day(db_entries, return_as_dict=False):
+def sort_db_entries_by_day(db_entries, return_as_dict=False, date_format='string'):
 	sorted_by_day = {}
 
 	for entry in db_entries:
@@ -324,9 +324,12 @@ def sort_db_entries_by_day(db_entries, return_as_dict=False):
 			date = entry.get_local_start_time()
 			toggl_date_url = get_toggl_date_url(date)
 
+			date_output = date.strftime('%a %d %b, %Y') if date_format == 'string' else date
+
 			sorted_by_day[entry_date_label] = {
 				'entries': [],
-				'date': date.strftime('%a %d %b, %Y'),
+				# 'date': date.strftime('%a %d %b, %Y'),
+				'date': date_output,
 				'toggl_date_url': toggl_date_url
 			}
 
