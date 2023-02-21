@@ -1,25 +1,11 @@
-from flask import Blueprint
-from flask import flash
-from flask import g
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import url_for
-from flask import current_app
-from flask import make_response
-from flask import jsonify
-from werkzeug.exceptions import abort
+from flask import Blueprint, render_template, request, current_app, make_response, jsonify
 
 from sqlalchemy import func
 
 import calendar
-import csv
-import pytz
-import math
 from datetime import date, datetime, timedelta
 import os
 
-import json
 import requests
 from pprint import pprint
 
@@ -28,9 +14,7 @@ from toggltimelines.reading.models import Book, Readthrough
 from toggltimelines.timelines.models import Project
 from toggltimelines import helpers
 
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
-
+from pprint import pprint
 
 bp = Blueprint("reading", __name__)
 
@@ -257,7 +241,7 @@ def search_readthroughs():
 
 	verify_covers(readthroughs)
 
-	pp.pprint(readthroughs)
+	pprint(readthroughs)
 
 
 	if readthroughs:
@@ -362,7 +346,6 @@ def graph():
 		'scale_from_zero': True
 	}
 
-	
 	response = requests.post(base_url + 'frequency', json=graph_data).text
 
 	return response

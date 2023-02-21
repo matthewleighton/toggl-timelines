@@ -28,6 +28,7 @@ app = current_app
 
 
 def create_app(test_config=None):
+	print('Creating app...')
 	"""Create and configure an instance of the Flask application."""
 	app = Flask(__name__, instance_relative_config=True)
 
@@ -69,7 +70,6 @@ def create_app(test_config=None):
 
 	app.cli.add_command(init_db_command)
 	app.cli.add_command(toggl_sync_all)
-	# app.cli.add_command(mytest)
 	app.cli.add_command(update_book_covers)
 
 	# Timeline Page

@@ -29,9 +29,10 @@ bp = Blueprint("frequency", __name__)
 
 @bp.route("/frequency", methods=['GET', 'POST'])
 def index():
-	# This is the old way of getting data from the request.
-	# request_data = request.json if request.json else {}
-	request_data = {}
+	if request.content_type == 'application/json':
+		request_data = request.json
+	else:
+		request_data = {}
 
 	graph_type = request_data['graph_type'] if 'graph_type' in request_data.keys() else 'normal'
 	scope_type = request_data['scope_type'] if 'scope_type' in request_data.keys() else 'days'
@@ -354,7 +355,7 @@ def get_month_occurances(start_datetime, end_datetime):
 def get_line_data_container(graph_type, scope_type, start_datetime=None, end_datetime=None):
 	if graph_type == 'frequency':
 		if scope_type == 'minutes':
-			 line_data_container = { i : 0 for i in list(range(0,1440)) }
+			line_data_container = { i : 0 for i in list(range(0,1440)) }
 		elif scope_type == 'weekday':
 			line_data_container = {i : 0 for i in weekdays}
 		elif scope_type == 'days':
