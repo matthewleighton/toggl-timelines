@@ -5,8 +5,8 @@ import math, pytz
 from datetime import datetime, timedelta, date
 import os.path
 import urllib.request
-import time
 from PIL import Image
+from time import perf_counter
 
 from toggltimelines.timelines.models import Entry
 from toggltimelines import db
@@ -22,19 +22,26 @@ class Book(db.Model):
 	def get_cover(self):
 		file_location = self.get_cover_location()
 
+		# If the cover exists, return the local file.
 		if os.path.isfile(file_location):
 			return self.get_cover_url()
 
+		# Check if the book has an cover image URL.
 		if self.image_url:
+			print(f'Book: {self.title} does NOT have a local cover image.\nDownloading from {self.image_url}...\n')
 
+			# Try to download the cover image.
 			if self.update_cover(self.image_url):
 				return file_location
 			else:
 				return self.image_url
 
+		# Fallback to placeholder image.
 		return '/static/img/cover_placeholder.png'
 
 	def update_cover(self, url):
+		start = perf_counter()
+
 		self.image_url = url
 		db.session.commit()
 
@@ -58,6 +65,8 @@ class Book(db.Model):
 		except:
 			return False
 
+		stop = perf_counter()
+		print(f'Cover updated in {stop-start} seconds.')
 		return True
 
 	def get_cover_location(self):

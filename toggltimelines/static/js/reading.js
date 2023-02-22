@@ -13,6 +13,7 @@ $('body').keypress(function(e) {
 
 /* New Readthrough search */
 var book_search_timeout = false
+var book_search_timeout_limit = 600 // Number of ms to wait before searching
 $('#new-readthrough-search').on('input', function() {
 	var title = this.value.toLowerCase()
 
@@ -23,9 +24,10 @@ $('#new-readthrough-search').on('input', function() {
 	book_search_timeout = setTimeout(function() {
 		search_books(title)
 	},
-	600)
+	book_search_timeout_limit)
 })
 
+var time_of_last_search = 0;
 function search_books(title) {
 	title = title.trim()
 
@@ -34,21 +36,40 @@ function search_books(title) {
 		return
 	}
 
-	data = {
-		'title': title
+	var populate_books_request_values = {
+		'type': 'POST',
+		'url': '/reading/populate_books',
+		success: function(response) {
+			time_of_last_search = new Date().getTime();
+		}
 	}
 
-	$.ajax({
-		"type": "POST",
-		"url": "/reading/search_books",
-		"contentType": "application/json",
-		"dataType": "json",
-		"data": JSON.stringify(data),
+	var search_books_request_values = {
+		'type': 'POST',
+		'url': '/reading/search_books',
+		'contentType': 'application/json',
+		'dataType': 'json',
+		'data': JSON.stringify({'title': title}),
 		success: function(response) {
 			$container = $('.books-search-results')
 			$container.replaceWith(response)
 		}
-	})
+	}
+
+	// If it's been more than 60 seconds since last populating the books, do that first.
+	// This means we add the SEARCH function to the success callback of the POPULATE function.
+	// We then call the POPULATE function, which will call the SEARCH function when it's done.
+	if (time_of_last_search < new Date().getTime() - 60*1000) {
+		populate_books_request_values['success'] = function(response) {
+			time_of_last_search = new Date().getTime();
+			$.ajax(search_books_request_values)
+		}
+		$.ajax(populate_books_request_values)
+	}
+	else { // Otherwise, we simply call the SEARCH function.
+		$.ajax(search_books_request_values)
+	}
+
 }
 
 

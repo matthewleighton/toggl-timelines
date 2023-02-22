@@ -7,12 +7,12 @@ from datetime import date, datetime, timedelta
 import os
 
 import requests
-from pprint import pprint
 
-from toggltimelines import db
+from toggltimelines import db, helpers
 from toggltimelines.reading.models import Book, Readthrough
 from toggltimelines.timelines.models import Project
-from toggltimelines import helpers
+
+from time import perf_counter
 
 from pprint import pprint
 
@@ -20,14 +20,21 @@ bp = Blueprint("reading", __name__)
 
 @bp.route("/reading")
 def reading_home():
+	start = perf_counter()
 
 	if not os.path.exists(current_app.covers_directory):
 		os.makedirs(current_app.covers_directory)
 
+	sync_start = perf_counter()
 	sync_start_datetime = datetime.utcnow().replace(hour=0, minute=0, second=0)
 	helpers.toggl_sync(sync_start_datetime)
+	sync_stop = perf_counter()
+	print(f"Syncing took {sync_stop-sync_start} seconds.")
 
-	populate_books()
+	# TODO: Maybe this shouldn't be fired on every page load.
+	# Instead add a button which searches for new books.
+	# The user clicks the button when they've started a new book.
+	# populate_books()
 
 	active_readthroughs = get_readthroughs('active')
 	books = get_all_books()
@@ -39,7 +46,13 @@ def reading_home():
 		'books': books
 	}
 
+	start_response = perf_counter()
 	response = make_response(render_template('reading/index.html', data=page_data))
+	stop_response = perf_counter()
+	print(f"Response took {stop_response-start_response} seconds.")
+
+	stop = perf_counter()
+	print(f"Reading home page loaded in {stop-start} seconds.")
 
 	return response
 
@@ -173,6 +186,10 @@ def delete_readthrough():
 
 @bp.route("/reading/load_past_readthroughs", methods=['POST'])
 def load_past_readthroughs():
+	print('\n\n starting load_past_readthroughs... \n\n')
+
+	start = perf_counter()
+
 	amount_per_request = 10
 
 	all_past_readthroughs = get_readthroughs('complete')
@@ -227,6 +244,9 @@ def load_past_readthroughs():
 	verify_covers(readthroughs_to_return)
 
 	none_remaining = True if target_end_number >= len(all_past_readthroughs) else False
+
+	stop = perf_counter()
+	print(f"Time to load past readthroughs: {stop - start}")
 
 	return jsonify(
 		html = render_template('reading/readthrough_list.html', readthroughs=readthroughs_to_return ),
@@ -692,12 +712,20 @@ def history_year_data():
 	
 
 def get_all_books():
+	start = perf_counter()
+
 	query = Book.query
 	books = query.all()
+	
+	end = perf_counter()
+	print(f'get_all_books: {round(end - start, 2)} seconds.' )
+
 	return books
 
 # Use a status of 'active' to only get currently read books. Or a status of 'complete' for finished books.
 def get_readthroughs(status='all', title=False, year=False, include_readthroughs_completed_in_next_year=True, order_by='start'):
+	start = perf_counter()
+	
 	query = Readthrough.query
 
 	if status == 'active':
@@ -729,22 +757,39 @@ def get_readthroughs(status='all', title=False, year=False, include_readthroughs
 
 	readthroughs = query.all()
 
+	end = perf_counter()
+	print(f'Got readthroughs in {round(end - start, 2)} seconds.')
+
 	return readthroughs
 
+@bp.route('/reading/populate_books', methods=['POST'])
 def populate_books():
+	print('\n------------Populating books...')
+	start = perf_counter()
+
+	# All the entires with a project of 'Reading'.
 	db_reading_entries = helpers.get_db_entries(projects=['Reading'])
 
+	# Create a list of all the unique books.
 	unique_books = set()
-
 	for entry in db_reading_entries:
 		unique_books.add(entry.description)
 
+	# Create a book for each unique book.
 	for title in unique_books:
 		create_book(title)
 
 	db.session.commit()
 
+	end = perf_counter()
 
+	print(f'Populated books in {round(end - start, 2)} seconds.')
+
+	# Return 200 status code.
+	if request.method == 'POST':
+		return '', 200
+
+# Create a book if it doesn't already exist.
 def create_book(title):
 	existing_book = get_book(title)
 
@@ -793,6 +838,11 @@ def get_book(title):
 # Check that the cover for each readthrough exists.
 # If not, we'll acquire the cover now, so it will be ready before the page loads.
 def verify_covers(readthroughs):
+	start = perf_counter()
+
 	for readthrough in readthroughs:
 
 		readthrough.book.get_cover()
+
+	stop = perf_counter()
+	print(f'Verified covers in {round(stop - start, 2)} seconds.')
